@@ -28,11 +28,11 @@ enum MODULE_ID
 
 #define SYS_RESTART_FUNC_MAGIC 0x3c
 
-uint64_t SYS_RESTART_FUNC_VAL = 0x2fa45d2002d54af2;
+// uint64_t SYS_RESTART_FUNC_VAL = 0x2fa45d2002d54af2;
 
 #define SYS_REBOOT_FUNC_MAGIC 0x9d
 
-uint64_t SYS_REBOOT_FUNC_VAL = 0x36a45d2002d54af0;
+// uint64_t SYS_REBOOT_FUNC_VAL = 0x36a45d2002d54af0;
 
 enum SW_UPD_FUNC_ID
 {
@@ -44,10 +44,10 @@ enum SW_UPD_FUNC_ID
 enum ACS_FUNC_ID
 {
     ACS_INVALID_ID = 0x0,
-    ACS_GET_MOI_ID,
-    ACS_SET_MOI_ID,
-    ACS_GET_IMOI_ID,
-    ACS_SET_IMOI_ID,
+    ACS_GET_MOI,
+    ACS_SET_MOI,
+    ACS_GET_IMOI,
+    ACS_SET_IMOI,
     ACS_GET_DIPOLE,
     ACS_SET_DIPOLE,
     ACS_GET_TSTEP,
@@ -97,6 +97,8 @@ enum XBAND_FUNC_ID
 };
 
 void glfw_error_callback(int error, const char* description);
+
+int gs_gui_check_password(char* password);
 
 // int gs_gui_init(GLFWwindow *window);
 

@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 #include "gs_gui.hpp"
+#include <unistd.h>
 
 int main(int, char **)
 {
@@ -56,7 +57,6 @@ int main(int, char **)
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    bool showOtherWindow = false;
 
     // Main loop.
     while (!glfwWindowShouldClose(window))
@@ -74,463 +74,138 @@ int main(int, char **)
             ImGui::Text("%.1f FPS %.1f", ImGui::GetIO().Framerate, ImGui::GetTime());
         }
 
-        // Create a window called "Sample Window".
-        if (ImGui::Begin("Sample Window"))
-        {
-            if (ImGui::Button("Toggle Window"))
-            {
-                showOtherWindow = !showOtherWindow;
-            }
+        // Level 0: Basic access, can retrieve data.
+        // Level 1: Advanced access, can set some values.
+        // Level 2: Project Manager access, can update flight software, edit critical systems.
+        static int authentication_access_level = 0;
+        // static bool authenticating = false;
 
-            ImGui::Text("%.1f FPS %.1f", ImGui::GetIO().Framerate, ImGui::GetTime());
+        if (ImGui::Begin("Authentication Control Panel"))
+        {
+            ImGui::Text("ACCESS LEVEL %d GRANTED", authentication_access_level);
+
+            char password_buffer[64];
+            ImGui::InputText("", password_buffer, 64, ImGuiInputTextFlags_Password);
+            ImGui::SameLine();
+            if (ImGui::Button("AUTHENTICATE"))
+            {
+                authentication_access_level = gs_gui_check_password(password_buffer);
+            }
 
             ImGui::End();
         }
 
-        // Other window.
-        if (showOtherWindow)
+        static bool ACS_window = false;
+        static bool EPS_window = false;
+        static bool XBAND_window = false;
+        static bool SW_UPD_window = false;
+        static bool SYS_CTRL_window = false;
+        static bool COMMS_SENDER_window = false;
+
+        if (ImGui::Begin("Communications Control Panel"))
         {
-            if (ImGui::Begin("Other Window", &showOtherWindow))
+            ImGui::Checkbox("Attitude Control System", &ACS_window); // Contains ACS and ACS_UPD
+            ImGui::Checkbox("Electrical Power Supply", &EPS_window);
+            ImGui::Checkbox("X-Band", &XBAND_window);
+            ImGui::Checkbox("Software Updater", &SW_UPD_window);
+            ImGui::Checkbox("System Control", &SYS_CTRL_window); // Contains SYS_VER, SYS_REBOOT, SYS_CLEAN_SHBYTES
+
+            ImGui::Separator();
+
+            ImGui::Checkbox("Communications Sender", &COMMS_SENDER_window);
+
+            // if (authentication_access_level < 2)
+            // {
+            //     SW_UPD_window = false;
+            //     SYS_CTRL_window = false;
+            // }
+
+            ImGui::End();
+        }
+
+        static int ACS_command = ACS_INVALID_ID;
+
+        if (ACS_window)
+        {
+            if (ImGui::Begin("ACS Operations"))
             {
-                ImGui::Text("This is another window.");
+                ImGui::Text("Retrieval Commands");
+
+                ImGui::RadioButton("Get MOI ID", &ACS_command, ACS_GET_MOI);
+                ImGui::RadioButton("Get IMOI ID", &ACS_command, ACS_GET_IMOI);
+                ImGui::RadioButton("Get Dipole", &ACS_command, ACS_GET_DIPOLE);
+                ImGui::RadioButton("Get Timestep", &ACS_command, ACS_GET_TSTEP);
+                ImGui::RadioButton("Get Measure Time", &ACS_command, ACS_GET_MEASURE_TIME);
+                ImGui::RadioButton("Get Leeway", &ACS_command, ACS_GET_LEEWAY);
+                ImGui::RadioButton("Get W-Target", &ACS_command, ACS_GET_WTARGET);
+                ImGui::RadioButton("Get Detumble Angle", &ACS_command, ACS_GET_DETUMBLE_ANG);
+                ImGui::RadioButton("Get Sun Angle", &ACS_command, ACS_GET_SUN_ANGLE);
+
+                ImGui::Separator();
+
+                ImGui::Text("Set Commands");
+
+                if (authentication_access_level > 0)
+                {
+                    ImGui::RadioButton("Set MOI ID", &ACS_command, ACS_SET_MOI);
+                    ImGui::RadioButton("Set IMOI ID", &ACS_command, ACS_SET_IMOI);
+                    ImGui::RadioButton("Set Dipole", &ACS_command, ACS_SET_DIPOLE);
+                    ImGui::RadioButton("Set Timestep", &ACS_command, ACS_SET_TSTEP);
+                    ImGui::RadioButton("Set Measure Time", &ACS_command, ACS_SET_MEASURE_TIME);
+                    ImGui::RadioButton("Set Leeway", &ACS_command, ACS_SET_LEEWAY);
+                    ImGui::RadioButton("Set W-Target", &ACS_command, ACS_SET_WTARGET);
+                    ImGui::RadioButton("Set Detumble Angle", &ACS_command, ACS_SET_DETUMBLE_ANG);
+                    ImGui::RadioButton("Set Sun Angle", &ACS_command, ACS_SET_SUN_ANGLE);
+                }
+                else
+                {
+                    ImGui::Text("ACCESS LEVEL 1 OR 2 REQUIRED!");
+                }
 
                 ImGui::End();
             }
         }
 
-        static bool show_win_communications = true;
-
-        static bool gs_mod_select_acs = false;
-        static bool gs_mod_select_eps = false;
-        static bool gs_mod_select_xband = false;
-        static bool gs_mod_select_update = false;
-        static bool gs_mod_select_acs_update = false;
-        static bool gs_mod_select_sys_version = false;
-        static bool gs_mod_select_sys_restart_program = false;
-        static bool gs_mod_select_sys_reboot = false;
-        static bool gs_mod_select_sys_clean_shbytes = false;
-
-        static bool gs_cmd_select_acs_get = true;
-        static bool gs_cmd_select_acs_moi_id = false;
-        static bool gs_cmd_select_acs_imoi_id = false;
-        static bool gs_cmd_select_acs_dipole = false;
-        static bool gs_cmd_select_acs_tstep = false;
-        static bool gs_cmd_select_acs_measure_time = false;
-        static bool gs_cmd_select_acs_leeway = false;
-        static bool gs_cmd_select_acs_wtarget = false;
-        static bool gs_cmd_select_acs_detumble_ang = false;
-        static bool gs_cmd_select_acs_sun_angle = false;
-
-        static bool gs_cmd_select_eps_get = true;
-        static bool gs_cmd_select_eps_min_hk = false;
-        static bool gs_cmd_select_eps_vbatt = false;
-        static bool gs_cmd_select_eps_sys_curr = false;
-        static bool gs_cmd_select_eps_outpower = false;
-        static bool gs_cmd_select_eps_vsun = false;
-        static bool gs_cmd_select_eps_vsun_all = false;
-        static bool gs_cmd_select_eps_isun = false;
-        static bool gs_cmd_select_eps_loop_timer = false;
-
-        static bool gs_cmd_select_xband_get = true;
-        static bool gs_cmd_select_xband_tx = false;
-        static bool gs_cmd_select_xband_rx = false;
-        static bool gs_cmd_select_xband_max_on = false;
-        static bool gs_cmd_select_xband_tmp_shdn = false;
-        static bool gs_cmd_select_xband_tmp_op = false;
-        static bool gs_cmd_select_xband_loop_time = false;
-
-        static int current_mod_id = INVALID_ID;
-        static int current_cmd_id = INVALID_ID;
-
-        // Possibly clean up this boolean mess using (Jimmyee commented on Nov 10, 2017).
-        // https://github.com/ocornut/imgui/issues/1422
-
-        if (ImGui::Begin("Communications"), &show_win_communications)
+        if (EPS_window)
         {
-            if (ImGui::BeginMenu("Module ID"))
+            if (ImGui::Begin("EPS Operations"))
             {
-                ImGui::RadioButton("ACS (0x1)", &current_mod_id, ACS_ID);
-                ImGui::RadioButton("EPS (0x2)", &current_mod_id, EPS_ID);
-                ImGui::RadioButton("XBAND (0x3)", &current_mod_id, XBAND_ID);
-                ImGui::RadioButton("Software Update (0xf)", &current_mod_id, SW_UPD_ID);
-                ImGui::RadioButton("ACS Update (0xe)", &current_mod_id, ACS_UPD_ID);
-                ImGui::RadioButton("System Version (0xd)", &current_mod_id, SYS_VER_MAGIC);
-                ImGui::RadioButton("System Restart Program (0xff)", &current_mod_id, SYS_RESTART_PROG);
-                ImGui::RadioButton("System Reboot (0xfe)", &current_mod_id, SYS_REBOOT);
-                ImGui::RadioButton("System Clean SHBYTES (0xfd)", &current_mod_id, SYS_CLEAN_SHBYTES);
-
-                ImGui::EndMenu();
+                ImGui::End();
             }
+        }
 
-            ImGui::Text("Module ID: 0x%x", current_mod_id);
-
-            if (gs_mod_select_acs)
+        if (XBAND_window)
+        {
+            if (ImGui::Begin("X-Band Operations"))
             {
-                current_mod_id = ACS_ID;
-                static char acs_mode[18]; // "Current Mode: GET\0"
-                static bool acs_mode_init = true;
-                if (acs_mode_init)
-                {
-                    snprintf(acs_mode, sizeof(acs_mode), "Current Mode: %s", gs_cmd_select_acs_get ? "GET" : "SET");
-                    acs_mode_init = false;
-                }
-                if (ImGui::Button(acs_mode))
-                {
-                    gs_cmd_select_acs_get = !gs_cmd_select_acs_get;
-                    snprintf(acs_mode, sizeof(acs_mode), "Current Mode: %s", gs_cmd_select_acs_get ? "GET" : "SET");
-                    // Reset all values when we switch between get and set.
-                    gs_cmd_select_acs_moi_id = false;
-                    gs_cmd_select_acs_imoi_id = false;
-                    gs_cmd_select_acs_dipole = false;
-                    gs_cmd_select_acs_tstep = false;
-                    gs_cmd_select_acs_measure_time = false;
-                    gs_cmd_select_acs_leeway = false;
-                    gs_cmd_select_acs_wtarget = false;
-                    gs_cmd_select_acs_detumble_ang = false;
-                    gs_cmd_select_acs_sun_angle = false;
-                }
-
-                if (gs_cmd_select_acs_get)
-                {
-
-                    if (ImGui::BeginMenu("Command ID (Get)"))
-                    {
-                        ImGui::MenuItem("Get MOI ID", NULL, &gs_cmd_select_acs_moi_id);
-                        ImGui::MenuItem("Get IMOI ID", NULL, &gs_cmd_select_acs_imoi_id);
-                        ImGui::MenuItem("Get Dipole", NULL, &gs_cmd_select_acs_dipole);
-                        ImGui::MenuItem("Get Timestep", NULL, &gs_cmd_select_acs_tstep);
-                        ImGui::MenuItem("Get Measure Time", NULL, &gs_cmd_select_acs_measure_time);
-                        ImGui::MenuItem("Get Leeway", NULL, &gs_cmd_select_acs_leeway);
-                        ImGui::MenuItem("Get W-Target", NULL, &gs_cmd_select_acs_wtarget);
-                        ImGui::MenuItem("Get Detumble Angle", NULL, &gs_cmd_select_acs_detumble_ang);
-                        ImGui::MenuItem("Get Sun Angle", NULL, &gs_cmd_select_acs_sun_angle);
-
-                        ImGui::EndMenu();
-                    }
-
-                    if (gs_cmd_select_acs_moi_id)
-                    {
-                        current_cmd_id = ACS_GET_MOI_ID;
-                    }
-                    else if (gs_cmd_select_acs_imoi_id)
-                    {
-                        current_cmd_id = ACS_GET_IMOI_ID;
-                    }
-                    else if (gs_cmd_select_acs_dipole)
-                    {
-                        current_cmd_id = ACS_GET_DIPOLE;
-                    }
-                    else if (gs_cmd_select_acs_tstep)
-                    {
-                        current_cmd_id = ACS_GET_TSTEP;
-                    }
-                    else if (gs_cmd_select_acs_measure_time)
-                    {
-                        current_cmd_id = ACS_GET_MEASURE_TIME;
-                    }
-                    else if (gs_cmd_select_acs_leeway)
-                    {
-                        current_cmd_id = ACS_GET_LEEWAY;
-                    }
-                    else if (gs_cmd_select_acs_wtarget)
-                    {
-                        current_cmd_id = ACS_GET_WTARGET;
-                    }
-                    else if (gs_cmd_select_acs_detumble_ang)
-                    {
-                        current_cmd_id = ACS_GET_DETUMBLE_ANG;
-                    }
-                    else if (gs_cmd_select_acs_sun_angle)
-                    {
-                        current_cmd_id = ACS_GET_SUN_ANGLE;
-                    }
-                }
-                else
-                {
-                    if (ImGui::BeginMenu("Command ID (Set)"))
-                    {
-                        ImGui::MenuItem("Set MOI ID", NULL, &gs_cmd_select_acs_moi_id);
-                        ImGui::MenuItem("Set IMOI ID", NULL, &gs_cmd_select_acs_imoi_id);
-                        ImGui::MenuItem("Set Dipole", NULL, &gs_cmd_select_acs_dipole);
-                        ImGui::MenuItem("Set Timestep", NULL, &gs_cmd_select_acs_tstep);
-                        ImGui::MenuItem("Set Measure Time", NULL, &gs_cmd_select_acs_measure_time);
-                        ImGui::MenuItem("Set Leeway", NULL, &gs_cmd_select_acs_leeway);
-                        ImGui::MenuItem("Set W-Target", NULL, &gs_cmd_select_acs_wtarget);
-                        ImGui::MenuItem("Set Detumble Angle", NULL, &gs_cmd_select_acs_detumble_ang);
-                        ImGui::MenuItem("Set Sun Angle", NULL, &gs_cmd_select_acs_sun_angle);
-
-                        ImGui::EndMenu();
-                    }
-
-                    if (gs_cmd_select_acs_moi_id)
-                    {
-                        current_cmd_id = ACS_SET_MOI_ID;
-                    }
-                    else if (gs_cmd_select_acs_imoi_id)
-                    {
-                        current_cmd_id = ACS_SET_IMOI_ID;
-                    }
-                    else if (gs_cmd_select_acs_dipole)
-                    {
-                        current_cmd_id = ACS_SET_DIPOLE;
-                    }
-                    else if (gs_cmd_select_acs_tstep)
-                    {
-                        current_cmd_id = ACS_SET_TSTEP;
-                    }
-                    else if (gs_cmd_select_acs_measure_time)
-                    {
-                        current_cmd_id = ACS_SET_MEASURE_TIME;
-                    }
-                    else if (gs_cmd_select_acs_leeway)
-                    {
-                        current_cmd_id = ACS_SET_LEEWAY;
-                    }
-                    else if (gs_cmd_select_acs_wtarget)
-                    {
-                        current_cmd_id = ACS_SET_WTARGET;
-                    }
-                    else if (gs_cmd_select_acs_detumble_ang)
-                    {
-                        current_cmd_id = ACS_SET_DETUMBLE_ANG;
-                    }
-                    else if (gs_cmd_select_acs_sun_angle)
-                    {
-                        current_cmd_id = ACS_SET_SUN_ANGLE;
-                    }
-                    else
-                    {
-                        current_cmd_id = INVALID_ID;
-                    }
-                }
+                ImGui::End();
             }
-            else if (gs_mod_select_eps)
+        }
+
+        if (SW_UPD_window)
+        {
+            if (ImGui::Begin("Software Updater Control Panel"))
             {
-                current_mod_id = 0x2;
-                static char eps_mode[18]; // "Current Mode: GET\0"
-                static bool eps_mode_init = true;
-                if (eps_mode_init)
-                {
-                    snprintf(eps_mode, sizeof(eps_mode), "Current Mode: %s", gs_cmd_select_eps_get ? "GET" : "SET");
-                    eps_mode_init = false;
-                }
-                if (ImGui::Button(eps_mode))
-                {
-                    gs_cmd_select_eps_get = !gs_cmd_select_eps_get;
-                    snprintf(eps_mode, sizeof(eps_mode), "Current Mode: %s", gs_cmd_select_eps_get ? "GET" : "SET");
-
-                    // Reset values.
-                    gs_cmd_select_eps_min_hk = false;
-                    gs_cmd_select_eps_vbatt = false;
-                    gs_cmd_select_eps_sys_curr = false;
-                    gs_cmd_select_eps_outpower = false;
-                    gs_cmd_select_eps_vsun = false;
-                    gs_cmd_select_eps_vsun_all = false;
-                    gs_cmd_select_eps_isun = false;
-                    gs_cmd_select_eps_loop_timer = false;
-                }
-
-                if (gs_cmd_select_eps_get)
-                {
-                    if (ImGui::BeginMenu("Command ID (Get)"))
-                    {
-                        ImGui::MenuItem("Get Minimal Housekeeping Data", NULL, &gs_cmd_select_eps_min_hk);
-                        ImGui::MenuItem("Get Battery Voltage", NULL, &gs_cmd_select_eps_vbatt);
-                        ImGui::MenuItem("Get System Current", NULL, &gs_cmd_select_eps_sys_curr);
-                        ImGui::MenuItem("Get Power Out", NULL, &gs_cmd_select_eps_outpower);
-                        ImGui::MenuItem("Get VSun", NULL, &gs_cmd_select_eps_vsun);
-                        ImGui::MenuItem("Get VSun All", NULL, &gs_cmd_select_eps_vsun_all);
-                        ImGui::MenuItem("Get ISun", NULL, &gs_cmd_select_eps_isun);
-                        ImGui::MenuItem("Get Loop Timer", NULL, &gs_cmd_select_eps_loop_timer);
-
-                        ImGui::EndMenu();
-                    }
-
-                    if (gs_cmd_select_eps_min_hk)
-                    {
-                        current_cmd_id = EPS_GET_MIN_HK;
-                    }
-                    else if (gs_cmd_select_eps_vbatt)
-                    {
-                        current_cmd_id = EPS_GET_VBATT;
-                    }
-                    else if (gs_cmd_select_eps_sys_curr)
-                    {
-                        current_cmd_id = EPS_GET_SYS_CURR;
-                    }
-                    else if (gs_cmd_select_eps_outpower)
-                    {
-                        current_cmd_id = EPS_GET_OUTPOWER;
-                    }
-                    else if (gs_cmd_select_eps_vsun)
-                    {
-                        current_cmd_id = EPS_GET_VSUN;
-                    }
-                    else if (gs_cmd_select_eps_vsun_all)
-                    {
-                        current_cmd_id = EPS_GET_VSUN_ALL;
-                    }
-                    else if (gs_cmd_select_eps_isun)
-                    {
-                        current_cmd_id = EPS_GET_ISUN;
-                    }
-                    else if (gs_cmd_select_eps_loop_timer)
-                    {
-                        current_cmd_id = EPS_GET_LOOP_TIMER;
-                    }
-                    else
-                    {
-                        current_cmd_id = INVALID_ID;
-                    }
-                }
-                else
-                {
-                    if (ImGui::BeginMenu("Command ID (Set)"))
-                    {
-                        ImGui::MenuItem("Set Loop Timer", NULL, &gs_cmd_select_eps_loop_timer);
-
-                        ImGui::EndMenu();
-                    }
-
-                    if (gs_cmd_select_eps_loop_timer)
-                    {
-                        current_cmd_id = EPS_SET_LOOP_TIMER;
-                    }
-                    else
-                    {
-                        current_cmd_id = INVALID_ID;
-                    }
-                }
+                ImGui::End();
             }
-            else if (gs_mod_select_xband)
+        }
+
+        if (SYS_CTRL_window)
+        {
+            if (ImGui::Begin("System Control Panel"))
             {
-                current_mod_id = 0x3;
-                static char xband_mode[18]; // "Current Mode: GET\0"
-                static bool xband_mode_init = true;
-                if (xband_mode_init)
-                {
-                    snprintf(xband_mode, sizeof(xband_mode), "Current Mode: %s", gs_cmd_select_xband_get ? "GET" : "SET");
-                    xband_mode_init = false;
-                }
-                if (ImGui::Button(xband_mode))
-                {
-                    gs_cmd_select_xband_get = !gs_cmd_select_xband_get;
-                    snprintf(xband_mode, sizeof(xband_mode), "Current Mode: %s", gs_cmd_select_xband_get ? "GET" : "SET");
-
-                    // Reset values.
-                    gs_cmd_select_xband_tx = false;
-                    gs_cmd_select_xband_rx = false;
-                    gs_cmd_select_xband_max_on = false;
-                    gs_cmd_select_xband_tmp_shdn = false;
-                    gs_cmd_select_xband_tmp_op = false;
-                    gs_cmd_select_xband_loop_time = false;
-                }
-
-                if (gs_cmd_select_xband_get)
-                {
-                    if (ImGui::BeginMenu("Command ID (Get)"))
-                    {
-                        ImGui::MenuItem("Get Max On", NULL, &gs_cmd_select_xband_max_on);
-                        ImGui::MenuItem("Get TMP SHDN", NULL, &gs_cmd_select_xband_tmp_shdn);
-                        ImGui::MenuItem("Get TMP OP", NULL, &gs_cmd_select_xband_tmp_op);
-                        ImGui::MenuItem("Get Loop Time", NULL, &gs_cmd_select_xband_loop_time);
-
-                        ImGui::EndMenu();
-                    }
-
-                    if (gs_cmd_select_xband_max_on)
-                    {
-                        current_cmd_id = XBAND_GET_MAX_ON;
-                    }
-                    else if (gs_cmd_select_xband_tmp_shdn)
-                    {
-                        current_cmd_id = XBAND_GET_TMP_SHDN;
-                    }
-                    else if (gs_cmd_select_xband_tmp_op)
-                    {
-                        current_cmd_id = XBAND_GET_TMP_OP;
-                    }
-                    else if (gs_cmd_select_xband_loop_time)
-                    {
-                        current_cmd_id = XBAND_GET_LOOP_TIME;
-                    }
-                    else
-                    {
-                        current_cmd_id = INVALID_ID;
-                    }
-                }
-                else
-                {
-                    if (ImGui::BeginMenu("Command ID (Set)"))
-                    {
-                        ImGui::MenuItem("Set Transmit", NULL, &gs_cmd_select_xband_tx);
-                        ImGui::MenuItem("Set Receive", NULL, &gs_cmd_select_xband_rx);
-                        ImGui::MenuItem("Set Max On", NULL, &gs_cmd_select_xband_max_on);
-                        ImGui::MenuItem("Set TMP SHDN", NULL, &gs_cmd_select_xband_tmp_shdn);
-                        ImGui::MenuItem("Set TMP OP", NULL, &gs_cmd_select_xband_tmp_op);
-                        ImGui::MenuItem("Set Loop Time", NULL, &gs_cmd_select_xband_loop_time);
-
-                        ImGui::EndMenu();
-                    }
-
-                    if (gs_cmd_select_xband_tx)
-                    {
-                        current_cmd_id = XBAND_SET_TX;
-                    }
-                    else if (gs_cmd_select_xband_rx)
-                    {
-                        current_cmd_id = XBAND_SET_RX;
-                    }
-                    else if (gs_cmd_select_xband_max_on)
-                    {
-                        current_cmd_id = XBAND_SET_MAX_ON;
-                    }
-                    else if (gs_cmd_select_xband_tmp_shdn)
-                    {
-                        current_cmd_id = XBAND_SET_TMP_SHDN;
-                    }
-                    else if (gs_cmd_select_xband_tmp_op)
-                    {
-                        current_cmd_id = XBAND_SET_TMP_OP;
-                    }
-                    else if (gs_cmd_select_xband_loop_time)
-                    {
-                        current_cmd_id = XBAND_SET_LOOP_TIME;
-                    }
-                    else
-                    {
-                        current_cmd_id = INVALID_ID;
-                    }
-                }
+                ImGui::End();
             }
-            else if (gs_mod_select_update)
+        }
+
+        if (COMMS_SENDER_window)
+        {
+            if (ImGui::Begin("Communications Sender Operations"))
             {
-                current_mod_id = 0xf;
-            }
-            else if (gs_mod_select_acs_update)
-            {
-                current_mod_id = 0xe;
-            }
-            else if (gs_mod_select_sys_version)
-            {
-                current_mod_id = 0xd;
-            }
-            else if (gs_mod_select_sys_restart_program)
-            {
-                current_mod_id = 0xff;
-            }
-            else if (gs_mod_select_sys_reboot)
-            {
-                current_mod_id = 0xfe;
-            }
-            else if (gs_mod_select_sys_clean_shbytes)
-            {
-                current_mod_id = 0xfd;
-            }
+                ImGui::Text("Level 3 authentication required!");
 
-            ImGui::Text("IDs: 0x%x 0x%x", current_mod_id, current_cmd_id);
-
-            ImGui::End();
+                ImGui::End();
+            }
         }
 
         // Send Command Button Here

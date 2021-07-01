@@ -15,10 +15,47 @@
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 #include "gs_gui.hpp"
+#include <stdlib.h>
 
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
+}
+
+/**
+ * @brief 
+ * 
+ * @param password 
+ * @return int Authentication access level allowed.
+ */
+int gs_gui_check_password(char* password)
+{
+    // Generate hash.
+    // Check hash against valid hashes.
+    // If valid, grant access.
+    // Return access level granted.
+
+    int retval = 0;
+
+    // PLACEHOLDERS
+    const char *valid_level_1 = "grantlevel1";
+    const char *valid_level_2 = "grantlevel2";
+
+    if (strcmp(valid_level_1, password) == 0) 
+    {
+        retval = 1;
+    }
+    else if (strcmp(valid_level_2, password) == 0)
+    {
+        retval = 2;
+    }
+    else
+    {
+        retval = 0;
+    }
+
+    memset(password, 0x0, strlen(password));
+    return retval;
 }
 
 // int gs_gui_init(GLFWwindow *window)
