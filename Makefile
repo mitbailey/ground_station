@@ -39,7 +39,7 @@ ifeq ($(UNAME_S), Darwin) #APPLE
 endif
 
 EDCFLAGS:= -O3 -Wall -std=gnu11 $(EDCFLAGS)
-EDLDFLAGS:= -lm -lpthread -lncursest $(EDLDFLAGS)
+EDLDFLAGS:= -lm -lpthread $(EDLDFLAGS)
 
 LIBS += -lm -lpthread
 
@@ -48,9 +48,9 @@ LIBS += -lm -lpthread
 
 BUILDGUI=imgui/libimgui_glfw.a
 
-BUILDCPP=guimain.o
+BUILDCPP=gs_guimain.o gs_gui.o
 
-GUITARGET=mtq_tester.out
+GUITARGET=gs.out
 
 all: $(GUITARGET)
 	@echo Finished building $(GUITARGET) for $(ECHO_MESSAGE)
