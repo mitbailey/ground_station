@@ -28,11 +28,11 @@ enum MODULE_ID
 
 #define SYS_RESTART_FUNC_MAGIC 0x3c
 
-// uint64_t SYS_RESTART_FUNC_VAL = 0x2fa45d2002d54af2;
+uint64_t SYS_RESTART_FUNC_VAL = 0x2fa45d2002d54af2;
 
 #define SYS_REBOOT_FUNC_MAGIC 0x9d
 
-// uint64_t SYS_REBOOT_FUNC_VAL = 0x36a45d2002d54af0;
+uint64_t SYS_REBOOT_FUNC_VAL = 0x36a45d2002d54af0;
 
 enum SW_UPD_FUNC_ID
 {
@@ -95,6 +95,15 @@ enum XBAND_FUNC_ID
     XBAND_GET_LOOP_TIME,
     XBAND_SET_LOOP_TIME,
 };
+
+typedef struct __attribute__((packed))
+{
+    uint8_t mod;
+    uint8_t cmd;
+    int unused;
+    int data_size;
+    unsigned char data[46];
+} cmd_input_t;
 
 void glfw_error_callback(int error, const char* description);
 
