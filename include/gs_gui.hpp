@@ -28,11 +28,11 @@ enum MODULE_ID
 
 #define SYS_RESTART_FUNC_MAGIC 0x3c
 
-uint64_t SYS_RESTART_FUNC_VAL = 0x2fa45d2002d54af2;
+// uint64_t SYS_RESTART_FUNC_VAL = 0x2fa45d2002d54af2;
 
 #define SYS_REBOOT_FUNC_MAGIC 0x9d
 
-uint64_t SYS_REBOOT_FUNC_VAL = 0x36a45d2002d54af0;
+// uint64_t SYS_REBOOT_FUNC_VAL = 0x36a45d2002d54af0;
 
 enum SW_UPD_FUNC_ID
 {
@@ -104,6 +104,107 @@ typedef struct __attribute__((packed))
     int data_size;
     unsigned char data[46];
 } cmd_input_t;
+
+typedef struct
+{
+    float moi[9];
+    float imoi[9];
+    float dipole;
+    uint8_t tstep;
+    uint8_t measure_time;
+    uint8_t leeway;
+    float wtarget;
+    uint8_t detumble_angle;
+    uint8_t sun_angle;
+} acs_set_data_t;
+
+typedef struct
+{
+    bool moi;
+    bool imoi;
+    bool dipole;
+    bool tstep;
+    bool measure_time;
+    bool leeway;
+    bool wtarget;
+    bool detumble_angle;
+    bool sun_angle;
+} acs_get_bool_t;
+
+typedef struct
+{
+    int loop_timer;
+} eps_set_data_t;
+
+typedef struct
+{
+    bool min_hk;
+    bool vbatt;
+    bool sys_curr;
+    bool outpower;
+    bool vsun;
+    bool vsun_all;
+    bool isun;
+    bool loop_timer;
+} eps_get_bool_t;
+
+// From line 113 of https://github.com/SPACE-HAUC/shflight/blob/flight_test/src/cmd_parser.c
+// Used for:
+// XBAND_SET_TX
+// XBAND_SET_RX
+// Not used for:       (uses this instead)
+// XBAND_DO_TX          xband_tx_data
+// XBAND_SET_MAX_ON     uint8_t
+// XBAND_SET_TMP_SHDN   uint8_t
+// XBAND_SET_TMP_OP     uint8_t
+// XBAND_SET_LOOP_TIME  uint8_t
+typedef struct
+{
+    float LO;
+    float bw;
+    uint16_t samp;
+    uint8_t phy_gain;
+    uint8_t adar_gain;
+    uint8_t ftr;
+    short phase[16];
+} xband_set_data_t;
+
+typedef struct
+{
+    xband_set_data_t RX;
+    xband_set_data_t TX;
+} xband_set_data_array_t;
+
+// Used for:
+// XBAND_DO_TX          xband_tx_data
+typedef struct
+{
+    uint8_t type; // 0 -> text, 1 -> image
+    int f_id;     // -1 -> random, 0 -> max
+    int mtu;      // 0 -> 128
+} xband_tx_data_t;
+
+// Used for:
+// XBAND_SET_MAX_ON     uint8_t
+// XBAND_SET_TMP_SHDN   uint8_t
+// XBAND_SET_TMP_OP     uint8_t
+// XBAND_SET_LOOP_TIME  uint8_t
+typedef struct
+{
+    uint8_t max_on;
+    uint8_t tmp_shdn;
+    uint8_t tmp_op;
+    uint8_t loop_time;
+} xband_rxtx_data_t;
+
+typedef struct
+{
+    bool max_on;
+    bool tmp_shdn;
+    bool tmp_op;
+    bool loop_time;
+} xband_get_bool_t;
+
 
 void glfw_error_callback(int error, const char* description);
 

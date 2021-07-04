@@ -146,37 +146,53 @@ int main(int, char **)
             ImGui::End();
         }
 
+        static acs_set_data_t acs_set_data = {0};
+        static acs_get_bool_t acs_get_bool = {0};
+
         if (ACS_window)
         {
             if (ImGui::Begin("ACS Operations"))
             {
-                ImGui::Text("Retrieval Commands");
+                ImGui::Text("Data-down Commands");
 
-                ImGui::RadioButton("Get MOI ID", &ACS_command, ACS_GET_MOI);
-                ImGui::RadioButton("Get IMOI ID", &ACS_command, ACS_GET_IMOI);
-                ImGui::RadioButton("Get Dipole", &ACS_command, ACS_GET_DIPOLE);
-                ImGui::RadioButton("Get Timestep", &ACS_command, ACS_GET_TSTEP);
-                ImGui::RadioButton("Get Measure Time", &ACS_command, ACS_GET_MEASURE_TIME);
-                ImGui::RadioButton("Get Leeway", &ACS_command, ACS_GET_LEEWAY);
-                ImGui::RadioButton("Get W-Target", &ACS_command, ACS_GET_WTARGET);
-                ImGui::RadioButton("Get Detumble Angle", &ACS_command, ACS_GET_DETUMBLE_ANG);
-                ImGui::RadioButton("Get Sun Angle", &ACS_command, ACS_GET_SUN_ANGLE);
+                ImGui::Checkbox("Get MOI", &acs_get_bool.moi);
+                ImGui::Checkbox("Get IMOI", &acs_get_bool.imoi);
+                ImGui::Checkbox("Get Dipole", &acs_get_bool.dipole);
+                ImGui::Checkbox("Get Timestep", &acs_get_bool.tstep);
+                ImGui::Checkbox("Get Measure Time", &acs_get_bool.measure_time);
+                ImGui::Checkbox("Get Leeway", &acs_get_bool.leeway);
+                ImGui::Checkbox("Get W-Target", &acs_get_bool.wtarget);
+                ImGui::Checkbox("Get Detumble Angle", &acs_get_bool.detumble_angle);
+                ImGui::Checkbox("Get Sun Angle", &acs_get_bool.sun_angle);
 
                 ImGui::Separator();
 
-                ImGui::Text("Set Commands");
+                ImGui::Text("Data-up Commands");
 
                 if (authentication_access_level > 0)
                 {
-                    ImGui::RadioButton("Set MOI ID", &ACS_command, ACS_SET_MOI);
-                    ImGui::RadioButton("Set IMOI ID", &ACS_command, ACS_SET_IMOI);
-                    ImGui::RadioButton("Set Dipole", &ACS_command, ACS_SET_DIPOLE);
-                    ImGui::RadioButton("Set Timestep", &ACS_command, ACS_SET_TSTEP);
-                    ImGui::RadioButton("Set Measure Time", &ACS_command, ACS_SET_MEASURE_TIME);
-                    ImGui::RadioButton("Set Leeway", &ACS_command, ACS_SET_LEEWAY);
-                    ImGui::RadioButton("Set W-Target", &ACS_command, ACS_SET_WTARGET);
-                    ImGui::RadioButton("Set Detumble Angle", &ACS_command, ACS_SET_DETUMBLE_ANG);
-                    ImGui::RadioButton("Set Sun Angle", &ACS_command, ACS_SET_SUN_ANGLE);
+                    ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI); // 9x floats
+                    ImGui::InputFloat3("MOI [0] [1] [2]", &acs_set_data.moi[0]); // Sets 3 at a time... so... yeah.
+                    ImGui::InputFloat3("MOI [3] [4] [5]", &acs_set_data.moi[3]);
+                    ImGui::InputFloat3("MOI [6] [7] [8]", &acs_set_data.moi[6]);
+                    ImGui::RadioButton("Set IMOI", &ACS_command, ACS_SET_IMOI); // 9x floats
+                    ImGui::InputFloat3("IMOI [0] [1] [2]", &acs_set_data.imoi[0]);
+                    ImGui::InputFloat3("IMOI [3] [4] [5]", &acs_set_data.imoi[3]);
+                    ImGui::InputFloat3("IMOI [6] [7] [8]", &acs_set_data.imoi[6]);
+                    ImGui::RadioButton("Set Dipole", &ACS_command, ACS_SET_DIPOLE); // 1x float
+                    ImGui::InputFloat("Dipole Moment", &acs_set_data.dipole);
+                    ImGui::RadioButton("Set Timestep", &ACS_command, ACS_SET_TSTEP); // 1x uint8_t
+                    ImGui::InputInt("Timestep (ms)", (int *)&acs_set_data.tstep);
+                    ImGui::RadioButton("Set Measure Time", &ACS_command, ACS_SET_MEASURE_TIME); // 1x uint8_t
+                    ImGui::InputInt("Measure Time (ms)", (int *)&acs_set_data.measure_time);
+                    ImGui::RadioButton("Set Leeway", &ACS_command, ACS_SET_LEEWAY); // 1x uint8_t
+                    ImGui::InputInt("Leeway Factor", (int *)&acs_set_data.leeway);
+                    ImGui::RadioButton("Set W-Target", &ACS_command, ACS_SET_WTARGET); // 1x float
+                    ImGui::InputFloat("W-Target", &acs_set_data.wtarget);
+                    ImGui::RadioButton("Set Detumble Angle", &ACS_command, ACS_SET_DETUMBLE_ANG); // 1x uint8_t
+                    ImGui::InputInt("Angle", (int *)&acs_set_data.detumble_angle);
+                    ImGui::RadioButton("Set Sun Angle", &ACS_command, ACS_SET_SUN_ANGLE); // 1x uint8_t
+                    ImGui::InputInt("Sun Angle", (int *)&acs_set_data.sun_angle);
                 }
                 else
                 {
@@ -205,7 +221,7 @@ int main(int, char **)
                     ImGui::Text("Data:           ");
                     for (int i = 0; i < ACS_command_input.data_size; i++)
                     {
-                        ImGui::Text("%x", ACS_command_input.data[i]);
+                        ImGui::Text("%2x", ACS_command_input.data[i]);
                         ImGui::SameLine(0, 0);
                     }
                 }
@@ -218,28 +234,32 @@ int main(int, char **)
             }
         }
 
+        static eps_set_data_t eps_set_data = {0};
+        static eps_get_bool_t eps_get_bool = {0};
+
         if (EPS_window)
         {
             if (ImGui::Begin("EPS Operations"))
             {
-                ImGui::Text("Retrieval Commands");
+                ImGui::Text("Data-down Commands");
 
-                ImGui::RadioButton("Get Minimal Housekeeping", &EPS_command, EPS_GET_MIN_HK);
-                ImGui::RadioButton("Get Battery Voltage", &EPS_command, EPS_GET_VBATT);
-                ImGui::RadioButton("Get System Current", &EPS_command, EPS_GET_SYS_CURR);
-                ImGui::RadioButton("Get Power Out", &EPS_command, EPS_GET_OUTPOWER);
-                ImGui::RadioButton("Get Solar Voltage", &EPS_command, EPS_GET_VSUN);
-                ImGui::RadioButton("Get Solar Voltage (All)", &EPS_command, EPS_GET_VSUN_ALL);
-                ImGui::RadioButton("Get ISUN", &EPS_command, EPS_GET_ISUN);
-                ImGui::RadioButton("Get Loop Timer", &EPS_command, EPS_GET_LOOP_TIMER);
+                ImGui::Checkbox("Get Minimal Housekeeping", &eps_get_bool.min_hk);
+                ImGui::Checkbox("Get Battery Voltage", &eps_get_bool.vbatt);
+                ImGui::Checkbox("Get System Current", &eps_get_bool.sys_curr);
+                ImGui::Checkbox("Get Power Out", &eps_get_bool.outpower);
+                ImGui::Checkbox("Get Solar Voltage", &eps_get_bool.vsun);
+                ImGui::Checkbox("Get Solar Voltage (All)", &eps_get_bool.vsun_all);
+                ImGui::Checkbox("Get ISUN", &eps_get_bool.isun);
+                ImGui::Checkbox("Get Loop Timer", &eps_get_bool.loop_timer);
 
                 ImGui::Separator();
 
-                ImGui::Text("Set Commands");
+                ImGui::Text("Data-up Commands");
 
                 if (authentication_access_level > 0)
                 {
                     ImGui::RadioButton("Set Loop Timer", &EPS_command, EPS_SET_LOOP_TIMER);
+                    ImGui::InputInt("Loop Time (seconds)", (int *)&eps_set_data.loop_timer);
                 }
                 else
                 {
@@ -250,30 +270,79 @@ int main(int, char **)
             }
         }
 
+        static xband_set_data_array_t xband_set_data = {0};
+        static xband_tx_data_t xband_tx_data = {0};
+        static xband_rxtx_data_t xband_rxtx_data = {0};
+        static xband_get_bool_t xband_get_bool = {0};
+
         if (XBAND_window)
         {
             if (ImGui::Begin("X-Band Operations"))
             {
 
-                ImGui::Text("Retrieval Commands");
+                ImGui::Text("Data-down Commands");
 
-                ImGui::RadioButton("Get MAX ON", &XBAND_command, XBAND_GET_MAX_ON);
-                ImGui::RadioButton("Get TMP SHDN", &XBAND_command, XBAND_GET_TMP_SHDN);
-                ImGui::RadioButton("Get TMP OP", &XBAND_command, XBAND_GET_TMP_OP);
-                ImGui::RadioButton("Get Loop Time", &XBAND_command, XBAND_GET_LOOP_TIME);
+                ImGui::Checkbox("Get MAX ON", &xband_get_bool.max_on);
+                ImGui::Checkbox("Get TMP SHDN", &xband_get_bool.tmp_shdn);
+                ImGui::Checkbox("Get TMP OP", &xband_get_bool.tmp_op);
+                ImGui::Checkbox("Get Loop Time", &xband_get_bool.loop_time);
 
                 ImGui::Separator();
 
-                ImGui::Text("Set Commands");
+                ImGui::Text("Data-up Commands");
 
                 if (authentication_access_level > 0)
                 {
                     ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
+                    ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
+                    ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
+                    ImGui::InputInt("TX Samp", (int *)&xband_set_data.TX.samp);
+                    ImGui::InputInt("TX Phy Gain", (int *)&xband_set_data.TX.samp);
+                    ImGui::InputInt("TX Adar Gain", (int *)&xband_set_data.TX.adar_gain);
+                    if (ImGui::BeginMenu("TX Filter Selection"))
+                    {
+                        ImGui::RadioButton("m_6144.ftr", (int *)&xband_set_data.TX.ftr, 0);
+                        ImGui::RadioButton("m_3072.ftr", (int *)&xband_set_data.TX.ftr, 1);
+                        ImGui::RadioButton("m_1000.ftr", (int *)&xband_set_data.TX.ftr, 2);
+                        ImGui::RadioButton("m_lte5.ftr", (int *)&xband_set_data.TX.ftr, 3);
+                        ImGui::RadioButton("m_lte1.ftr", (int *)&xband_set_data.TX.ftr, 4);
+
+                        ImGui::EndMenu();
+                    }
+                    ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", (int *)&xband_set_data.RX.phase[0]);
+                    ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", (int *)&xband_set_data.RX.phase[4]);
+                    ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", (int *)&xband_set_data.RX.phase[8]);
+                    ImGui::InputInt4("RX Phase [12] [13] [14] [15]", (int *)&xband_set_data.RX.phase[12]);
+
                     ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
+                    ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
+                    ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
+                    ImGui::InputInt("RX Samp", (int *)&xband_set_data.RX.samp);
+                    ImGui::InputInt("RX Phy Gain", (int *)&xband_set_data.RX.samp);
+                    ImGui::InputInt("RX Adar Gain", (int *)&xband_set_data.RX.adar_gain);
+                    if (ImGui::BeginMenu("RX Filter Selection"))
+                    {
+                        ImGui::RadioButton("m_6144.ftr", (int *)&xband_set_data.RX.ftr, 0);
+                        ImGui::RadioButton("m_3072.ftr", (int *)&xband_set_data.RX.ftr, 1);
+                        ImGui::RadioButton("m_1000.ftr", (int *)&xband_set_data.RX.ftr, 2);
+                        ImGui::RadioButton("m_lte5.ftr", (int *)&xband_set_data.RX.ftr, 3);
+                        ImGui::RadioButton("m_lte1.ftr", (int *)&xband_set_data.RX.ftr, 4);
+
+                        ImGui::EndMenu();
+                    }
+                    ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", (int *)&xband_set_data.RX.phase[0]);
+                    ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", (int *)&xband_set_data.RX.phase[4]);
+                    ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", (int *)&xband_set_data.RX.phase[8]);
+                    ImGui::InputInt4("RX Phase [12] [13] [14] [15]", (int *)&xband_set_data.RX.phase[12]);
+
                     ImGui::RadioButton("Set MAX ON", &XBAND_command, XBAND_SET_MAX_ON);
+                    ImGui::InputInt("Max On", (int *)&xband_rxtx_data.max_on);
                     ImGui::RadioButton("Set TMP SHDN", &XBAND_command, XBAND_SET_TMP_SHDN);
+                    ImGui::InputInt("TMP SHDN", (int *)&xband_rxtx_data.tmp_shdn);
                     ImGui::RadioButton("Set TMP OP", &XBAND_command, XBAND_SET_TMP_OP);
-                    ImGui::RadioButton("Set LOOP TIME", &XBAND_command, XBAND_SET_LOOP_TIME);
+                    ImGui::InputInt("TMP OP", (int *)&xband_rxtx_data.tmp_op);
+                    ImGui::RadioButton("Set Loop Time", &XBAND_command, XBAND_SET_LOOP_TIME);
+                    ImGui::InputInt("Loop Time", (int *)&xband_rxtx_data.loop_time);
                 }
                 else
                 {
@@ -282,7 +351,7 @@ int main(int, char **)
 
                 ImGui::Separator();
 
-                ImGui::Text("Perform Commands");
+                ImGui::Text("Actionable Commands");
 
                 if (authentication_access_level > 1)
                 {
@@ -304,19 +373,21 @@ int main(int, char **)
         {
             if (ImGui::Begin("Software Updater Control Panel"))
             {
-                ImGui::Text("Retrieval Commands");
+                // Needs buttons. Values are just #defines and magic values
 
-                ImGui::Separator();
+                // ImGui::Text("Retrieval Commands");
 
-                ImGui::Text("Set Commands");
+                // ImGui::Separator();
 
-                if (authentication_access_level > 1)
-                {
-                }
-                else
-                {
-                    ImGui::Text("ACCESS DENIED");
-                }
+                // ImGui::Text("Set Commands");
+
+                // if (authentication_access_level > 1)
+                // {
+                // }
+                // else
+                // {
+                //     ImGui::Text("ACCESS DENIED");
+                // }
 
                 ImGui::End();
             }
