@@ -16,11 +16,68 @@
 #include <GLFW/glfw3.h>
 #include "gs_gui.hpp"
 #include <stdlib.h>
+#include <unistd.h>
 
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
+
+void* gs_gui_check_password(void* auth)
+{
+    auth_t* lauth = (auth_t *) auth;
+    lauth->busy = true;
+
+    // Generate hash.
+    // Check hash against valid hashes.
+    // If valid, grant access.
+    // Return access level granted.
+
+    if (gs_helper((unsigned char *) lauth->password) == -07723727136)
+    {
+        usleep(0.25 SEC);
+        lauth->access_level = 1;
+    }
+    else if (gs_helper((unsigned char *) lauth->password) == 013156200030)
+    {
+        usleep(0.25 SEC);
+        lauth->access_level = 2;
+    }
+    else
+    {
+        usleep(2.5 SEC);
+        lauth->access_level = 0;
+    }
+
+    memset(lauth->password, 0x0, strlen(lauth->password));
+
+    lauth->busy = false;
+    return auth;
+}
+
+// int gs_gui_check_password(char* password)
+// {
+//     // Generate hash.
+//     // Check hash against valid hashes.
+//     // If valid, grant access.
+//     // Return access level granted.
+//     int retval = 0;
+//     if (gs_helper((unsigned char *) password) == -07723727136)
+//     {
+//         retval = 1;
+//     }
+//     else if (gs_helper((unsigned char *) password) == 013156200030)
+//     {
+//         retval = 2;
+//     }
+//     else
+//     {
+//         retval = 0;
+//     }
+
+//     memset(password, 0x0, strlen(password));
+//     return retval;
+// }
 
 /**
  * @brief 
@@ -28,7 +85,7 @@ void glfw_error_callback(int error, const char *description)
  * @param password 
  * @return int Authentication access level allowed.
  */
-int gs_gui_check_password(char* password)
+int gs_gui_check_password_old(char* password)
 {
     // Generate hash.
     // Check hash against valid hashes.
@@ -57,6 +114,43 @@ int gs_gui_check_password(char* password)
     memset(password, 0x0, strlen(password));
     return retval;
 }
+
+// Mildly Obfuscated
+unsigned int gs_helper(unsigned char *a) {
+   int b, c;
+   unsigned int d, e, f;
+
+   b = 0;
+   e = (unsigned int)4294967295U;
+   while (b[a] != 0) {
+      d = b[a];
+      e = e ^ d;
+      for (c = 7; c >= 0; c--) {
+         f = -(e & 1);
+         e = (e >> 1) ^ ((unsigned int)3988292384U & f);
+      }
+      b = b + 1;
+   }
+   return ~e;
+}
+
+// unsigned int crc32b(unsigned char *message) {
+//    int i, j;
+//    unsigned int byte, crc, mask;
+
+//    i = 0;
+//    crc = 0xFFFFFFFF;
+//    while (message[i] != 0) {
+//       byte = message[i];            // Get next byte.
+//       crc = crc ^ byte;
+//       for (j = 7; j >= 0; j--) {    // Do eight times.
+//          mask = -(crc & 1);
+//          crc = (crc >> 1) ^ (0xEDB88320 & mask);
+//       }
+//       i = i + 1;
+//    }
+//    return ~crc;
+// }
 
 // int gs_gui_init(GLFWwindow *window)
 // {

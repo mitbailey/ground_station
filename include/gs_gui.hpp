@@ -12,6 +12,8 @@
 #ifndef GS_GUI_HPP
 #define GS_GUI_HPP
 
+#define SEC * 1000000
+
 enum MODULE_ID
 {
     INVALID_ID = 0x0,
@@ -222,10 +224,18 @@ typedef struct
     bool loop_time;
 } xband_get_bool_t;
 
+typedef struct
+{
+    bool busy;
+    uint8_t access_level;
+    char password[64];
+} auth_t;
 
 void glfw_error_callback(int error, const char* description);
 
-int gs_gui_check_password(char* password);
+void* gs_gui_check_password(void* arg);
+
+unsigned int gs_helper(unsigned char *message);
 
 // int gs_gui_init(GLFWwindow *window);
 

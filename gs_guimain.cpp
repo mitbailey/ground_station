@@ -16,6 +16,7 @@
 #include <GLFW/glfw3.h>
 #include "gs_gui.hpp"
 #include <unistd.h>
+#include <pthread.h>
 
 int main(int, char **)
 {
@@ -59,8 +60,8 @@ int main(int, char **)
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Used by the Authentication Control Panel
-    char password_buffer[64];
-    memset(password_buffer, 0x0, 64);
+    // char password_buffer[64];
+    // memset(password_buffer, 0x0, 64);
 
     // Main loop.
     while (!glfwWindowShouldClose(window))
@@ -82,31 +83,58 @@ int main(int, char **)
         // Level 1: Advanced access, can set some values.
         // Level 2: Project Manager access, can update flight software, edit critical systems.
         static bool AUTH_control_panel = true;
-        static int authentication_access_level = 0;
+        // static uint8_t authentication_access_level = 0;
+
+        // static bool auth_done = false;
+        static pthread_t auth_thread_id;
+
+        static auth_t auth = {0};
 
         if (AUTH_control_panel)
         {
             if (ImGui::Begin("Authentication Control Panel", &AUTH_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
-                ImGui::Text("ACCESS LEVEL %d GRANTED", authentication_access_level);
-
-                if (ImGui::InputText("", password_buffer, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+                if (auth.busy)
                 {
-                    // TODO: Implement gs_gui_check_password() to check password against a hash.
-                    authentication_access_level = gs_gui_check_password(password_buffer);
+                    ImGui::Text("PROCESSING...");
+                    ImGui::InputTextWithHint("", "Enter Password", auth.password, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_ReadOnly);
+                }
+                else
+                {
+                    switch (auth.access_level)
+                    {
+                    case 0:
+                        ImGui::Text("LOW LEVEL ACCESS");
+                        break;
+                    case 1:
+                        ImGui::Text("PRIORITY ACCESS GRANTED");
+                        break;
+                    case 2:
+                        ImGui::Text("PROJECT MANAGER ACCESS GRANTED");
+                        break;
+                    default:
+                        ImGui::Text("ERROR: UNKNOWN ACCESS");
+                        break;
+                    }
+
+                    if (ImGui::InputTextWithHint("", "Enter Password", auth.password, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+                    {
+                        pthread_create(&auth_thread_id, NULL, gs_gui_check_password, &auth);
+                    }
                 }
 
-                // ImGui::MenuItem("MMItem1", NULL, main_menu_bool);
-                // ImGui::Combo("File", &mm_current_item, mm_combo_items, 2, -1);
+                // ImGui::Text("ACCESS LEVEL %d GRANTED", auth.access_level);
 
-                // ImGui::EndMainMenuBar();
-
-                // ImGui::SameLine();
-                // if (ImGui::Button("AUTHENTICATE"))
+                // if (auth.done)
                 // {
-                //     // TODO: Implement gs_gui_check_password() to check password against a hash.
-                //     authentication_access_level = gs_gui_check_password(password_buffer);
+                //     auth.done = false;
+                //     pthread_exit()
                 // }
+
+                if (ImGui::Button("DEAUTHENTICATE"))
+                {
+                    auth.access_level = 0;
+                }
             }
             ImGui::End();
         }
@@ -119,6 +147,9 @@ int main(int, char **)
         static cmd_input_t ACS_command_input = {.mod = INVALID_ID, .cmd = ACS_INVALID_ID, .unused = 0, .data_size = 0};
         static acs_set_data_t acs_set_data = {0};
         static acs_get_bool_t acs_get_bool = {0};
+
+        static bool acs_rxtx_automated = false;
+        static int acs_automated_rate = 1000;
 
         if (ACS_window)
         {
@@ -140,7 +171,7 @@ int main(int, char **)
 
                 ImGui::Text("Data-up Commands");
 
-                if (authentication_access_level > 0)
+                if (auth.access_level > 0)
                 {
                     ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI);    // 9x floats
                     ImGui::InputFloat3("MOI [0] [1] [2]", &acs_set_data.moi[0]); // Sets 3 at a time... so... yeah.
@@ -164,7 +195,7 @@ int main(int, char **)
                             acs_set_data.tstep = 0;
                         }
                     }
-                    
+
                     ImGui::RadioButton("Set Measure Time", &ACS_command, ACS_SET_MEASURE_TIME); // 1x uint8_t
                     if (ImGui::InputInt("Measure Time (ms)", (int *)&acs_set_data.measure_time))
                     {
@@ -177,7 +208,7 @@ int main(int, char **)
                             acs_set_data.measure_time = 0;
                         }
                     }
-                    
+
                     ImGui::RadioButton("Set Leeway", &ACS_command, ACS_SET_LEEWAY); // 1x uint8_t
                     if (ImGui::InputInt("Leeway Factor", (int *)&acs_set_data.leeway))
                     {
@@ -223,9 +254,6 @@ int main(int, char **)
                     ImGui::Text("ACCESS DENIED");
                 }
 
-                // TODO: Temporary, very much a placeholder. Needs to actually figure out the proper arugment formats and turn the inputs (from individual boxes per argument) to binary data before inputting. Also, this needs to display the data back to the user in a meaningful and useful format.
-                // ImGui::InputText("Data", (char *)ACS_command_input.data, 46); // Has to be desired number of characters + 1 (\0?)
-
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_command;
                 ACS_command_input.data_size = 46; // TEMPORARY
@@ -237,17 +265,96 @@ int main(int, char **)
 
                 if (allow_transmission)
                 {
+                    ImGui::Text("[Data-down]");
+                    ImGui::Indent();
+                    ImGui::Checkbox("Automated", &acs_rxtx_automated);
+                    ImGui::InputInt("Rate (ms)", &acs_automated_rate);
 
+                    ImGui::Text("(%s) Polling for Data-down every %d ms.", acs_rxtx_automated ? "ON" : "OFF", acs_automated_rate);
+
+                    ImGui::Unindent();
+                    ImGui::Text("[Data-up]");
+                    ImGui::Indent();
                     ImGui::Text("Queued Transmission");
                     ImGui::Text("Module ID:      0x%x", ACS_command_input.mod);
                     ImGui::Text("Command ID:     0x%x", ACS_command_input.cmd);
                     ImGui::Text("Data size:      0x%x", ACS_command_input.data_size);
-                    // ImGui::Text("Data:           ");
-                    // for (int i = 0; i < ACS_command_input.data_size; i++)
-                    // {
-                    //     ImGui::Text("%2x", ACS_command_input.data[i]);
-                    //     ImGui::SameLine(0, 0);
-                    // }
+
+                    if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
+                    {
+                        // Move the data into ACS_command_input.data
+                        switch (ACS_command_input.cmd)
+                        {
+                        case ACS_SET_MOI:
+                        {
+                            memcpy(ACS_command_input.data, acs_set_data.moi, sizeof(float) * 9);
+                            ACS_command_input.data_size = sizeof(float) * 9;
+                            break;
+                        }
+                        case ACS_SET_IMOI:
+                        {
+                            memcpy(ACS_command_input.data, acs_set_data.imoi, sizeof(float) * 9);
+                            ACS_command_input.data_size = sizeof(float) * 9;
+                            break;
+                        }
+                        case ACS_SET_DIPOLE:
+                        {
+                            ACS_command_input.data[0] = acs_set_data.dipole;
+                            ACS_command_input.data_size = sizeof(float);
+                            break;
+                        }
+                        case ACS_SET_TSTEP:
+                        {
+                            ACS_command_input.data[0] = (uint8_t)acs_set_data.tstep;
+                            ACS_command_input.data_size = sizeof(uint8_t);
+                            break;
+                        }
+                        case ACS_SET_MEASURE_TIME:
+                        {
+                            ACS_command_input.data[0] = (uint8_t)acs_set_data.measure_time;
+                            ACS_command_input.data_size = sizeof(uint8_t);
+                            break;
+                        }
+                        case ACS_SET_LEEWAY:
+                        {
+                            ACS_command_input.data[0] = (uint8_t)acs_set_data.leeway;
+                            ACS_command_input.data_size = sizeof(uint8_t);
+                            break;
+                        }
+                        case ACS_SET_WTARGET:
+                        {
+                            ACS_command_input.data[0] = acs_set_data.wtarget;
+                            ACS_command_input.data_size = sizeof(float);
+                            break;
+                        }
+                        case ACS_SET_DETUMBLE_ANG:
+                        {
+                            ACS_command_input.data[0] = (uint8_t)acs_set_data.detumble_angle;
+                            ACS_command_input.data_size = sizeof(uint8_t);
+                            break;
+                        }
+                        case ACS_SET_SUN_ANGLE:
+                        {
+                            ACS_command_input.data[0] = (uint8_t)acs_set_data.sun_angle;
+                            ACS_command_input.data_size = sizeof(uint8_t);
+                            break;
+                        }
+                        default:
+                        {
+                            printf("ERROR!");
+                            break;
+                        }
+                        }
+                        ImGui::Unindent();
+
+                        printf("Pretending to send the following data-up command to SPACE-HAUC:\n");
+                        printf("0x%02x 0x%02x 0x%02x 0x%02x", ACS_command_input.mod, ACS_command_input.cmd, ACS_command_input.unused, ACS_command_input.data_size);
+                        for (int i = 0; i < ACS_command_input.data_size; i++)
+                        {
+                            printf(" 0x%02x", ACS_command_input.data[i]);
+                        }
+                        printf("\n");
+                    }
                 }
                 else
                 {
@@ -282,7 +389,7 @@ int main(int, char **)
 
                 ImGui::Text("Data-up Commands");
 
-                if (authentication_access_level > 0)
+                if (auth.access_level > 0)
                 {
                     ImGui::RadioButton("Set Loop Timer", &EPS_command, EPS_SET_LOOP_TIMER);
                     ImGui::InputInt("Loop Time (seconds)", (int *)&eps_set_data.loop_timer);
@@ -318,7 +425,7 @@ int main(int, char **)
 
                 ImGui::Text("Data-up Commands");
 
-                if (authentication_access_level > 0)
+                if (auth.access_level > 0)
                 {
                     ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
                     ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
@@ -380,7 +487,7 @@ int main(int, char **)
 
                 ImGui::Text("Actionable Commands");
 
-                if (authentication_access_level > 1)
+                if (auth.access_level > 1)
                 {
                     ImGui::RadioButton("Transmit", &XBAND_command, XBAND_DO_TX);
                     ImGui::RadioButton("Receive", &XBAND_command, XBAND_DO_RX);
@@ -435,7 +542,7 @@ int main(int, char **)
         {
             if (ImGui::Begin("System Control Panel", &SYS_CTRL_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
-                if (authentication_access_level > 0)
+                if (auth.access_level > 0)
                 {
                     ImGui::RadioButton("Version Magic", &SYS_command, SYS_VER_MAGIC);
                     ImGui::RadioButton("Restart Program", &SYS_command, SYS_RESTART_PROG);
@@ -456,10 +563,6 @@ int main(int, char **)
         {
             if (ImGui::Begin("Communications Control Panel", &COMMS_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar /*| ImGuiWindowFlags_MenuBar*/))
             {
-                // ImGui::BeginMenuBar();
-                // ImGui::Button("Settings");
-                // ImGui::EndMenuBar();
-
                 ImGui::Checkbox("Attitude Control System", &ACS_window); // Contains ACS and ACS_UPD
                 ImGui::Checkbox("Electrical Power Supply", &EPS_window);
                 ImGui::Checkbox("X-Band", &XBAND_window);
@@ -468,13 +571,7 @@ int main(int, char **)
 
                 ImGui::Separator();
 
-                ImGui::Text("Queued Command");
-
-                ImGui::Text("ACS: %d, EPS: %d, XBAND: %d, UPD: %d, SYS: %d", ACS_command, EPS_command, XBAND_command, UPD_command, SYS_command);
-
-                ImGui::Separator();
-
-                if (authentication_access_level >= 0)
+                if (auth.access_level >= 0)
                 {
                     ImGui::Checkbox("Unlock Transmissions", &allow_transmission);
                 }
@@ -501,22 +598,18 @@ int main(int, char **)
         {
             if (ImGui::Button("Authentication"))
             {
-                printf("AUTH toggle.\n");
                 AUTH_control_panel = !AUTH_control_panel;
-                printf("Now: %d\n", AUTH_control_panel);
             }
             if (ImGui::Button("Communications"))
             {
-                printf("COMMS toggle.\n");
                 COMMS_control_panel = !COMMS_control_panel;
-                printf("Now: %d\n", COMMS_control_panel);
             }
             if (ImGui::Button("User Manual"))
             {
-                printf("User Manual toggle.\n");
                 User_Manual = !User_Manual;
-                printf("Now: %d\n", User_Manual);
             }
+
+            // ImGui::Text("Uptime: %d \t\t Framerate: %f", ImGui::GetTime(), ImGui::GetIO().Framerate);
         }
         ImGui::EndMainMenuBar();
 
