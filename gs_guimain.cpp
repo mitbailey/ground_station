@@ -53,7 +53,7 @@ int main(int, char **)
     ImGui_ImplOpenGL2_Init();
 
     // return 1;
-    ///////////////////////////
+    /// ///////////////////////
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -73,85 +73,56 @@ int main(int, char **)
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Debug window (default).
-        {
-            ImGui::Text("%.1f FPS %.1f", ImGui::GetIO().Framerate, ImGui::GetTime());
-        }
+        // // Debug window (default).
+        // {
+        //     ImGui::Text("%.1f FPS %.1f", ImGui::GetIO().Framerate, ImGui::GetTime());
+        // }
 
         // Level 0: Basic access, can retrieve data.
         // Level 1: Advanced access, can set some values.
         // Level 2: Project Manager access, can update flight software, edit critical systems.
         static int authentication_access_level = 0;
 
-        if (ImGui::Begin("Authentication Control Panel"))
+        static bool main_menu_bool = false;
+        static int mm_current_item = 0;
+        static const char *mm_combo_items[8] = {"foo", "bar"};
+
+        if (ImGui::Begin("Authentication Control Panel", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
         {
             ImGui::Text("ACCESS LEVEL %d GRANTED", authentication_access_level);
 
-            ImGui::InputText("", password_buffer, 64, ImGuiInputTextFlags_Password);
-            ImGui::SameLine();
-            if (ImGui::Button("AUTHENTICATE"))
+            if (ImGui::InputText("", password_buffer, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
             {
+                // TODO: Implement gs_gui_check_password() to check password against a hash.
                 authentication_access_level = gs_gui_check_password(password_buffer);
             }
 
-            ImGui::End();
+            // ImGui::MenuItem("MMItem1", NULL, main_menu_bool);
+            // ImGui::Combo("File", &mm_current_item, mm_combo_items, 2, -1);
+
+            // ImGui::EndMainMenuBar();
+
+            // ImGui::SameLine();
+            // if (ImGui::Button("AUTHENTICATE"))
+            // {
+            //     // TODO: Implement gs_gui_check_password() to check password against a hash.
+            //     authentication_access_level = gs_gui_check_password(password_buffer);
+            // }
         }
-
-        static bool ACS_window = false;
-        static bool EPS_window = false;
-        static bool XBAND_window = false;
-        static bool SW_UPD_window = false;
-        static bool SYS_CTRL_window = false;
-
-        static int ACS_command = ACS_INVALID_ID;
-        static int EPS_command = EPS_INVALID_ID;
-        static int XBAND_command = XBAND_INVALID_ID;
-        static int UPD_command = INVALID_ID;
-        static int SYS_command = INVALID_ID;
+        ImGui::End();
 
         static bool allow_transmission = false;
         static bool allow_receiving = true;
 
+        static bool ACS_window = false;
+        static int ACS_command = ACS_INVALID_ID;
         static cmd_input_t ACS_command_input = {.mod = INVALID_ID, .cmd = ACS_INVALID_ID, .unused = 0, .data_size = 0};
-        static cmd_input_t EPS_command_input = {.mod = INVALID_ID, .cmd = EPS_INVALID_ID, .unused = 0, .data_size = 0};
-        static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
-        static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
-        static cmd_input_t SYS_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
-
-        if (ImGui::Begin("Communications Control Panel"))
-        {
-            ImGui::Checkbox("Attitude Control System", &ACS_window); // Contains ACS and ACS_UPD
-            ImGui::Checkbox("Electrical Power Supply", &EPS_window);
-            ImGui::Checkbox("X-Band", &XBAND_window);
-            ImGui::Checkbox("Software Updater", &SW_UPD_window);
-            ImGui::Checkbox("System Control", &SYS_CTRL_window); // Contains SYS_VER, SYS_REBOOT, SYS_CLEAN_SHBYTES
-
-            ImGui::Separator();
-
-            ImGui::Text("Queued Command");
-
-            ImGui::Text("ACS: %d, EPS: %d, XBAND: %d, UPD: %d, SYS: %d", ACS_command, EPS_command, XBAND_command, UPD_command, SYS_command);
-
-            ImGui::Separator();
-
-            if (authentication_access_level >= 0)
-            {
-                ImGui::Checkbox("Unlock Transmissions", &allow_transmission);
-            }
-            else
-            {
-                ImGui::Text("ACCESS DENIED");
-            }
-
-            ImGui::End();
-        }
-
         static acs_set_data_t acs_set_data = {0};
         static acs_get_bool_t acs_get_bool = {0};
 
         if (ACS_window)
         {
-            if (ImGui::Begin("ACS Operations"))
+            if (ImGui::Begin("ACS Operations", &ACS_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
                 ImGui::Text("Data-down Commands");
 
@@ -171,7 +142,7 @@ int main(int, char **)
 
                 if (authentication_access_level > 0)
                 {
-                    ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI); // 9x floats
+                    ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI);    // 9x floats
                     ImGui::InputFloat3("MOI [0] [1] [2]", &acs_set_data.moi[0]); // Sets 3 at a time... so... yeah.
                     ImGui::InputFloat3("MOI [3] [4] [5]", &acs_set_data.moi[3]);
                     ImGui::InputFloat3("MOI [6] [7] [8]", &acs_set_data.moi[6]);
@@ -229,17 +200,19 @@ int main(int, char **)
                 {
                     ImGui::Text("TRANSMISSIONS LOCKED");
                 }
-
-                ImGui::End();
             }
+            ImGui::End();
         }
 
+        static bool EPS_window = false;
+        static int EPS_command = EPS_INVALID_ID;
+        static cmd_input_t EPS_command_input = {.mod = INVALID_ID, .cmd = EPS_INVALID_ID, .unused = 0, .data_size = 0};
         static eps_set_data_t eps_set_data = {0};
         static eps_get_bool_t eps_get_bool = {0};
 
         if (EPS_window)
         {
-            if (ImGui::Begin("EPS Operations"))
+            if (ImGui::Begin("EPS Operations", &EPS_window))
             {
                 ImGui::Text("Data-down Commands");
 
@@ -265,11 +238,13 @@ int main(int, char **)
                 {
                     ImGui::Text("ACCESS DENIED");
                 }
-
-                ImGui::End();
             }
+            ImGui::End();
         }
 
+        static bool XBAND_window = false;
+        static int XBAND_command = XBAND_INVALID_ID;
+        static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
         static xband_set_data_array_t xband_set_data = {0};
         static xband_tx_data_t xband_tx_data = {0};
         static xband_rxtx_data_t xband_rxtx_data = {0};
@@ -277,9 +252,8 @@ int main(int, char **)
 
         if (XBAND_window)
         {
-            if (ImGui::Begin("X-Band Operations"))
+            if (ImGui::Begin("X-Band Operations", &XBAND_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
-
                 ImGui::Text("Data-down Commands");
 
                 ImGui::Checkbox("Get MAX ON", &xband_get_bool.max_on);
@@ -297,7 +271,7 @@ int main(int, char **)
                     ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
                     ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
                     ImGui::InputInt("TX Samp", (int *)&xband_set_data.TX.samp);
-                    ImGui::InputInt("TX Phy Gain", (int *)&xband_set_data.TX.samp);
+                    ImGui::InputInt("TX Phy Gain", (int *)&xband_set_data.TX.phy_gain);
                     ImGui::InputInt("TX Adar Gain", (int *)&xband_set_data.TX.adar_gain);
                     if (ImGui::BeginMenu("TX Filter Selection"))
                     {
@@ -309,16 +283,16 @@ int main(int, char **)
 
                         ImGui::EndMenu();
                     }
-                    ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", (int *)&xband_set_data.RX.phase[0]);
-                    ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", (int *)&xband_set_data.RX.phase[4]);
-                    ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", (int *)&xband_set_data.RX.phase[8]);
-                    ImGui::InputInt4("RX Phase [12] [13] [14] [15]", (int *)&xband_set_data.RX.phase[12]);
+                    ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", (int *)&xband_set_data.TX.phase[0]);
+                    ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", (int *)&xband_set_data.TX.phase[4]);
+                    ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", (int *)&xband_set_data.TX.phase[8]);
+                    ImGui::InputInt4("TX Phase [12] [13] [14] [15]", (int *)&xband_set_data.TX.phase[12]);
 
                     ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
                     ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
                     ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
                     ImGui::InputInt("RX Samp", (int *)&xband_set_data.RX.samp);
-                    ImGui::InputInt("RX Phy Gain", (int *)&xband_set_data.RX.samp);
+                    ImGui::InputInt("RX Phy Gain", (int *)&xband_set_data.RX.phy_gain);
                     ImGui::InputInt("RX Adar Gain", (int *)&xband_set_data.RX.adar_gain);
                     if (ImGui::BeginMenu("RX Filter Selection"))
                     {
@@ -363,15 +337,18 @@ int main(int, char **)
                 {
                     ImGui::Text("ACCESS DENIED");
                 }
-
-                ImGui::End();
             }
+            ImGui::End();
         }
+
+        static bool SW_UPD_window = false;
+        static int UPD_command = INVALID_ID;
+        static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
 
         // Handles software updates.
         if (SW_UPD_window)
         {
-            if (ImGui::Begin("Software Updater Control Panel"))
+            if (ImGui::Begin("Software Updater Control Panel", &SW_UPD_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
                 // Needs buttons. Values are just #defines and magic values
 
@@ -388,10 +365,13 @@ int main(int, char **)
                 // {
                 //     ImGui::Text("ACCESS DENIED");
                 // }
-
-                ImGui::End();
             }
+            ImGui::End();
         }
+
+        static bool SYS_CTRL_window = false;
+        static int SYS_command = INVALID_ID;
+        static cmd_input_t SYS_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
 
         // Handles
         // SYS_VER_MAGIC = 0xd,
@@ -400,7 +380,7 @@ int main(int, char **)
         // SYS_CLEAN_SHBYTES = 0xfd
         if (SYS_CTRL_window)
         {
-            if (ImGui::Begin("System Control Panel"))
+            if (ImGui::Begin("System Control Panel", &SYS_CTRL_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
                 if (authentication_access_level > 0)
                 {
@@ -413,12 +393,36 @@ int main(int, char **)
                 {
                     ImGui::Text("ACCESS DENIED");
                 }
-
-                ImGui::End();
             }
+            ImGui::End();
         }
 
-        // Send Command Button Here
+        if (ImGui::Begin("Communications Control Panel", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+        {
+            ImGui::Checkbox("Attitude Control System", &ACS_window); // Contains ACS and ACS_UPD
+            ImGui::Checkbox("Electrical Power Supply", &EPS_window);
+            ImGui::Checkbox("X-Band", &XBAND_window);
+            ImGui::Checkbox("Software Updater", &SW_UPD_window);
+            ImGui::Checkbox("System Control", &SYS_CTRL_window); // Contains SYS_VER, SYS_REBOOT, SYS_CLEAN_SHBYTES
+
+            ImGui::Separator();
+
+            ImGui::Text("Queued Command");
+
+            ImGui::Text("ACS: %d, EPS: %d, XBAND: %d, UPD: %d, SYS: %d", ACS_command, EPS_command, XBAND_command, UPD_command, SYS_command);
+
+            ImGui::Separator();
+
+            if (authentication_access_level >= 0)
+            {
+                ImGui::Checkbox("Unlock Transmissions", &allow_transmission);
+            }
+            else
+            {
+                ImGui::Text("ACCESS DENIED");
+            }
+        }
+        ImGui::End();
 
         // Rendering.
         ImGui::Render();

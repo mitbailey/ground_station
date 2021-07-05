@@ -98,8 +98,10 @@ enum XBAND_FUNC_ID
 
 typedef struct __attribute__((packed))
 {
-    uint8_t mod;
-    uint8_t cmd;
+    // uint8_t mod;
+    // uint8_t cmd;
+    int mod;
+    int cmd;
     int unused;
     int data_size;
     unsigned char data[46];
@@ -110,12 +112,17 @@ typedef struct
     float moi[9];
     float imoi[9];
     float dipole;
-    uint8_t tstep;
-    uint8_t measure_time;
-    uint8_t leeway;
+    // uint8_t tstep;
+    // uint8_t measure_time;
+    // uint8_t leeway;
+    int tstep;
+    int measure_time;
+    int leeway;
     float wtarget;
-    uint8_t detumble_angle;
-    uint8_t sun_angle;
+    // uint8_t detumble_angle;
+    // uint8_t sun_angle;
+    int detumble_angle;
+    int sun_angle;
 } acs_set_data_t;
 
 typedef struct
@@ -162,11 +169,16 @@ typedef struct
 {
     float LO;
     float bw;
-    uint16_t samp;
-    uint8_t phy_gain;
-    uint8_t adar_gain;
-    uint8_t ftr;
-    short phase[16];
+    // uint16_t samp;
+    // uint8_t phy_gain;
+    // uint8_t adar_gain;
+    // uint8_t ftr;
+    // short phase[16];
+    int samp;
+    int phy_gain;
+    int adar_gain;
+    int ftr;
+    int phase[16];
 } xband_set_data_t;
 
 typedef struct
@@ -179,7 +191,8 @@ typedef struct
 // XBAND_DO_TX          xband_tx_data
 typedef struct
 {
-    uint8_t type; // 0 -> text, 1 -> image
+    // uint8_t type; // 0 -> text, 1 -> image
+    int type;
     int f_id;     // -1 -> random, 0 -> max
     int mtu;      // 0 -> 128
 } xband_tx_data_t;
@@ -191,10 +204,14 @@ typedef struct
 // XBAND_SET_LOOP_TIME  uint8_t
 typedef struct
 {
-    uint8_t max_on;
-    uint8_t tmp_shdn;
-    uint8_t tmp_op;
-    uint8_t loop_time;
+    // uint8_t max_on;
+    // uint8_t tmp_shdn;
+    // uint8_t tmp_op;
+    // uint8_t loop_time;
+    int max_on;
+    int tmp_shdn;
+    int tmp_op;
+    int loop_time;
 } xband_rxtx_data_t;
 
 typedef struct
