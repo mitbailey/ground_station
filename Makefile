@@ -38,7 +38,7 @@ ifeq ($(UNAME_S), Darwin) #APPLE
 	CFLAGS = $(CXXFLAGS)
 endif
 
-EDCFLAGS:= -O3 -Wall -std=gnu11 $(EDCFLAGS)
+EDCFLAGS:= -O3 -Wall -std=gnu11 -mfp16-format=ieee $(EDCFLAGS)
 EDLDFLAGS:= -lm -lpthread $(EDLDFLAGS)
 
 LIBS += -lm -lpthread

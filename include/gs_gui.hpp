@@ -29,12 +29,10 @@ enum MODULE_ID
 };
 
 #define SYS_RESTART_FUNC_MAGIC 0x3c
-
-// uint64_t SYS_RESTART_FUNC_VAL = 0x2fa45d2002d54af2;
+#define SYS_RESTART_FUNC_VAL 0x2fa45d2002d54af2
 
 #define SYS_REBOOT_FUNC_MAGIC 0x9d
-
-// uint64_t SYS_REBOOT_FUNC_VAL = 0x36a45d2002d54af0;
+#define SYS_REBOOT_FUNC_VAL 0x36a45d2002d54af0
 
 enum SW_UPD_FUNC_ID
 {
@@ -108,6 +106,42 @@ typedef struct __attribute__((packed))
     int data_size;
     unsigned char data[46];
 } cmd_input_t;
+
+typedef struct __attribute__((packed))
+{
+    // uint8_t mod;
+    // uint8_t cmd;
+    int mod;
+    int cmd;
+    int unused;
+    int data_size;
+    unsigned char data[46];
+    bool ready;
+} acs_upd_input_t;
+
+// typedef struct __attribute__((packed))
+// {
+//     uint8_t ct; // count
+//     uint8_t mode; // ACS mode
+//     __fp16 bx;
+//     __fp16 by;
+//     __fp16 bz;
+//     __fp16 wx;
+//     __fp16 wy;
+//     __fp16 wz;
+//     __fp16 sx;
+//     __fp16 sy;
+//     __fp16 sz;
+//     uint16_t vbatt;
+//     uint16_t vboost;
+//     uint16_t cursun;
+//     uint16_t cursys;
+// } acs_uhf_packet;
+
+// typedef struct __attribute__((packed))
+// {
+//     bool ready;
+// } acs_uhf_packet;
 
 typedef struct
 {
@@ -236,6 +270,10 @@ void glfw_error_callback(int error, const char* description);
 void* gs_gui_check_password(void* arg);
 
 unsigned int gs_helper(unsigned char *message);
+
+void* gs_acs_update_data_handler(void* vp);
+
+int gs_transmit(cmd_input_t *input);
 
 // int gs_gui_init(GLFWwindow *window);
 
