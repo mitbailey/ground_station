@@ -504,6 +504,7 @@ int main(int, char **)
         static bool SW_UPD_window = false;
         static int UPD_command = INVALID_ID;
         static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
+        static char upd_filename_buffer[256] = {0};
 
         // Handles software updates.
         if (SW_UPD_window)
@@ -512,19 +513,24 @@ int main(int, char **)
             {
                 // Needs buttons. Values are just #defines and magic values
 
-                // ImGui::Text("Retrieval Commands");
+                ImGui::Text("Name of the file to send:");
+                ImGui::InputTextWithHint("", "Name of File", upd_filename_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue);
 
-                // ImGui::Separator();
+                ImGui::Text("Queued file name: %s", upd_filename_buffer);
 
-                // ImGui::Text("Set Commands");
+                ImGui::Separator();
 
-                // if (authentication_access_level > 1)
-                // {
-                // }
-                // else
-                // {
-                //     ImGui::Text("ACCESS DENIED");
-                // }
+                if (auth.access_level > 1)
+                {
+                    ImGui::Button("BEGIN UPDATE");
+                }
+                else
+                {
+                    ImGui::Text("ACCESS DENIED");
+                }
+
+                // Maybe some information on the current status of an update can go here.
+            
             }
             ImGui::End();
         }
