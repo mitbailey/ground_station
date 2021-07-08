@@ -28,7 +28,7 @@ int main(int, char **)
         return -1;
     }
 
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "SPACE-HAUC Ground Station", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "SPACE-HAUC Ground Station: Graphical Interface Client", NULL, NULL);
 
     if (window == NULL)
     {
@@ -146,7 +146,7 @@ int main(int, char **)
 
         static bool acs_rxtx_automated = false;
         static bool acs_rxtx_automated_thread_alive = false;
-        static int acs_automated_rate = 100;
+        static int acs_automated_rate = ACS_UPD_DATARATE;
         static pthread_t acs_thread_id;
         static acs_upd_input_t acs_update_data = {0};
 
@@ -163,7 +163,14 @@ int main(int, char **)
 
                         if (ImGui::ArrowButton("get_moi_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            //printf("Pretending to poll SPACE-HAUC...\n");
+                            // TODO: Copy this structure to replace the other pretenders below...
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_MOI;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get MOI");
@@ -716,8 +723,19 @@ int main(int, char **)
                 {
                     if (auth.access_level > 1)
                     {
-                        // TODO: 
+                        // TODO:
                         ImGui::RadioButton("Transmit", &XBAND_command, XBAND_DO_TX);
+                        ImGui::InputInt("TX type", &xband_tx_data.type);
+                        if (xband_tx_data.type > 255)
+                        {
+                            xband_tx_data.type = 255;
+                        } 
+                        else if (xband_tx_data.type < 0)
+                        {
+                            xband_tx_data.type = 0;
+                        }
+                        ImGui::InputInt("TX f_id", &xband_tx_data.f_id);
+                        ImGui::InputInt("TX mtu", &xband_tx_data.mtu);
                         ImGui::RadioButton("Receive", &XBAND_command, XBAND_DO_RX);
                         ImGui::SameLine();
                         ImGui::Text("(NYI)");
@@ -768,33 +786,48 @@ int main(int, char **)
                                 }
                                 case XBAND_DO_TX:
                                 {
-break;
+                                    // TODO:
+                                    memcpy(XBAND_command_input.data, &xband_tx_data, sizeof(xband_tx_data_t));
+                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
+                                    break;
                                 }
                                 case XBAND_DO_RX:
                                 {
+                                    // Not yet implemented on SPACE-HAUC.
+                                    printf("This functionality is not implemented as it does not yet exist on SPACE-HAUC.\n");
                                     break;
                                 }
                                 case XBAND_DISABLE:
                                 {
+                                    // Not yet implemented on SPACE-HAUC.
+                                    printf("This functionality is not implemented as it does not yet exist on SPACE-HAUC.\n");
                                     break;
                                 }
                                 case XBAND_SET_MAX_ON:
                                 {
+                                    // TODO:
+
                                     break;
                                 }
                                 case XBAND_SET_TMP_SHDN:
                                 {
+                                    // TODO:
                                     break;
                                 }
                                 case XBAND_SET_TMP_OP:
                                 {
+                                    // TODO:
                                     break;
                                 }
                                 case XBAND_SET_LOOP_TIME:
                                 {
+                                    // TODO:
                                     break;
                                 }
                                 }
+
+                                // TODO: Send the transmission.
+                                gs_transmit(&XBAND_command_input);
                             }
                         }
                         else
@@ -1070,7 +1103,7 @@ break;
                 User_Manual = !User_Manual;
             }
 
-            // ImGui::Text("Uptime: %d \t\t Framerate: %f", ImGui::GetTime(), ImGui::GetIO().Framerate);
+            ImGui::Text("Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);
         }
         ImGui::EndMainMenuBar();
 

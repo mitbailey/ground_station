@@ -147,11 +147,11 @@ void *gs_acs_update_data_handler(void *vp)
     acs_upd_input_t *acs = (acs_upd_input_t *)vp;
     cmd_input_t acs_cmd[1];
 
-    acs_cmd->mod = acs->mod;
-    acs_cmd->cmd = acs->cmd;
-    acs_cmd->unused = acs->unused;
-    acs_cmd->data_size = acs->data_size;
-    memset(acs_cmd->data, 0x0, 46);
+    acs_cmd->mod = ACS_ID;
+    acs_cmd->cmd = ACS_UPD_ID;
+    acs_cmd->unused = 0x0;
+    acs_cmd->data_size = 0x0;
+    memset(acs_cmd->data, 0x0, MAX_DATA_SIZE);
 
     usleep(100);
 

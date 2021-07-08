@@ -13,6 +13,8 @@
 #define GS_GUI_HPP
 
 #define SEC * 1000000
+#define MAX_DATA_SIZE 46
+#define ACS_UPD_DATARATE 100
 
 enum MODULE_ID
 {
