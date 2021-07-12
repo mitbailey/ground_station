@@ -16,6 +16,10 @@
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
 
+/**
+ * @brief Numeric identifiers for determining what module a command is for.
+ * 
+ */
 enum MODULE_ID
 {
     INVALID_ID = 0x0,
@@ -30,19 +34,32 @@ enum MODULE_ID
     SYS_CLEAN_SHBYTES = 0xfd
 };
 
+// Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
+// Data value for system restart command, replaces .data[] values.
 #define SYS_RESTART_FUNC_VAL 0x2fa45d2002d54af2
 
+// Function magic for system reboot command, replaces .cmd value.
 #define SYS_REBOOT_FUNC_MAGIC 0x9d
+// Data value for system restart command, replaces .data[] values.
 #define SYS_REBOOT_FUNC_VAL 0x36a45d2002d54af0
 
+/**
+ * @brief Function magic for software update command, replaces .cmd value.
+ * 
+ */
 enum SW_UPD_FUNC_ID
 {
     SW_UPD_FUNC_MAGIC = 0x87,
 };
 
+// Data value for software update command, replaces .data[] values.
 #define SW_UPD_VALID_MAGIC 0x2489f750228d2e4fL
 
+/**
+ * @brief ID values for each ACS command.
+ * 
+ */
 enum ACS_FUNC_ID
 {
     ACS_INVALID_ID = 0x0,
@@ -66,6 +83,10 @@ enum ACS_FUNC_ID
     ACS_SET_SUN_ANGLE
 };
 
+/**
+ * @brief ID values for each EPS command.
+ * 
+ */
 enum EPS_FUNC_ID
 {
     EPS_INVALID_ID = 0x0,
@@ -80,6 +101,10 @@ enum EPS_FUNC_ID
     EPS_SET_LOOP_TIMER,
 };
 
+/**
+ * @brief ID values for each XBAND command.
+ * 
+ */
 enum XBAND_FUNC_ID
 {
     XBAND_INVALID_ID = 0x0,
@@ -98,26 +123,49 @@ enum XBAND_FUNC_ID
     XBAND_SET_LOOP_TIME,
 };
 
+/**
+ * @brief Command structure that SPACE-HAUC receives.
+ * 
+ */
 typedef struct __attribute__((packed))
 {
-    // uint8_t mod;
-    // uint8_t cmd;
-    int mod;
-    int cmd;
+    uint8_t mod;
+    uint8_t cmd;
     int unused;
     int data_size;
     unsigned char data[46];
 } cmd_input_t;
 
-typedef struct __attribute__((packed))
+/**
+ * @brief Holds full integers from the user before we cast them to uint8_t.
+ * 
+ */
+typedef struct
 {
-    // uint8_t mod;
-    // uint8_t cmd;
     int mod;
     int cmd;
-    int unused;
-    int data_size;
-    unsigned char data[46];
+} cmd_input_holder_t;
+
+/**
+ * @brief Command structure that SPACE-HAUC transmits.
+ * 
+ */
+typedef struct __attribute__((packed))
+{
+    uint8_t mod;            // 1
+    uint8_t cmd;            // 1
+    int retval;             // 4
+    int data_size;          // 4
+    unsigned char data[46]; // 46
+} cmd_output_t;
+
+/**
+ * @brief Used for asynchronous transmission of acs_upd requests.
+ * 
+ */
+typedef struct __attribute__((packed))
+{
+    cmd_input_t cmd_input[1];
     bool ready;
 } acs_upd_input_t;
 
@@ -145,24 +193,40 @@ typedef struct __attribute__((packed))
 //     bool ready;
 // } acs_uhf_packet;
 
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
     float moi[9];
     float imoi[9];
     float dipole;
-    // uint8_t tstep;
-    // uint8_t measure_time;
-    // uint8_t leeway;
+    uint8_t tstep;
+    uint8_t measure_time;
+    uint8_t leeway;
+    float wtarget;
+    uint8_t detumble_angle;
+    uint8_t sun_angle;
+} acs_set_data_t;
+
+/**
+ * @brief Holds full integers from the user before we cast them to uint8_t.
+ * 
+ */
+typedef struct
+{
     int tstep;
     int measure_time;
     int leeway;
-    float wtarget;
-    // uint8_t detumble_angle;
-    // uint8_t sun_angle;
     int detumble_angle;
     int sun_angle;
-} acs_set_data_t;
+} acs_set_data_holder_t;
 
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
     bool moi;
@@ -176,11 +240,19 @@ typedef struct
     bool sun_angle;
 } acs_get_bool_t;
 
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
     int loop_timer;
 } eps_set_data_t;
 
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
     bool min_hk;
@@ -203,55 +275,93 @@ typedef struct
 // XBAND_SET_TMP_SHDN   uint8_t
 // XBAND_SET_TMP_OP     uint8_t
 // XBAND_SET_LOOP_TIME  uint8_t
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
     float LO;
     float bw;
-    // uint16_t samp;
-    // uint8_t phy_gain;
-    // uint8_t adar_gain;
-    // uint8_t ftr;
-    // short phase[16];
+    uint16_t samp;
+    uint8_t phy_gain;
+    uint8_t adar_gain;
+    uint8_t ftr;
+    short phase[16];
+} xband_set_data_t;
+
+/**
+ * @brief Holds full integers from the user before we cast them to uint8_t.
+ * 
+ */
+typedef struct
+{
     int samp;
     int phy_gain;
     int adar_gain;
     int ftr;
     int phase[16];
-} xband_set_data_t;
+} xband_set_data_holder_t;
 
 typedef struct
 {
     xband_set_data_t RX;
+    xband_set_data_holder_t RXH;
     xband_set_data_t TX;
+    xband_set_data_holder_t TXH;
 } xband_set_data_array_t;
 
 // Used for:
 // XBAND_DO_TX          xband_tx_data
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
-    // uint8_t type; // 0 -> text, 1 -> image
-    int type;
+    uint8_t type; // 0 -> text, 1 -> image
     int f_id;     // -1 -> random, 0 -> max
     int mtu;      // 0 -> 128
 } xband_tx_data_t;
+
+/**
+ * @brief Holds full integers from the user before we cast them to uint8_t.
+ * 
+ */
+typedef struct
+{
+    int type;
+} xband_tx_data_holder_t;
 
 // Used for:
 // XBAND_SET_MAX_ON     uint8_t
 // XBAND_SET_TMP_SHDN   uint8_t
 // XBAND_SET_TMP_OP     uint8_t
 // XBAND_SET_LOOP_TIME  uint8_t
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
-    // uint8_t max_on;
-    // uint8_t tmp_shdn;
-    // uint8_t tmp_op;
-    // uint8_t loop_time;
+    uint8_t max_on;
+    uint8_t tmp_shdn;
+    uint8_t tmp_op;
+    uint8_t loop_time;
+} xband_rxtx_data_t;
+
+typedef struct
+{
     int max_on;
     int tmp_shdn;
     int tmp_op;
     int loop_time;
-} xband_rxtx_data_t;
+} xband_rxtx_data_holder_t;
 
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
     bool max_on;
@@ -260,6 +370,10 @@ typedef struct
     bool loop_time;
 } xband_get_bool_t;
 
+/**
+ * @brief 
+ * 
+ */
 typedef struct
 {
     bool busy;
@@ -267,15 +381,53 @@ typedef struct
     char password[64];
 } auth_t;
 
+/**
+ * @brief 
+ * 
+ * @param error 
+ * @param description 
+ */
 void glfw_error_callback(int error, const char* description);
 
+/**
+ * @brief 
+ * 
+ * @param arg 
+ * @return void* 
+ */
 void* gs_gui_check_password(void* arg);
 
+/**
+ * @brief 
+ * 
+ * @param message 
+ * @return unsigned int 
+ */
 unsigned int gs_helper(unsigned char *message);
 
+/**
+ * @brief 
+ * 
+ * @param vp 
+ * @return void* 
+ */
 void* gs_acs_update_data_handler(void* vp);
 
+/**
+ * @brief 
+ * 
+ * @param input 
+ * @return int 
+ */
 int gs_transmit(cmd_input_t *input);
+
+/**
+ * @brief 
+ * 
+ * @param output 
+ * @return int 
+ */
+int gs_receive(cmd_output_t *output);
 
 // int gs_gui_init(GLFWwindow *window);
 

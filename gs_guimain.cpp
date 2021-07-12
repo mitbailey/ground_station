@@ -142,6 +142,7 @@ int main(int, char **)
         static int ACS_command = ACS_INVALID_ID;
         static cmd_input_t ACS_command_input = {.mod = INVALID_ID, .cmd = ACS_INVALID_ID, .unused = 0, .data_size = 0};
         static acs_set_data_t acs_set_data = {0};
+        static acs_set_data_holder_t acs_set_data_holder = {0};
         static acs_get_bool_t acs_get_bool = {0};
 
         static bool acs_rxtx_automated = false;
@@ -164,7 +165,6 @@ int main(int, char **)
                         if (ImGui::ArrowButton("get_moi_button", ImGuiDir_Right))
                         {
                             //printf("Pretending to poll SPACE-HAUC...\n");
-                            // TODO: Copy this structure to replace the other pretenders below...
                             ACS_command_input.mod = ACS_ID;
                             ACS_command_input.cmd = ACS_GET_MOI;
                             ACS_command_input.unused = 0x0;
@@ -177,56 +177,104 @@ int main(int, char **)
 
                         if (ImGui::ArrowButton("get_imoi_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_IMOI;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get IMOI");
 
                         if (ImGui::ArrowButton("get_dipole_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_DIPOLE;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Dipole");
 
                         if (ImGui::ArrowButton("get_timestep_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_TSTEP;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Timestep");
 
                         if (ImGui::ArrowButton("get_measure_time_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_MEASURE_TIME;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Measure Time");
 
                         if (ImGui::ArrowButton("get_leeway_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_LEEWAY;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Leeway");
 
                         if (ImGui::ArrowButton("get_wtarget_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_WTARGET;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get W-Target");
 
                         if (ImGui::ArrowButton("get_detumble_angle_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_DETUMBLE_ANG;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Detumble Angle");
 
                         if (ImGui::ArrowButton("get_sun_angle_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            // printf("Pretending to poll SPACE-HAUC...\n");
+                            ACS_command_input.mod = ACS_ID;
+                            ACS_command_input.cmd = ACS_GET_SUN_ANGLE;
+                            ACS_command_input.unused = 0x0;
+                            ACS_command_input.data_size = 0x0;
+                            memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&ACS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Sun Angle");
@@ -255,69 +303,74 @@ int main(int, char **)
                         ImGui::RadioButton("Set Dipole", &ACS_command, ACS_SET_DIPOLE); // 1x float
                         ImGui::InputFloat("Dipole Moment", &acs_set_data.dipole);
                         ImGui::RadioButton("Set Timestep", &ACS_command, ACS_SET_TSTEP); // 1x uint8_t
-                        if (ImGui::InputInt("Timestep (ms)", (int *)&acs_set_data.tstep))
+                        if (ImGui::InputInt("Timestep (ms)", &acs_set_data_holder.tstep))
                         {
-                            if (acs_set_data.tstep > 255)
+                            if (acs_set_data_holder.tstep > 255)
                             {
-                                acs_set_data.tstep = 255;
+                                acs_set_data_holder.tstep = 255;
                             }
-                            else if (acs_set_data.tstep < 0)
+                            else if (acs_set_data_holder.tstep < 0)
                             {
-                                acs_set_data.tstep = 0;
+                                acs_set_data_holder.tstep = 0;
                             }
+                            acs_set_data.tstep = (uint8_t)acs_set_data_holder.tstep;
                         }
 
                         ImGui::RadioButton("Set Measure Time", &ACS_command, ACS_SET_MEASURE_TIME); // 1x uint8_t
-                        if (ImGui::InputInt("Measure Time (ms)", (int *)&acs_set_data.measure_time))
+                        if (ImGui::InputInt("Measure Time (ms)", &acs_set_data_holder.measure_time))
                         {
-                            if (acs_set_data.measure_time > 255)
+                            if (acs_set_data_holder.measure_time > 255)
                             {
-                                acs_set_data.measure_time = 255;
+                                acs_set_data_holder.measure_time = 255;
                             }
-                            else if (acs_set_data.measure_time < 0)
+                            else if (acs_set_data_holder.measure_time < 0)
                             {
-                                acs_set_data.measure_time = 0;
+                                acs_set_data_holder.measure_time = 0;
                             }
+                            acs_set_data.measure_time = (uint8_t)acs_set_data_holder.measure_time;
                         }
 
                         ImGui::RadioButton("Set Leeway", &ACS_command, ACS_SET_LEEWAY); // 1x uint8_t
-                        if (ImGui::InputInt("Leeway Factor", (int *)&acs_set_data.leeway))
+                        if (ImGui::InputInt("Leeway Factor", &acs_set_data_holder.leeway))
                         {
-                            if (acs_set_data.leeway > 255)
+                            if (acs_set_data_holder.leeway > 255)
                             {
-                                acs_set_data.leeway = 255;
+                                acs_set_data_holder.leeway = 255;
                             }
-                            else if (acs_set_data.leeway < 0)
+                            else if (acs_set_data_holder.leeway < 0)
                             {
-                                acs_set_data.leeway = 0;
+                                acs_set_data_holder.leeway = 0;
                             }
+                            acs_set_data.leeway = (uint8_t)acs_set_data_holder.leeway;
                         }
 
                         ImGui::RadioButton("Set W-Target", &ACS_command, ACS_SET_WTARGET); // 1x float
                         ImGui::InputFloat("W-Target", &acs_set_data.wtarget);
                         ImGui::RadioButton("Set Detumble Angle", &ACS_command, ACS_SET_DETUMBLE_ANG); // 1x uint8_t
-                        if (ImGui::InputInt("Angle", (int *)&acs_set_data.detumble_angle))
+                        if (ImGui::InputInt("Angle", &acs_set_data_holder.detumble_angle))
                         {
-                            if (acs_set_data.detumble_angle > 255)
+                            if (acs_set_data_holder.detumble_angle > 255)
                             {
-                                acs_set_data.detumble_angle = 255;
+                                acs_set_data_holder.detumble_angle = 255;
                             }
-                            else if (acs_set_data.detumble_angle < 0)
+                            else if (acs_set_data_holder.detumble_angle < 0)
                             {
-                                acs_set_data.detumble_angle = 0;
+                                acs_set_data_holder.detumble_angle = 0;
                             }
+                            acs_set_data.detumble_angle = (uint8_t)acs_set_data_holder.detumble_angle;
                         }
                         ImGui::RadioButton("Set Sun Angle", &ACS_command, ACS_SET_SUN_ANGLE); // 1x uint8_t
-                        if (ImGui::InputInt("Sun Angle", (int *)&acs_set_data.sun_angle))
+                        if (ImGui::InputInt("Sun Angle", &acs_set_data_holder.sun_angle))
                         {
-                            if (acs_set_data.sun_angle > 255)
+                            if (acs_set_data_holder.sun_angle > 255)
                             {
-                                acs_set_data.sun_angle = 255;
+                                acs_set_data_holder.sun_angle = 255;
                             }
-                            else if (acs_set_data.sun_angle < 0)
+                            else if (acs_set_data_holder.sun_angle < 0)
                             {
-                                acs_set_data.sun_angle = 0;
+                                acs_set_data_holder.sun_angle = 0;
                             }
+                            acs_set_data.sun_angle = (uint8_t)acs_set_data_holder.sun_angle;
                         }
                     }
                     else
@@ -356,9 +409,6 @@ int main(int, char **)
                                 acs_update_data.ready = false;
                             }
                         }
-
-                        // else if (auto_get_is_ready) <-- example
-                        // TODO: Send data to TX device every so-many-milliseconds.
 
                         ImGui::Unindent();
                         ImGui::Text("Send Command [Data-up]");
@@ -439,17 +489,7 @@ int main(int, char **)
                                 }
                                 ImGui::Unindent();
 
-                                // TODO: Replace this with actually sending the communication to a TX device.
-
                                 gs_transmit(&ACS_command_input);
-
-                                // printf("Pretending to send the following data-up command to SPACE-HAUC:\n");
-                                // printf("0x%02x 0x%02x 0x%08x 0x%08x", ACS_command_input.mod, ACS_command_input.cmd, ACS_command_input.unused, ACS_command_input.data_size);
-                                // for (int i = 0; i < ACS_command_input.data_size; i++)
-                                // {
-                                //     printf(" 0x%02x", ACS_command_input.data[i]);
-                                // }
-                                // printf("\n");
                             }
                         }
                         else
@@ -484,56 +524,96 @@ int main(int, char **)
                     {
                         if (ImGui::ArrowButton("get_min_hk_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_MIN_HK;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Minimal Housekeeping");
 
                         if (ImGui::ArrowButton("get_vbatt_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_VBATT;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Battery Voltage");
 
                         if (ImGui::ArrowButton("get_sys_curr_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_SYS_CURR;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get System Current");
 
                         if (ImGui::ArrowButton("get_power_out_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_OUTPOWER;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Power Out");
 
                         if (ImGui::ArrowButton("get_solar_voltage_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_VSUN;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Solar Voltage");
 
                         if (ImGui::ArrowButton("get_all_solar_voltage_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_VSUN_ALL;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Solar Voltage (All)");
 
                         if (ImGui::ArrowButton("get_isun_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_ISUN;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get ISUN");
 
                         if (ImGui::ArrowButton("get_loop_timer_button", ImGuiDir_Right))
                         {
-                            printf("Pretending to poll SPACE-HAUC...\n");
+                            EPS_command_input.mod = EPS_ID;
+                            EPS_command_input.cmd = EPS_GET_LOOP_TIMER;
+                            EPS_command_input.unused = 0x0;
+                            EPS_command_input.data_size = 0x0;
+                            memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&EPS_command_input);
                         }
                         ImGui::SameLine();
                         ImGui::Text("Get Loop Timer");
@@ -552,7 +632,7 @@ int main(int, char **)
                     if (auth.access_level > 1)
                     {
                         ImGui::RadioButton("Set Loop Timer", &EPS_command, EPS_SET_LOOP_TIMER);
-                        ImGui::InputInt("Loop Time (seconds)", (int *)&eps_set_data.loop_timer);
+                        ImGui::InputInt("Loop Time (seconds)", &eps_set_data.loop_timer);
                     }
                     else
                     {
@@ -600,14 +680,6 @@ int main(int, char **)
                                 ImGui::Unindent();
 
                                 gs_transmit(&EPS_command_input);
-
-                                // printf("Pretending to send the following data-up command to SPACE-HAUC:\n");
-                                // printf("0x%02x 0x%02x 0x%08x 0x%08x", EPS_command_input.mod, EPS_command_input.cmd, EPS_command_input.unused, EPS_command_input.data_size);
-                                // for (int i = 0; i < EPS_command_input.data_size; i++)
-                                // {
-                                //     printf(" 0x%02x", EPS_command_input.data[i]);
-                                // }
-                                // printf("\n");
                             }
                         }
                         else
@@ -629,7 +701,9 @@ int main(int, char **)
         static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
         static xband_set_data_array_t xband_set_data = {0};
         static xband_tx_data_t xband_tx_data = {0};
+        static xband_tx_data_holder_t xband_tx_data_holder = {0};
         static xband_rxtx_data_t xband_rxtx_data = {0};
+        static xband_rxtx_data_holder_t xband_rxtx_data_holder = {0};
         static xband_get_bool_t xband_get_bool = {0};
 
         if (XBAND_window)
@@ -662,53 +736,178 @@ int main(int, char **)
                         ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
                         ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
                         ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
-                        ImGui::InputInt("TX Samp", (int *)&xband_set_data.TX.samp);
-                        ImGui::InputInt("TX Phy Gain", (int *)&xband_set_data.TX.phy_gain);
-                        ImGui::InputInt("TX Adar Gain", (int *)&xband_set_data.TX.adar_gain);
+                        ImGui::InputInt("TX Samp", &xband_set_data.TXH.samp);
+                        if (xband_set_data.TXH.samp > 0xFFFF)
+                        {
+                            xband_set_data.TXH.samp = 0xFFFF;
+                        }
+                        else if (xband_set_data.TXH.samp < 0)
+                        {
+                            xband_set_data.TXH.samp = 0;
+                        }
+                        xband_set_data.TX.samp = (uint16_t)xband_set_data.TXH.samp;
+
+                        ImGui::InputInt("TX Phy Gain", &xband_set_data.TXH.phy_gain);
+                        if (xband_set_data.TXH.phy_gain > 0xFF)
+                        {
+                            xband_set_data.TXH.phy_gain = 0xFF;
+                        }
+                        else if (xband_set_data.TXH.phy_gain < 0)
+                        {
+                            xband_set_data.TXH.phy_gain = 0;
+                        }
+                        xband_set_data.TX.phy_gain = (uint8_t)xband_set_data.TXH.phy_gain;
+
+                        ImGui::InputInt("TX Adar Gain", &xband_set_data.TXH.adar_gain);
+                        if (xband_set_data.TXH.adar_gain > 0xFF)
+                        {
+                            xband_set_data.TXH.adar_gain = 0xFF;
+                        }
+                        else if (xband_set_data.TXH.adar_gain < 0)
+                        {
+                            xband_set_data.TXH.adar_gain = 0;
+                        }
+                        xband_set_data.TX.adar_gain = (uint8_t)xband_set_data.TXH.adar_gain;
+
                         if (ImGui::BeginMenu("TX Filter Selection"))
                         {
-                            ImGui::RadioButton("m_6144.ftr", (int *)&xband_set_data.TX.ftr, 0);
-                            ImGui::RadioButton("m_3072.ftr", (int *)&xband_set_data.TX.ftr, 1);
-                            ImGui::RadioButton("m_1000.ftr", (int *)&xband_set_data.TX.ftr, 2);
-                            ImGui::RadioButton("m_lte5.ftr", (int *)&xband_set_data.TX.ftr, 3);
-                            ImGui::RadioButton("m_lte1.ftr", (int *)&xband_set_data.TX.ftr, 4);
+                            ImGui::RadioButton("m_6144.ftr", &xband_set_data.TXH.ftr, 0);
+                            ImGui::RadioButton("m_3072.ftr", &xband_set_data.TXH.ftr, 1);
+                            ImGui::RadioButton("m_1000.ftr", &xband_set_data.TXH.ftr, 2);
+                            ImGui::RadioButton("m_lte5.ftr", &xband_set_data.TXH.ftr, 3);
+                            ImGui::RadioButton("m_lte1.ftr", &xband_set_data.TXH.ftr, 4);
+
+                            xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
 
                             ImGui::EndMenu();
                         }
-                        ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", (int *)&xband_set_data.TX.phase[0]);
-                        ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", (int *)&xband_set_data.TX.phase[4]);
-                        ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", (int *)&xband_set_data.TX.phase[8]);
-                        ImGui::InputInt4("TX Phase [12] [13] [14] [15]", (int *)&xband_set_data.TX.phase[12]);
+                        ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0]);
+                        ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4]);
+                        ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8]);
+                        ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_set_data.TXH.phase[12]);
+                        for (int i = 0; i < 16; i++)
+                        {
+                            if (xband_set_data.TXH.phase[i] > 32767)
+                            {
+                                xband_set_data.TXH.phase[i] = 32767;
+                            }
+                            else if (xband_set_data.TXH.phase[i] < -32768)
+                            {
+                                xband_set_data.TXH.phase[i] = -32768;
+                            }
+                            xband_set_data.TX.phase[i] = (uint8_t)xband_set_data.TXH.phase[i];
+                        }
 
                         ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
                         ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
                         ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
-                        ImGui::InputInt("RX Samp", (int *)&xband_set_data.RX.samp);
-                        ImGui::InputInt("RX Phy Gain", (int *)&xband_set_data.RX.phy_gain);
-                        ImGui::InputInt("RX Adar Gain", (int *)&xband_set_data.RX.adar_gain);
+                        ImGui::InputInt("RX Samp", &xband_set_data.RXH.samp);
+                        if (xband_set_data.RXH.samp > 0xFFFF)
+                        {
+                            xband_set_data.RXH.samp = 0xFFFF;
+                        }
+                        else if (xband_set_data.RXH.samp < 0)
+                        {
+                            xband_set_data.RXH.samp = 0;
+                        }
+                        xband_set_data.RX.samp = (uint16_t)xband_set_data.RXH.samp;
+
+                        ImGui::InputInt("RX Phy Gain", &xband_set_data.RXH.phy_gain);
+                        if (xband_set_data.RXH.phy_gain > 0xFF)
+                        {
+                            xband_set_data.RXH.phy_gain = 0xFF;
+                        }
+                        else if (xband_set_data.RXH.phy_gain < 0)
+                        {
+                            xband_set_data.RXH.phy_gain = 0;
+                        }
+                        xband_set_data.RX.phy_gain = (uint8_t)xband_set_data.RXH.phy_gain;
+
+                        ImGui::InputInt("RX Adar Gain", &xband_set_data.RXH.adar_gain);
+                        if (xband_set_data.RXH.adar_gain > 0xFF)
+                        {
+                            xband_set_data.RXH.adar_gain = 0xFF;
+                        }
+                        else if (xband_set_data.RXH.adar_gain < 0)
+                        {
+                            xband_set_data.RXH.adar_gain = 0;
+                        }
+                        xband_set_data.RX.adar_gain = (uint8_t)xband_set_data.RXH.adar_gain;
+
                         if (ImGui::BeginMenu("RX Filter Selection"))
                         {
-                            ImGui::RadioButton("m_6144.ftr", (int *)&xband_set_data.RX.ftr, 0);
-                            ImGui::RadioButton("m_3072.ftr", (int *)&xband_set_data.RX.ftr, 1);
-                            ImGui::RadioButton("m_1000.ftr", (int *)&xband_set_data.RX.ftr, 2);
-                            ImGui::RadioButton("m_lte5.ftr", (int *)&xband_set_data.RX.ftr, 3);
-                            ImGui::RadioButton("m_lte1.ftr", (int *)&xband_set_data.RX.ftr, 4);
+                            ImGui::RadioButton("m_6144.ftr", &xband_set_data.RXH.ftr, 0);
+                            ImGui::RadioButton("m_3072.ftr", &xband_set_data.RXH.ftr, 1);
+                            ImGui::RadioButton("m_1000.ftr", &xband_set_data.RXH.ftr, 2);
+                            ImGui::RadioButton("m_lte5.ftr", &xband_set_data.RXH.ftr, 3);
+                            ImGui::RadioButton("m_lte1.ftr", &xband_set_data.RXH.ftr, 4);
+
+                            xband_set_data.RX.ftr = (uint8_t) xband_set_data.RXH.ftr;
 
                             ImGui::EndMenu();
                         }
-                        ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", (int *)&xband_set_data.RX.phase[0]);
-                        ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", (int *)&xband_set_data.RX.phase[4]);
-                        ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", (int *)&xband_set_data.RX.phase[8]);
-                        ImGui::InputInt4("RX Phase [12] [13] [14] [15]", (int *)&xband_set_data.RX.phase[12]);
+                        ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0]);
+                        ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4]);
+                        ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8]);
+                        ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_set_data.RXH.phase[12]);
+                        for (int i = 0; i < 16; i++)
+                        {
+                            if (xband_set_data.RXH.phase[i] > 32767)
+                            {
+                                xband_set_data.RXH.phase[i] = 32767;
+                            }
+                            else if (xband_set_data.RXH.phase[i] < -32768)
+                            {
+                                xband_set_data.RXH.phase[i] = -32768;
+                            }
+                            xband_set_data.RX.phase[i] = (uint8_t)xband_set_data.RXH.phase[i];
+                        }
 
                         ImGui::RadioButton("Set MAX ON", &XBAND_command, XBAND_SET_MAX_ON);
-                        ImGui::InputInt("Max On", (int *)&xband_rxtx_data.max_on);
+                        ImGui::InputInt("Max On", &xband_rxtx_data_holder.max_on);
+                        if (xband_rxtx_data_holder.max_on > 0xFF)
+                        {
+                            xband_rxtx_data_holder.max_on = 0xFF;
+                        } else if (xband_rxtx_data_holder.max_on < 0)
+                        {
+                            xband_rxtx_data_holder.max_on = 0;
+                        }
+                        xband_rxtx_data.max_on = (uint8_t) xband_rxtx_data_holder.max_on;
+
                         ImGui::RadioButton("Set TMP SHDN", &XBAND_command, XBAND_SET_TMP_SHDN);
-                        ImGui::InputInt("TMP SHDN", (int *)&xband_rxtx_data.tmp_shdn);
+                        ImGui::InputInt("TMP SHDN", &xband_rxtx_data_holder.tmp_shdn);
+                        if (xband_rxtx_data_holder.tmp_shdn > 0xFF)
+                        {
+                            xband_rxtx_data_holder.tmp_shdn = 0xFF;
+                        } else if (xband_rxtx_data_holder.tmp_shdn < 0)
+                        {
+                            xband_rxtx_data_holder.tmp_shdn = 0;
+                        }
+                        xband_rxtx_data.tmp_shdn = (uint8_t) xband_rxtx_data_holder.tmp_shdn;
+
                         ImGui::RadioButton("Set TMP OP", &XBAND_command, XBAND_SET_TMP_OP);
-                        ImGui::InputInt("TMP OP", (int *)&xband_rxtx_data.tmp_op);
+                        ImGui::InputInt("TMP OP", &xband_rxtx_data_holder.tmp_op);
+                        if (xband_rxtx_data_holder.tmp_op > 0xFF)
+                        {
+                            xband_rxtx_data_holder.tmp_op = 0xFF;
+                        }
+                        else if (xband_rxtx_data_holder.tmp_op < 0)
+                        {
+                            xband_rxtx_data_holder.tmp_op = 0;
+                        }
+                        xband_rxtx_data.tmp_op = (uint8_t) xband_rxtx_data_holder.tmp_op;
+
                         ImGui::RadioButton("Set Loop Time", &XBAND_command, XBAND_SET_LOOP_TIME);
-                        ImGui::InputInt("Loop Time", (int *)&xband_rxtx_data.loop_time);
+                        ImGui::InputInt("Loop Time", &xband_rxtx_data_holder.loop_time);
+                        if (xband_rxtx_data_holder.loop_time > 0xFF)
+                        {
+                            xband_rxtx_data_holder.loop_time = 0xFF;
+                        }
+                        else if (xband_rxtx_data_holder.loop_time < 0)
+                        {
+                            xband_rxtx_data_holder.loop_time = 0;
+                        }
+                        xband_rxtx_data.loop_time = (uint8_t) xband_rxtx_data_holder.loop_time;
                     }
                     else
                     {
@@ -725,15 +924,17 @@ int main(int, char **)
                     {
                         // TODO:
                         ImGui::RadioButton("Transmit", &XBAND_command, XBAND_DO_TX);
-                        ImGui::InputInt("TX type", &xband_tx_data.type);
-                        if (xband_tx_data.type > 255)
+                        ImGui::InputInt("TX type", &xband_tx_data_holder.type);
+                        if (xband_tx_data_holder.type > 255)
                         {
-                            xband_tx_data.type = 255;
-                        } 
-                        else if (xband_tx_data.type < 0)
-                        {
-                            xband_tx_data.type = 0;
+                            xband_tx_data_holder.type = 255;
                         }
+                        else if (xband_tx_data_holder.type < 0)
+                        {
+                            xband_tx_data_holder.type = 0;
+                        }
+                        xband_tx_data.type = (uint8_t) xband_tx_data_holder.type;
+
                         ImGui::InputInt("TX f_id", &xband_tx_data.f_id);
                         ImGui::InputInt("TX mtu", &xband_tx_data.mtu);
                         ImGui::RadioButton("Receive", &XBAND_command, XBAND_DO_RX);
@@ -805,28 +1006,37 @@ int main(int, char **)
                                 }
                                 case XBAND_SET_MAX_ON:
                                 {
-                                    // TODO:
-
+                                    // cmd_parser expects an int8_t for data.
+                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.max_on;
+                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
                                     break;
                                 }
                                 case XBAND_SET_TMP_SHDN:
                                 {
-                                    // TODO:
+                                    // cmd_parser expects an int8_t for data.
+                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_shdn;
+                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
                                     break;
                                 }
                                 case XBAND_SET_TMP_OP:
                                 {
-                                    // TODO:
+                                    // cmd_parser expects an int8_t for data.
+                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_op;
+                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
                                     break;
                                 }
                                 case XBAND_SET_LOOP_TIME:
                                 {
-                                    // TODO:
+                                    // cmd_parser expects an int8_t for data.
+                                    // XBAND_command_input is a structure that is transmitted.
+                                    // .data contains the data expected by SH's cmd_parser
+                                    // xband_rxtx_data is just a convenient structure for collecting user input
+                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_op;
                                     break;
                                 }
                                 }
 
-                                // TODO: Send the transmission.
+                                // Send the transmission.
                                 gs_transmit(&XBAND_command_input);
                             }
                         }
@@ -859,13 +1069,23 @@ int main(int, char **)
                 ImGui::Text("Name of the file to send:");
                 ImGui::InputTextWithHint("", "Name of File", upd_filename_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue);
 
+                // NOTE: Queued file name not sent with software update command, probably doesn't need to be here at all. This is something the Ground Station's version of SW_UPDATE will have to handle.
                 ImGui::Text("Queued file name: %s", upd_filename_buffer);
 
                 ImGui::Separator();
 
                 if (auth.access_level > 1)
                 {
-                    ImGui::Button("BEGIN UPDATE");
+                    if (ImGui::Button("BEGIN UPDATE"))
+                    {
+                        // Sets values for the software update command structure.
+                        UPD_command_input.mod = SW_UPD_ID;
+                        UPD_command_input.cmd = SW_UPD_FUNC_MAGIC;
+                        UPD_command_input.data[0] = SW_UPD_VALID_MAGIC;
+
+                        // Transmits the software update command.
+                        gs_transmit(&UPD_command_input);
+                    }
                 }
                 else
                 {
@@ -880,6 +1100,7 @@ int main(int, char **)
         static bool SYS_CTRL_window = false;
         // static int SYS_command = INVALID_ID;
         static cmd_input_t SYS_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
+        static cmd_input_holder_t SYS_command_input_holder = {0};
 
         // Handles
         // SYS_VER_MAGIC = 0xd,
@@ -892,10 +1113,13 @@ int main(int, char **)
             {
                 if (auth.access_level > 2)
                 {
-                    ImGui::RadioButton("Version Magic", &SYS_command_input.mod, SYS_VER_MAGIC);
-                    ImGui::RadioButton("Restart Program", &SYS_command_input.mod, SYS_RESTART_PROG);
-                    ImGui::RadioButton("Reboot", &SYS_command_input.mod, SYS_REBOOT);
-                    ImGui::RadioButton("Clean SHBYTES", &SYS_command_input.mod, SYS_CLEAN_SHBYTES);
+                    // NOTE: Since IMGUI only accepts full integers, we have to use a temporary full integer structure to hold them before converting to uint8_t, which is what SPACE-HAUC requires.
+                    ImGui::RadioButton("Version Magic", &SYS_command_input_holder.mod, SYS_VER_MAGIC);
+                    ImGui::RadioButton("Restart Program", &SYS_command_input_holder.mod, SYS_RESTART_PROG);
+                    ImGui::RadioButton("Reboot", &SYS_command_input_holder.mod, SYS_REBOOT);
+                    ImGui::RadioButton("Clean SHBYTES", &SYS_command_input_holder.mod, SYS_CLEAN_SHBYTES);
+
+                    SYS_command_input.mod = (uint8_t)SYS_command_input_holder.mod;
                 }
                 else
                 {
@@ -954,14 +1178,6 @@ int main(int, char **)
                                 ImGui::Unindent();
 
                                 gs_transmit(&SYS_command_input);
-
-                                // printf("Pretending to send the following data-up command to SPACE-HAUC:\n");
-                                // printf("0x%02x 0x%02x 0x%08x 0x%08x", SYS_command_input.mod, SYS_command_input.cmd, SYS_command_input.unused, SYS_command_input.data_size);
-                                // for (int i = 0; i < SYS_command_input.data_size; i++)
-                                // {
-                                //     printf(" 0x%02x", SYS_command_input.data[i]);
-                                // }
-                                // printf("\n");
                             }
                         }
                         else

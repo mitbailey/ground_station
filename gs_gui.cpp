@@ -144,18 +144,17 @@ unsigned int gs_helper(unsigned char *a)
 
 void *gs_acs_update_data_handler(void *vp)
 {
-    acs_upd_input_t *acs = (acs_upd_input_t *)vp;
-    cmd_input_t acs_cmd[1];
+    acs_upd_input_t *acs = (acs_upd_input_t *)vp;   
 
-    acs_cmd->mod = ACS_ID;
-    acs_cmd->cmd = ACS_UPD_ID;
-    acs_cmd->unused = 0x0;
-    acs_cmd->data_size = 0x0;
-    memset(acs_cmd->data, 0x0, MAX_DATA_SIZE);
+    acs->cmd_input->mod = ACS_ID;
+    acs->cmd_input->cmd = ACS_UPD_ID;
+    acs->cmd_input->unused = 0x0;
+    acs->cmd_input->data_size = 0x0;
+    memset(acs->cmd_input->data, 0x0, MAX_DATA_SIZE);
 
     usleep(100);
 
-    gs_transmit(acs_cmd);
+    gs_transmit(acs->cmd_input);
 
     acs->ready = true;
 
@@ -164,13 +163,14 @@ void *gs_acs_update_data_handler(void *vp)
 
 int gs_transmit(cmd_input_t *input)
 {
-    if (input->data_size)
+    if (input->data_size < 0)
     {
         printf("Error: input->data_size is %d.\n", input->data_size);
         printf("Cancelling transmit.\n");
         return;
     }
 
+    // TODO: Change to actually transmitting.
     printf("Pretending to transmit the following:\n");
     printf("0x%02x 0x%02x 0x%08x 0x%08x", input->mod, input->cmd, input->unused, input->data_size);
     for (int i = 0; i < input->data_size; i++)
@@ -178,7 +178,13 @@ int gs_transmit(cmd_input_t *input)
         printf(" 0x%02x", input->data[i]);
     }
     printf("\n");
+    
     return 1;
+}
+
+int gs_receive(cmd_output_t *output)
+{
+    
 }
 
 // // TODO: Change each printout to actually send data to TX device.
