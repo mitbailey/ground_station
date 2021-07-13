@@ -140,7 +140,7 @@ typedef struct __attribute__((packed))
  * @brief Holds full integers from the user before we cast them to uint8_t.
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     int mod;
     int cmd;
@@ -197,7 +197,7 @@ typedef struct __attribute__((packed))
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     float moi[9];
     float imoi[9];
@@ -214,7 +214,7 @@ typedef struct
  * @brief Holds full integers from the user before we cast them to uint8_t.
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     int tstep;
     int measure_time;
@@ -227,7 +227,7 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     bool moi;
     bool imoi;
@@ -244,7 +244,7 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     int loop_timer;
 } eps_set_data_t;
@@ -253,7 +253,7 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     bool min_hk;
     bool vbatt;
@@ -279,7 +279,7 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     float LO;
     float bw;
@@ -294,7 +294,7 @@ typedef struct
  * @brief Holds full integers from the user before we cast them to uint8_t.
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     int samp;
     int phy_gain;
@@ -303,7 +303,7 @@ typedef struct
     int phase[16];
 } xband_set_data_holder_t;
 
-typedef struct
+typedef struct __attribute__((packed))
 {
     xband_set_data_t RX;
     xband_set_data_holder_t RXH;
@@ -317,18 +317,18 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
-    uint8_t type; // 0 -> text, 1 -> image
-    int f_id;     // -1 -> random, 0 -> max
-    int mtu;      // 0 -> 128
+    uint8_t type; // 0 -> text, 1 -> image          1
+    int f_id;     // -1 -> random, 0 -> max         4
+    int mtu;      // 0 -> 128                       4
 } xband_tx_data_t;
 
 /**
  * @brief Holds full integers from the user before we cast them to uint8_t.
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     int type;
 } xband_tx_data_holder_t;
@@ -342,7 +342,7 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     uint8_t max_on;
     uint8_t tmp_shdn;
@@ -350,7 +350,7 @@ typedef struct
     uint8_t loop_time;
 } xband_rxtx_data_t;
 
-typedef struct
+typedef struct __attribute__((packed))
 {
     int max_on;
     int tmp_shdn;
@@ -362,7 +362,7 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     bool max_on;
     bool tmp_shdn;
@@ -374,7 +374,7 @@ typedef struct
  * @brief 
  * 
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     bool busy;
     uint8_t access_level;
@@ -420,6 +420,15 @@ void* gs_acs_update_data_handler(void* vp);
  * @return int 
  */
 int gs_transmit(cmd_input_t *input);
+
+/**
+ * @brief 
+ * 
+ * @param auth 
+ * @param command_input 
+ * @return int 
+ */
+int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
 
 /**
  * @brief 

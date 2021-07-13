@@ -415,82 +415,80 @@ int main(int, char **)
                         ImGui::Indent();
                         if (auth.access_level > 1)
                         {
-                            ImGui::Text("Queued Transmission");
-                            ImGui::Text("Module ID:      0x%02x", ACS_command_input.mod);
-                            ImGui::Text("Command ID:     0x%02x", ACS_command_input.cmd);
-                            ImGui::Text("Unused:         0x%08x", ACS_command_input.unused);
-                            ImGui::Text("Data size:      0x%08x", ACS_command_input.data_size);
-
-                            if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
+                            // Move the data into ACS_command_input.data
+                            switch (ACS_command_input.cmd)
                             {
-                                // Move the data into ACS_command_input.data
-                                switch (ACS_command_input.cmd)
-                                {
-                                case ACS_SET_MOI:
-                                {
-                                    memcpy(ACS_command_input.data, acs_set_data.moi, sizeof(float) * 9);
-                                    ACS_command_input.data_size = sizeof(float) * 9;
-                                    break;
-                                }
-                                case ACS_SET_IMOI:
-                                {
-                                    memcpy(ACS_command_input.data, acs_set_data.imoi, sizeof(float) * 9);
-                                    ACS_command_input.data_size = sizeof(float) * 9;
-                                    break;
-                                }
-                                case ACS_SET_DIPOLE:
-                                {
-                                    ACS_command_input.data[0] = acs_set_data.dipole;
-                                    ACS_command_input.data_size = sizeof(float);
-                                    break;
-                                }
-                                case ACS_SET_TSTEP:
-                                {
-                                    ACS_command_input.data[0] = (uint8_t)acs_set_data.tstep;
-                                    ACS_command_input.data_size = sizeof(uint8_t);
-                                    break;
-                                }
-                                case ACS_SET_MEASURE_TIME:
-                                {
-                                    ACS_command_input.data[0] = (uint8_t)acs_set_data.measure_time;
-                                    ACS_command_input.data_size = sizeof(uint8_t);
-                                    break;
-                                }
-                                case ACS_SET_LEEWAY:
-                                {
-                                    ACS_command_input.data[0] = (uint8_t)acs_set_data.leeway;
-                                    ACS_command_input.data_size = sizeof(uint8_t);
-                                    break;
-                                }
-                                case ACS_SET_WTARGET:
-                                {
-                                    ACS_command_input.data[0] = acs_set_data.wtarget;
-                                    ACS_command_input.data_size = sizeof(float);
-                                    break;
-                                }
-                                case ACS_SET_DETUMBLE_ANG:
-                                {
-                                    ACS_command_input.data[0] = (uint8_t)acs_set_data.detumble_angle;
-                                    ACS_command_input.data_size = sizeof(uint8_t);
-                                    break;
-                                }
-                                case ACS_SET_SUN_ANGLE:
-                                {
-                                    ACS_command_input.data[0] = (uint8_t)acs_set_data.sun_angle;
-                                    ACS_command_input.data_size = sizeof(uint8_t);
-                                    break;
-                                }
-                                default:
-                                {
-                                    printf("ERROR!");
-                                    ACS_command_input.data_size = -1;
-                                    break;
-                                }
-                                }
-                                ImGui::Unindent();
-
-                                gs_transmit(&ACS_command_input);
+                            case ACS_SET_MOI:
+                            {
+                                memcpy(ACS_command_input.data, acs_set_data.moi, sizeof(float) * 9);
+                                ACS_command_input.data_size = sizeof(float) * 9;
+                                break;
                             }
+                            case ACS_SET_IMOI:
+                            {
+                                memcpy(ACS_command_input.data, acs_set_data.imoi, sizeof(float) * 9);
+                                ACS_command_input.data_size = sizeof(float) * 9;
+                                break;
+                            }
+                            case ACS_SET_DIPOLE:
+                            {
+                                // ACS_command_input.data[0] = acs_set_data.dipole;
+                                ACS_command_input.data_size = sizeof(float);
+                                memcpy(ACS_command_input.data, &acs_set_data.dipole, ACS_command_input.data_size);
+                                break;
+                            }
+                            case ACS_SET_TSTEP:
+                            {
+                                ACS_command_input.data[0] = (uint8_t)acs_set_data.tstep;
+                                ACS_command_input.data_size = sizeof(uint8_t);
+                                // memcpy(&ACS_command_input.data[0], &acs_set_data.tstep, ACS_command_input.data_size);
+                                break;
+                            }
+                            case ACS_SET_MEASURE_TIME:
+                            {
+                                ACS_command_input.data[0] = (uint8_t)acs_set_data.measure_time;
+                                ACS_command_input.data_size = sizeof(uint8_t);
+                                // memcpy(&ACS_command_input.data[0], &acs_set_data.measure_time, ACS_command_input.data_size);
+                                break;
+                            }
+                            case ACS_SET_LEEWAY:
+                            {
+                                ACS_command_input.data[0] = (uint8_t)acs_set_data.leeway;
+                                ACS_command_input.data_size = sizeof(uint8_t);
+                                // memcpy(&ACS_command_input.data[0], &acs_set_data.leeway, ACS_command_input.data_size);
+                                break;
+                            }
+                            case ACS_SET_WTARGET:
+                            {
+                                // ACS_command_input.data[0] = acs_set_data.wtarget;
+                                ACS_command_input.data_size = sizeof(float);
+                                memcpy(ACS_command_input.data, &acs_set_data.wtarget, ACS_command_input.data_size);
+                                break;
+                            }
+                            case ACS_SET_DETUMBLE_ANG:
+                            {
+                                ACS_command_input.data[0] = (uint8_t)acs_set_data.detumble_angle;
+                                ACS_command_input.data_size = sizeof(uint8_t);
+                                // memcpy(&ACS_command_input.data[0], &acs_set_data.detumble_angle, ACS_command_input.data_size);
+                                break;
+                            }
+                            case ACS_SET_SUN_ANGLE:
+                            {
+                                ACS_command_input.data[0] = (uint8_t)acs_set_data.sun_angle;
+                                ACS_command_input.data_size = sizeof(uint8_t);
+                                // memcpy(&ACS_command_input.data[0], &acs_set_data.sun_angle, ACS_command_input.data_size);
+                                break;
+                            }
+                            default:
+                            {
+                                printf("ACS ID ERROR!\n");
+                                ACS_command_input.data_size = -1;
+                                break;
+                            }
+                            }
+                            ImGui::Unindent();
+
+                            gs_gui_transmissions_handler(&auth, &ACS_command_input);
                         }
                         else
                         {
@@ -654,33 +652,27 @@ int main(int, char **)
                         ImGui::Indent();
                         if (auth.access_level > 1)
                         {
-                            ImGui::Text("Queued Transmission");
-                            ImGui::Text("Module ID:     0x%02x", EPS_command_input.mod);
-                            ImGui::Text("Command ID:    0x%02x", EPS_command_input.cmd);
-                            ImGui::Text("Unused:        0x%08x", EPS_command_input.unused);
-                            ImGui::Text("Data size:     0x%08x", EPS_command_input.data_size);
-
-                            if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
+                            switch (EPS_command_input.cmd)
                             {
-                                switch (EPS_command_input.cmd)
-                                {
-                                case EPS_SET_LOOP_TIMER:
-                                {
-                                    EPS_command_input.data[0] = eps_set_data.loop_timer;
-                                    EPS_command_input.data_size = sizeof(int);
-                                    break;
-                                }
-                                default:
-                                {
-                                    printf("ERROR!");
-                                    EPS_command_input.data_size = -1;
-                                    break;
-                                }
-                                }
-                                ImGui::Unindent();
-
-                                gs_transmit(&EPS_command_input);
+                            case EPS_SET_LOOP_TIMER:
+                            {
+                                // TODO: Remove all .data[0] = some_variable, because this will only set the first byte of .data because its in section of bytes.
+                                // TODO: ~DO NOT REMOVE~ UNLESS it is a one-byte kind of data, ie uint8_t.
+                                // EPS_command_input.data[0] = eps_set_data.loop_timer;
+                                EPS_command_input.data_size = sizeof(int);
+                                memcpy(EPS_command_input.data, &eps_set_data.loop_timer, EPS_command_input.data_size);
+                                break;
                             }
+                            default:
+                            {
+                                printf("ERROR!");
+                                EPS_command_input.data_size = -1;
+                                break;
+                            }
+                            }
+                            ImGui::Unindent();
+                            
+                            gs_gui_transmissions_handler(&auth, &EPS_command_input);
                         }
                         else
                         {
@@ -711,6 +703,7 @@ int main(int, char **)
             if (ImGui::Begin("X-Band Operations", &XBAND_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
                 // ImGui::Text("Data-down Commands");
+                // TODO: Change to arrow-button implementation.
                 if (ImGui::CollapsingHeader("Data-down Commands"))
                 {
                     if (auth.access_level > 0)
@@ -842,7 +835,7 @@ int main(int, char **)
                             ImGui::RadioButton("m_lte5.ftr", &xband_set_data.RXH.ftr, 3);
                             ImGui::RadioButton("m_lte1.ftr", &xband_set_data.RXH.ftr, 4);
 
-                            xband_set_data.RX.ftr = (uint8_t) xband_set_data.RXH.ftr;
+                            xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
 
                             ImGui::EndMenu();
                         }
@@ -860,7 +853,7 @@ int main(int, char **)
                             {
                                 xband_set_data.RXH.phase[i] = -32768;
                             }
-                            xband_set_data.RX.phase[i] = (uint8_t)xband_set_data.RXH.phase[i];
+                            xband_set_data.RX.phase[i] = (short)xband_set_data.RXH.phase[i];
                         }
 
                         ImGui::RadioButton("Set MAX ON", &XBAND_command, XBAND_SET_MAX_ON);
@@ -868,22 +861,24 @@ int main(int, char **)
                         if (xband_rxtx_data_holder.max_on > 0xFF)
                         {
                             xband_rxtx_data_holder.max_on = 0xFF;
-                        } else if (xband_rxtx_data_holder.max_on < 0)
+                        }
+                        else if (xband_rxtx_data_holder.max_on < 0)
                         {
                             xband_rxtx_data_holder.max_on = 0;
                         }
-                        xband_rxtx_data.max_on = (uint8_t) xband_rxtx_data_holder.max_on;
+                        xband_rxtx_data.max_on = (uint8_t)xband_rxtx_data_holder.max_on;
 
                         ImGui::RadioButton("Set TMP SHDN", &XBAND_command, XBAND_SET_TMP_SHDN);
                         ImGui::InputInt("TMP SHDN", &xband_rxtx_data_holder.tmp_shdn);
                         if (xband_rxtx_data_holder.tmp_shdn > 0xFF)
                         {
                             xband_rxtx_data_holder.tmp_shdn = 0xFF;
-                        } else if (xband_rxtx_data_holder.tmp_shdn < 0)
+                        }
+                        else if (xband_rxtx_data_holder.tmp_shdn < 0)
                         {
                             xband_rxtx_data_holder.tmp_shdn = 0;
                         }
-                        xband_rxtx_data.tmp_shdn = (uint8_t) xband_rxtx_data_holder.tmp_shdn;
+                        xband_rxtx_data.tmp_shdn = (uint8_t)xband_rxtx_data_holder.tmp_shdn;
 
                         ImGui::RadioButton("Set TMP OP", &XBAND_command, XBAND_SET_TMP_OP);
                         ImGui::InputInt("TMP OP", &xband_rxtx_data_holder.tmp_op);
@@ -895,7 +890,7 @@ int main(int, char **)
                         {
                             xband_rxtx_data_holder.tmp_op = 0;
                         }
-                        xband_rxtx_data.tmp_op = (uint8_t) xband_rxtx_data_holder.tmp_op;
+                        xband_rxtx_data.tmp_op = (uint8_t)xband_rxtx_data_holder.tmp_op;
 
                         ImGui::RadioButton("Set Loop Time", &XBAND_command, XBAND_SET_LOOP_TIME);
                         ImGui::InputInt("Loop Time", &xband_rxtx_data_holder.loop_time);
@@ -907,7 +902,7 @@ int main(int, char **)
                         {
                             xband_rxtx_data_holder.loop_time = 0;
                         }
-                        xband_rxtx_data.loop_time = (uint8_t) xband_rxtx_data_holder.loop_time;
+                        xband_rxtx_data.loop_time = (uint8_t)xband_rxtx_data_holder.loop_time;
                     }
                     else
                     {
@@ -933,7 +928,7 @@ int main(int, char **)
                         {
                             xband_tx_data_holder.type = 0;
                         }
-                        xband_tx_data.type = (uint8_t) xband_tx_data_holder.type;
+                        xband_tx_data.type = (uint8_t)xband_tx_data_holder.type;
 
                         ImGui::InputInt("TX f_id", &xband_tx_data.f_id);
                         ImGui::InputInt("TX mtu", &xband_tx_data.mtu);
@@ -963,82 +958,71 @@ int main(int, char **)
                         ImGui::Indent();
                         if (auth.access_level > 1)
                         {
-                            ImGui::Text("Queued Transmission");
-                            ImGui::Text("Module ID: 0x%02x", XBAND_command_input.mod);
-                            ImGui::Text("Command ID: 0x%02x", XBAND_command_input.cmd);
-                            ImGui::Text("Unused: 0x%02x", XBAND_command_input.unused);
-                            ImGui::Text("Data size: 0x%02x", XBAND_command_input.data_size);
-
-                            if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
+                            switch (XBAND_command_input.cmd)
                             {
-                                switch (XBAND_command_input.cmd)
-                                {
-                                case XBAND_SET_TX:
-                                {
-                                    memcpy(XBAND_command_input.data, &xband_set_data.TX, sizeof(xband_set_data_t));
-                                    XBAND_command_input.data_size = sizeof(xband_set_data_t);
-                                    break;
-                                }
-                                case XBAND_SET_RX:
-                                {
-                                    memcpy(XBAND_command_input.data, &xband_set_data.RX, sizeof(xband_set_data_t));
-                                    XBAND_command_input.data_size = sizeof(xband_set_data_t);
-                                    break;
-                                }
-                                case XBAND_DO_TX:
-                                {
-                                    // TODO:
-                                    memcpy(XBAND_command_input.data, &xband_tx_data, sizeof(xband_tx_data_t));
-                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
-                                    break;
-                                }
-                                case XBAND_DO_RX:
-                                {
-                                    // Not yet implemented on SPACE-HAUC.
-                                    printf("This functionality is not implemented as it does not yet exist on SPACE-HAUC.\n");
-                                    break;
-                                }
-                                case XBAND_DISABLE:
-                                {
-                                    // Not yet implemented on SPACE-HAUC.
-                                    printf("This functionality is not implemented as it does not yet exist on SPACE-HAUC.\n");
-                                    break;
-                                }
-                                case XBAND_SET_MAX_ON:
-                                {
-                                    // cmd_parser expects an int8_t for data.
-                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.max_on;
-                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
-                                    break;
-                                }
-                                case XBAND_SET_TMP_SHDN:
-                                {
-                                    // cmd_parser expects an int8_t for data.
-                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_shdn;
-                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
-                                    break;
-                                }
-                                case XBAND_SET_TMP_OP:
-                                {
-                                    // cmd_parser expects an int8_t for data.
-                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_op;
-                                    XBAND_command_input.data_size = sizeof(xband_tx_data_t);
-                                    break;
-                                }
-                                case XBAND_SET_LOOP_TIME:
-                                {
-                                    // cmd_parser expects an int8_t for data.
-                                    // XBAND_command_input is a structure that is transmitted.
-                                    // .data contains the data expected by SH's cmd_parser
-                                    // xband_rxtx_data is just a convenient structure for collecting user input
-                                    XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_op;
-                                    break;
-                                }
-                                }
-
-                                // Send the transmission.
-                                gs_transmit(&XBAND_command_input);
+                            case XBAND_SET_TX:
+                            {
+                                memcpy(XBAND_command_input.data, &xband_set_data.TX, sizeof(xband_set_data_t));
+                                XBAND_command_input.data_size = sizeof(xband_set_data_t);
+                                break;
                             }
+                            case XBAND_SET_RX:
+                            {
+                                memcpy(XBAND_command_input.data, &xband_set_data.RX, sizeof(xband_set_data_t));
+                                XBAND_command_input.data_size = sizeof(xband_set_data_t);
+                                break;
+                            }
+                            case XBAND_DO_TX:
+                            {
+                                memcpy(XBAND_command_input.data, &xband_tx_data, sizeof(xband_tx_data_t));
+                                XBAND_command_input.data_size = sizeof(xband_tx_data_t);
+                                break;
+                            }
+                            case XBAND_DO_RX:
+                            {
+                                // Not yet implemented on SPACE-HAUC.
+                                printf("This functionality is not implemented as it does not yet exist on SPACE-HAUC.\n");
+                                break;
+                            }
+                            case XBAND_DISABLE:
+                            {
+                                // Not yet implemented on SPACE-HAUC.
+                                printf("This functionality is not implemented as it does not yet exist on SPACE-HAUC.\n");
+                                break;
+                            }
+                            case XBAND_SET_MAX_ON:
+                            {
+                                // cmd_parser expects an int8_t for data.
+                                XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.max_on;
+                                XBAND_command_input.data_size = sizeof(xband_tx_data_t);
+                                break;
+                            }
+                            case XBAND_SET_TMP_SHDN:
+                            {
+                                // cmd_parser expects an int8_t for data.
+                                XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_shdn;
+                                XBAND_command_input.data_size = sizeof(xband_tx_data_t);
+                                break;
+                            }
+                            case XBAND_SET_TMP_OP:
+                            {
+                                // cmd_parser expects an int8_t for data.
+                                XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_op;
+                                XBAND_command_input.data_size = sizeof(xband_tx_data_t);
+                                break;
+                            }
+                            case XBAND_SET_LOOP_TIME:
+                            {
+                                // cmd_parser expects an int8_t for data.
+                                // XBAND_command_input is a structure that is transmitted.
+                                // .data contains the data expected by SH's cmd_parser
+                                // xband_rxtx_data is just a convenient structure for collecting user input
+                                XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_op;
+                                break;
+                            }
+                            }
+
+                            gs_gui_transmissions_handler(&auth, &XBAND_command_input);
                         }
                         else
                         {
@@ -1081,7 +1065,9 @@ int main(int, char **)
                         // Sets values for the software update command structure.
                         UPD_command_input.mod = SW_UPD_ID;
                         UPD_command_input.cmd = SW_UPD_FUNC_MAGIC;
-                        UPD_command_input.data[0] = SW_UPD_VALID_MAGIC;
+                        // UPD_command_input.data[0] = SW_UPD_VALID_MAGIC;
+                        long sw_upd_valid_magic_temp = SW_UPD_VALID_MAGIC;
+                        memcpy(UPD_command_input.data, &sw_upd_valid_magic_temp, sizeof(long));
 
                         // Transmits the software update command.
                         gs_transmit(&UPD_command_input);
@@ -1154,13 +1140,17 @@ int main(int, char **)
                                 case SYS_RESTART_PROG:
                                 {
                                     SYS_command_input.cmd = SYS_RESTART_FUNC_MAGIC;
-                                    SYS_command_input.data[0] = SYS_RESTART_FUNC_VAL;
+                                    // SYS_command_input.data[0] = SYS_RESTART_FUNC_VAL;
+                                    long sys_restart_func_val_temp = SYS_RESTART_FUNC_VAL;
+                                    memcpy(SYS_command_input.data, &sys_restart_func_val_temp, sizeof(long));
                                     break;
                                 }
                                 case SYS_REBOOT:
                                 {
                                     SYS_command_input.cmd = SYS_REBOOT_FUNC_MAGIC;
-                                    SYS_command_input.data[0] = SYS_REBOOT_FUNC_VAL;
+                                    // SYS_command_input.data[0] = SYS_REBOOT_FUNC_VAL;
+                                    long sys_reboot_func_val_temp = SYS_REBOOT_FUNC_VAL;
+                                    memcpy(SYS_command_input.data, &sys_reboot_func_val_temp, sizeof(long));
                                     break;
                                 }
                                 case SYS_CLEAN_SHBYTES:

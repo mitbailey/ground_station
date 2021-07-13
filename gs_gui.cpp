@@ -144,7 +144,7 @@ unsigned int gs_helper(unsigned char *a)
 
 void *gs_acs_update_data_handler(void *vp)
 {
-    acs_upd_input_t *acs = (acs_upd_input_t *)vp;   
+    acs_upd_input_t *acs = (acs_upd_input_t *)vp;
 
     acs->cmd_input->mod = ACS_ID;
     acs->cmd_input->cmd = ACS_UPD_ID;
@@ -172,19 +172,71 @@ int gs_transmit(cmd_input_t *input)
 
     // TODO: Change to actually transmitting.
     printf("Pretending to transmit the following:\n");
-    printf("0x%02x 0x%02x 0x%08x 0x%08x", input->mod, input->cmd, input->unused, input->data_size);
+
+    printf("mod ---------- 0x%02x\n", input->mod);
+    printf("cmd ---------- 0x%02x\n", input->cmd);
+    printf("unused ------- 0x%02x\n", input->unused);
+    printf("data_size ---- 0x%08x\n", input->data_size);
+    printf("data --------- ");
     for (int i = 0; i < input->data_size; i++)
     {
-        printf(" 0x%02x", input->data[i]);
+        printf("0x%02x ", input->data[i]);
     }
-    printf("\n");
-    
+    printf("(END)\n");
+
+    printf("mod ---------- %d\n", input->mod);
+    printf("cmd ---------- %d\n", input->cmd);
+    printf("unused ------- %d\n", input->unused);
+    printf("data_size ---- %d\n", input->data_size);
+    printf("data --------- ");
+    for (int i = 0; i < input->data_size; i++)
+    {
+        if (input->data[i] <= 0x20 || input->data[i] >= 0x7F)
+        {
+            printf("[0x%02x]", input->data[i]);
+        }
+        else
+        {
+            printf("%c", input->data[i]);
+        }
+    }
+    printf("(END)\n");
+
+    return 1;
+}
+// gs_gui_transmissions_handler(&auth, &XBAND_command_input);
+int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input)
+{
+    ImGui::Text("Send Command");
+    ImGui::Indent();
+    if (auth->access_level > 1)
+    {
+        ImGui::Text("Queued Transmission");
+        ImGui::Text("Module ID ----- 0x%02x", command_input->mod);
+        ImGui::Text("Command ID ---- 0x%02x", command_input->cmd);
+        ImGui::Text("Unused -------- 0x%02x", command_input->unused);
+        ImGui::Text("Data size ----- 0x%02x", command_input->data_size);
+        ImGui::Text("Data ---------- ");
+
+        for (int i = 0; i < command_input->data_size; i++)
+        {
+            ImGui::SameLine(0.0F, 0.0F);
+            ImGui::Text("%02x", command_input->data[i]);
+        }
+        sizeof(xband_tx_data_t);
+        ImGui::Unindent();
+        if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
+        {
+            // Send the transmission.
+            gs_transmit(command_input);
+        }
+    }
+
     return 1;
 }
 
 int gs_receive(cmd_output_t *output)
 {
-    
 }
 
 // // TODO: Change each printout to actually send data to TX device.
