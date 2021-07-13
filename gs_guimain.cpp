@@ -788,7 +788,7 @@ int main(int, char **)
                             {
                                 xband_set_data.TXH.phase[i] = -32768;
                             }
-                            xband_set_data.TX.phase[i] = (uint8_t)xband_set_data.TXH.phase[i];
+                            xband_set_data.TX.phase[i] = (short)xband_set_data.TXH.phase[i];
                         }
 
                         ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
