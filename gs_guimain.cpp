@@ -9,6 +9,8 @@
  * 
  */
 
+// TODO: Add receive functionality where necessary.
+
 #include "imgui/imgui.h"
 #include "backend/imgui_impl_glfw.h"
 #include "backend/imgui_impl_opengl2.h"
@@ -1252,6 +1254,17 @@ int main(int, char **)
                     ImGui::TextWrapped("Once the transmit functionality is 'unlocked' via the 'Communications Control' panel, the operator can check the currently queued command in the 'Transmit' drop-down section. Pressing 'SEND DATA-UP TRANSMISSION' will confirm and send the queued transmission. Any return value or data received as a result of the 'data-up' transmission will also be displayed in the [NO DISPLAY IMPLEMENTED YET].");
 
                     ImGui::Unindent();
+                    ImGui::Separator();
+
+                    ImGui::TextWrapped("Window Interaction");
+                    ImGui::Indent();
+
+                    ImGui::TextWrapped("The Menu Bar at the top of the screen has buttons to toggle the visibility of the Authentication, Communications, and User Manual windows. Within the Communications window are checkboxes to toggle the visibility of the Attitude Control System, Electrical Power Supply, X-Band, Software Updater, and System Control windows.");
+
+                    ImGui::TextWrapped("Some windows are a fixed size, while larger windows are able to be resized by the user. All windows have an 'X' in the top right-hand corner to hide the window. Windows can also be hidden the same way they are shown as previously mentioned.");
+
+                    ImGui::Unindent();
+
                     ImGui::EndTabItem();
                 }
 
@@ -1268,7 +1281,9 @@ int main(int, char **)
 
                     ImGui::TextWrapped("To enter your password, click on the text entry field and press [ENTER] when finished. The system will process your input and update your access level accordingly. Please note that incorrect inputs are punished with a 2.5 second delay.");
 
-                    ImGui::TextWrapped("To revoke authentication, press the <DEAUTHENTICATE> button. This will not reset any previously set values within the program, but will simply deny further access.");
+                    ImGui::TextWrapped("To revoke authentication, press the <DEAUTHENTICATE> button. This will not reset any previously set values within the program, but will simply deny further access. This should be used by the operator to lock the application when they are not present to prohibit accidental or malicious acts.");
+
+                    ImGui::TextWrapped("The Authentication Control Panel does not need to be visible to maintain access, and it is recommended to toggle the visibility off once it is no longer needed by pressing the 'Authentication' button on the Menu Bar at the top of the screen.");
 
                     ImGui::Unindent();
                     ImGui::Separator();
@@ -1300,6 +1315,18 @@ int main(int, char **)
 
                 if (ImGui::BeginTabItem("Communications"))
                 {
+                    ImGui::TextWrapped("Window");
+                    ImGui::Indent();
+
+                    ImGui::TextWrapped("The Communications Control window is unique, as it is the only window which allows for toggling the visibility of other windows. The Communications Control window itself can be toggled by the 'Communications' button on the Menu Bar at the top of the screen.");
+
+                    ImGui::TextWrapped("The checkboxes each enable or disable the visibility of their respective windows. From top to bottom, the checkboxes control the visibility of the Attitude Control System, Electrical Power Supply, X-Band, Software Updater, and System Control windows. Toggling the visibility has no effect on the data or actions being performed, except that it disallows any further user interaction with that window's elements (until it is made visible again, of course).");
+
+                    ImGui::TextWrapped("Also in this window is the 'Enable Transmissions' checkbox. This acts as a safety which disallows all data-up transmissions when it is unchecked. This should remain unchecked at ALL TIMES unless one or more data-up transmissions are being made.");
+
+                    ImGui::Unindent();
+                    ImGui::Separator();
+
                     ImGui::TextWrapped("Command Types");
                     ImGui::Indent();
 
@@ -1327,6 +1354,51 @@ int main(int, char **)
                 {
                     ImGui::TextWrapped("Mit Bailey Copyright (c) 2021");
 
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("ACS"))
+                {
+                    ImGui::TextWrapped("Attitude Control System");
+                    ImGui::Indent();
+
+                    ImGui::Unindent();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("EPS"))
+                {
+                    ImGui::TextWrapped("Electrical Power Supply");
+                    ImGui::Indent();
+
+                    ImGui::Unindent();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("XBAND"))
+                {
+                    ImGui::TextWrapped("X-Band");
+                    ImGui::Indent();
+
+                    ImGui::Unindent();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("UPD"))
+                {
+                    ImGui::TextWrapped("Software Updater");
+                    ImGui::Indent();
+
+                    ImGui::Unindent();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("SYS"))
+                {
+                    ImGui::TextWrapped("System Control");
+                    ImGui::Indent();
+
+                    ImGui::Unindent();
                     ImGui::EndTabItem();
                 }
 
