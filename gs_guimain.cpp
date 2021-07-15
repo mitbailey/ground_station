@@ -153,7 +153,7 @@ int main(int, char **)
 
         if (ACS_window)
         {
-            if (ImGui::Begin("ACS Operations", &ACS_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+            if (ImGui::Begin("ACS Operations", &ACS_window))
             {
                 if (ImGui::CollapsingHeader("Data-down Commands"))
                 {
@@ -512,7 +512,7 @@ int main(int, char **)
 
         if (EPS_window)
         {
-            if (ImGui::Begin("EPS Operations", &EPS_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+            if (ImGui::Begin("EPS Operations", &EPS_window))
             {
                 // ImGui::Text("Data-down Commands");
                 if (ImGui::CollapsingHeader("Data-down Commands"))
@@ -699,7 +699,7 @@ int main(int, char **)
 
         if (XBAND_window)
         {
-            if (ImGui::Begin("X-Band Operations", &XBAND_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+            if (ImGui::Begin("X-Band Operations", &XBAND_window))
             {
                 // ImGui::Text("Data-down Commands");
                 // TODO: Change to arrow-button implementation.
@@ -725,134 +725,142 @@ int main(int, char **)
                 {
                     if (auth.access_level > 1)
                     {
-                        ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
-                        ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
-                        ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
-                        ImGui::InputInt("TX Samp", &xband_set_data.TXH.samp);
-                        if (xband_set_data.TXH.samp > 0xFFFF)
-                        {
-                            xband_set_data.TXH.samp = 0xFFFF;
-                        }
-                        else if (xband_set_data.TXH.samp < 0)
-                        {
-                            xband_set_data.TXH.samp = 0;
-                        }
-                        xband_set_data.TX.samp = (uint16_t)xband_set_data.TXH.samp;
+                        ImGui::Indent();
 
-                        ImGui::InputInt("TX Phy Gain", &xband_set_data.TXH.phy_gain);
-                        if (xband_set_data.TXH.phy_gain > 0xFF)
+                        if (ImGui::CollapsingHeader("Set Transmit"))
                         {
-                            xband_set_data.TXH.phy_gain = 0xFF;
-                        }
-                        else if (xband_set_data.TXH.phy_gain < 0)
-                        {
-                            xband_set_data.TXH.phy_gain = 0;
-                        }
-                        xband_set_data.TX.phy_gain = (uint8_t)xband_set_data.TXH.phy_gain;
-
-                        ImGui::InputInt("TX Adar Gain", &xband_set_data.TXH.adar_gain);
-                        if (xband_set_data.TXH.adar_gain > 0xFF)
-                        {
-                            xband_set_data.TXH.adar_gain = 0xFF;
-                        }
-                        else if (xband_set_data.TXH.adar_gain < 0)
-                        {
-                            xband_set_data.TXH.adar_gain = 0;
-                        }
-                        xband_set_data.TX.adar_gain = (uint8_t)xband_set_data.TXH.adar_gain;
-
-                        if (ImGui::BeginMenu("TX Filter Selection"))
-                        {
-                            ImGui::RadioButton("m_6144.ftr", &xband_set_data.TXH.ftr, 0);
-                            ImGui::RadioButton("m_3072.ftr", &xband_set_data.TXH.ftr, 1);
-                            ImGui::RadioButton("m_1000.ftr", &xband_set_data.TXH.ftr, 2);
-                            ImGui::RadioButton("m_lte5.ftr", &xband_set_data.TXH.ftr, 3);
-                            ImGui::RadioButton("m_lte1.ftr", &xband_set_data.TXH.ftr, 4);
-
-                            xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
-
-                            ImGui::EndMenu();
-                        }
-                        ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0]);
-                        ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4]);
-                        ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8]);
-                        ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_set_data.TXH.phase[12]);
-                        for (int i = 0; i < 16; i++)
-                        {
-                            if (xband_set_data.TXH.phase[i] > 32767)
+                            ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
+                            ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
+                            ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
+                            ImGui::InputInt("TX Samp", &xband_set_data.TXH.samp);
+                            if (xband_set_data.TXH.samp > 0xFFFF)
                             {
-                                xband_set_data.TXH.phase[i] = 32767;
+                                xband_set_data.TXH.samp = 0xFFFF;
                             }
-                            else if (xband_set_data.TXH.phase[i] < -32768)
+                            else if (xband_set_data.TXH.samp < 0)
                             {
-                                xband_set_data.TXH.phase[i] = -32768;
+                                xband_set_data.TXH.samp = 0;
                             }
-                            xband_set_data.TX.phase[i] = (short)xband_set_data.TXH.phase[i];
-                        }
+                            xband_set_data.TX.samp = (uint16_t)xband_set_data.TXH.samp;
 
-                        ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
-                        ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
-                        ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
-                        ImGui::InputInt("RX Samp", &xband_set_data.RXH.samp);
-                        if (xband_set_data.RXH.samp > 0xFFFF)
-                        {
-                            xband_set_data.RXH.samp = 0xFFFF;
-                        }
-                        else if (xband_set_data.RXH.samp < 0)
-                        {
-                            xband_set_data.RXH.samp = 0;
-                        }
-                        xband_set_data.RX.samp = (uint16_t)xband_set_data.RXH.samp;
-
-                        ImGui::InputInt("RX Phy Gain", &xband_set_data.RXH.phy_gain);
-                        if (xband_set_data.RXH.phy_gain > 0xFF)
-                        {
-                            xband_set_data.RXH.phy_gain = 0xFF;
-                        }
-                        else if (xband_set_data.RXH.phy_gain < 0)
-                        {
-                            xband_set_data.RXH.phy_gain = 0;
-                        }
-                        xband_set_data.RX.phy_gain = (uint8_t)xband_set_data.RXH.phy_gain;
-
-                        ImGui::InputInt("RX Adar Gain", &xband_set_data.RXH.adar_gain);
-                        if (xband_set_data.RXH.adar_gain > 0xFF)
-                        {
-                            xband_set_data.RXH.adar_gain = 0xFF;
-                        }
-                        else if (xband_set_data.RXH.adar_gain < 0)
-                        {
-                            xband_set_data.RXH.adar_gain = 0;
-                        }
-                        xband_set_data.RX.adar_gain = (uint8_t)xband_set_data.RXH.adar_gain;
-
-                        if (ImGui::BeginMenu("RX Filter Selection"))
-                        {
-                            ImGui::RadioButton("m_6144.ftr", &xband_set_data.RXH.ftr, 0);
-                            ImGui::RadioButton("m_3072.ftr", &xband_set_data.RXH.ftr, 1);
-                            ImGui::RadioButton("m_1000.ftr", &xband_set_data.RXH.ftr, 2);
-                            ImGui::RadioButton("m_lte5.ftr", &xband_set_data.RXH.ftr, 3);
-                            ImGui::RadioButton("m_lte1.ftr", &xband_set_data.RXH.ftr, 4);
-
-                            xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
-
-                            ImGui::EndMenu();
-                        }
-                        ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0]);
-                        ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4]);
-                        ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8]);
-                        ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_set_data.RXH.phase[12]);
-                        for (int i = 0; i < 16; i++)
-                        {
-                            if (xband_set_data.RXH.phase[i] > 32767)
+                            ImGui::InputInt("TX Phy Gain", &xband_set_data.TXH.phy_gain);
+                            if (xband_set_data.TXH.phy_gain > 0xFF)
                             {
-                                xband_set_data.RXH.phase[i] = 32767;
+                                xband_set_data.TXH.phy_gain = 0xFF;
                             }
-                            else if (xband_set_data.RXH.phase[i] < -32768)
+                            else if (xband_set_data.TXH.phy_gain < 0)
                             {
-                                xband_set_data.RXH.phase[i] = -32768;
+                                xband_set_data.TXH.phy_gain = 0;
                             }
-                            xband_set_data.RX.phase[i] = (short)xband_set_data.RXH.phase[i];
+                            xband_set_data.TX.phy_gain = (uint8_t)xband_set_data.TXH.phy_gain;
+
+                            ImGui::InputInt("TX Adar Gain", &xband_set_data.TXH.adar_gain);
+                            if (xband_set_data.TXH.adar_gain > 0xFF)
+                            {
+                                xband_set_data.TXH.adar_gain = 0xFF;
+                            }
+                            else if (xband_set_data.TXH.adar_gain < 0)
+                            {
+                                xband_set_data.TXH.adar_gain = 0;
+                            }
+                            xband_set_data.TX.adar_gain = (uint8_t)xband_set_data.TXH.adar_gain;
+
+                            if (ImGui::BeginMenu("TX Filter Selection"))
+                            {
+                                ImGui::RadioButton("m_6144.ftr", &xband_set_data.TXH.ftr, 0);
+                                ImGui::RadioButton("m_3072.ftr", &xband_set_data.TXH.ftr, 1);
+                                ImGui::RadioButton("m_1000.ftr", &xband_set_data.TXH.ftr, 2);
+                                ImGui::RadioButton("m_lte5.ftr", &xband_set_data.TXH.ftr, 3);
+                                ImGui::RadioButton("m_lte1.ftr", &xband_set_data.TXH.ftr, 4);
+
+                                xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
+
+                                ImGui::EndMenu();
+                            }
+                            ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0]);
+                            ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4]);
+                            ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8]);
+                            ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_set_data.TXH.phase[12]);
+                            for (int i = 0; i < 16; i++)
+                            {
+                                if (xband_set_data.TXH.phase[i] > 32767)
+                                {
+                                    xband_set_data.TXH.phase[i] = 32767;
+                                }
+                                else if (xband_set_data.TXH.phase[i] < -32768)
+                                {
+                                    xband_set_data.TXH.phase[i] = -32768;
+                                }
+                                xband_set_data.TX.phase[i] = (short)xband_set_data.TXH.phase[i];
+                            }
+                        }
+
+                        if (ImGui::CollapsingHeader("Set Receive"))
+                        {
+                            ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
+                            ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
+                            ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
+                            ImGui::InputInt("RX Samp", &xband_set_data.RXH.samp);
+                            if (xband_set_data.RXH.samp > 0xFFFF)
+                            {
+                                xband_set_data.RXH.samp = 0xFFFF;
+                            }
+                            else if (xband_set_data.RXH.samp < 0)
+                            {
+                                xband_set_data.RXH.samp = 0;
+                            }
+                            xband_set_data.RX.samp = (uint16_t)xband_set_data.RXH.samp;
+
+                            ImGui::InputInt("RX Phy Gain", &xband_set_data.RXH.phy_gain);
+                            if (xband_set_data.RXH.phy_gain > 0xFF)
+                            {
+                                xband_set_data.RXH.phy_gain = 0xFF;
+                            }
+                            else if (xband_set_data.RXH.phy_gain < 0)
+                            {
+                                xband_set_data.RXH.phy_gain = 0;
+                            }
+                            xband_set_data.RX.phy_gain = (uint8_t)xband_set_data.RXH.phy_gain;
+
+                            ImGui::InputInt("RX Adar Gain", &xband_set_data.RXH.adar_gain);
+                            if (xband_set_data.RXH.adar_gain > 0xFF)
+                            {
+                                xband_set_data.RXH.adar_gain = 0xFF;
+                            }
+                            else if (xband_set_data.RXH.adar_gain < 0)
+                            {
+                                xband_set_data.RXH.adar_gain = 0;
+                            }
+                            xband_set_data.RX.adar_gain = (uint8_t)xband_set_data.RXH.adar_gain;
+
+                            if (ImGui::BeginMenu("RX Filter Selection"))
+                            {
+                                ImGui::RadioButton("m_6144.ftr", &xband_set_data.RXH.ftr, 0);
+                                ImGui::RadioButton("m_3072.ftr", &xband_set_data.RXH.ftr, 1);
+                                ImGui::RadioButton("m_1000.ftr", &xband_set_data.RXH.ftr, 2);
+                                ImGui::RadioButton("m_lte5.ftr", &xband_set_data.RXH.ftr, 3);
+                                ImGui::RadioButton("m_lte1.ftr", &xband_set_data.RXH.ftr, 4);
+
+                                xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
+
+                                ImGui::EndMenu();
+                            }
+                            ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0]);
+                            ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4]);
+                            ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8]);
+                            ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_set_data.RXH.phase[12]);
+                            for (int i = 0; i < 16; i++)
+                            {
+                                if (xband_set_data.RXH.phase[i] > 32767)
+                                {
+                                    xband_set_data.RXH.phase[i] = 32767;
+                                }
+                                else if (xband_set_data.RXH.phase[i] < -32768)
+                                {
+                                    xband_set_data.RXH.phase[i] = -32768;
+                                }
+                                xband_set_data.RX.phase[i] = (short)xband_set_data.RXH.phase[i];
+                            }
                         }
 
                         ImGui::RadioButton("Set MAX ON", &XBAND_command, XBAND_SET_MAX_ON);
@@ -902,6 +910,8 @@ int main(int, char **)
                             xband_rxtx_data_holder.loop_time = 0;
                         }
                         xband_rxtx_data.loop_time = (uint8_t)xband_rxtx_data_holder.loop_time;
+
+                        ImGui::Unindent();
                     }
                     else
                     {
@@ -1163,7 +1173,7 @@ int main(int, char **)
                             {
                                 SYS_command_input.data_size = 0;
                                 SYS_command_input.cmd = SYS_CLEAN_SHBYTES;
-                                
+
                                 SYS_command_input.unused = 0x0;
                                 memset(SYS_command_input.data, 0x0, MAX_DATA_SIZE);
                                 break;
@@ -1233,7 +1243,13 @@ int main(int, char **)
                     ImGui::Indent();
 
                     // TODO: Implement a display to show the data retrieved when a data-down command is sent.
-                    ImGui::TextWrapped("The SPACE-HAUC Ground Station Client is provided to allow an operator to interface with the SPACE-HAUC satellite. Data-retrieval commands, referred to as 'data-down,' are sent automatically when the corresponding Arrow Button is pressed. These can be found in the corresponding 'Data-down' drop-down sections of the three 'Operations' panels (ACS, EPS, or XBAND). Once the data is received, it is displayed in the [NO DISPLAY IMPLEMENTED YET]. Value-setting commands, referred to as 'data-up,' are accessed in the 'Data-up' drop-down sections of the three 'Operations' panels. Unlike the 'data-down' commands, 'data-up' commands do not send automatically. Instead, the operator must choose which 'data-up' command they would like to make active using the Radio Buttons. Any number of 'data-up' command arguments can be edited simultaneously, but only one 'data-up' command can be selected for transmission at a time. The arguments are not cleared until the program is restarted. Once the transmit functionality is 'unlocked' via the 'Communications Control' panel, the operator can check the currently queued command in the 'Transmit' drop-down section. Pressing 'SEND DATA-UP TRANSMISSION' will confirm and send the queued transmission. Any return value or data received as a result of the 'data-up' transmission will also be displayed in the [NO DISPLAY IMPLEMENTED YET].");
+                    ImGui::TextWrapped("The SPACE-HAUC Ground Station Client is provided to allow an operator to interface with the SPACE-HAUC satellite.");
+
+                    ImGui::TextWrapped("Data-retrieval commands, referred to as 'data-down,' are sent automatically when the corresponding Arrow Button is pressed. These can be found in the corresponding 'Data-down' drop-down sections of the three 'Operations' panels (ACS, EPS, or XBAND). Once the data is received, it is displayed in the [NO DISPLAY IMPLEMENTED YET].");
+
+                    ImGui::TextWrapped("Value-setting commands, referred to as 'data-up,' are accessed in the 'Data-up' drop-down sections of the three 'Operations' panels. Unlike the 'data-down' commands, 'data-up' commands do not send automatically. Instead, the operator must choose which 'data-up' command they would like to make active using the Radio Buttons. Any number of 'data-up' command arguments can be edited simultaneously, but only one 'data-up' command can be selected for transmission at a time. The arguments are not cleared until the program is restarted.");
+
+                    ImGui::TextWrapped("Once the transmit functionality is 'unlocked' via the 'Communications Control' panel, the operator can check the currently queued command in the 'Transmit' drop-down section. Pressing 'SEND DATA-UP TRANSMISSION' will confirm and send the queued transmission. Any return value or data received as a result of the 'data-up' transmission will also be displayed in the [NO DISPLAY IMPLEMENTED YET].");
 
                     ImGui::Unindent();
                     ImGui::EndTabItem();
