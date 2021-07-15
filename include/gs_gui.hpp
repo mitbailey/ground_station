@@ -12,7 +12,7 @@
 #ifndef GS_GUI_HPP
 #define GS_GUI_HPP
 
-#define SEC * 1000000
+#define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
 
@@ -137,7 +137,7 @@ typedef struct __attribute__((packed))
 } cmd_input_t;
 
 /**
- * @brief Holds full integers from the user before we cast them to uint8_t.
+ * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
 typedef struct __attribute__((packed))
@@ -147,7 +147,7 @@ typedef struct __attribute__((packed))
 } cmd_input_holder_t;
 
 /**
- * @brief Command structure that SPACE-HAUC transmits.
+ * @brief Command structure that SPACE-HAUC transmits to Ground.
  * 
  */
 typedef struct __attribute__((packed))
@@ -169,32 +169,8 @@ typedef struct __attribute__((packed))
     bool ready;
 } acs_upd_input_t;
 
-// typedef struct __attribute__((packed))
-// {
-//     uint8_t ct; // count
-//     uint8_t mode; // ACS mode
-//     __fp16 bx;
-//     __fp16 by;
-//     __fp16 bz;
-//     __fp16 wx;
-//     __fp16 wy;
-//     __fp16 wz;
-//     __fp16 sx;
-//     __fp16 sy;
-//     __fp16 sz;
-//     uint16_t vbatt;
-//     uint16_t vboost;
-//     uint16_t cursun;
-//     uint16_t cursys;
-// } acs_uhf_packet;
-
-// typedef struct __attribute__((packed))
-// {
-//     bool ready;
-// } acs_uhf_packet;
-
 /**
- * @brief 
+ * @brief Set of possible data ACS can set.
  * 
  */
 typedef struct __attribute__((packed))
@@ -211,7 +187,7 @@ typedef struct __attribute__((packed))
 } acs_set_data_t;
 
 /**
- * @brief Holds full integers from the user before we cast them to uint8_t.
+ * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
 typedef struct __attribute__((packed))
@@ -224,7 +200,7 @@ typedef struct __attribute__((packed))
 } acs_set_data_holder_t;
 
 /**
- * @brief 
+ * @brief Set of possible booleans ACS can use.
  * 
  */
 typedef struct __attribute__((packed))
@@ -241,7 +217,7 @@ typedef struct __attribute__((packed))
 } acs_get_bool_t;
 
 /**
- * @brief 
+ * @brief Set of possible data EPS can set.
  * 
  */
 typedef struct __attribute__((packed))
@@ -250,7 +226,7 @@ typedef struct __attribute__((packed))
 } eps_set_data_t;
 
 /**
- * @brief 
+ * @brief Set of possible booleans EPS can use.
  * 
  */
 typedef struct __attribute__((packed))
@@ -265,18 +241,13 @@ typedef struct __attribute__((packed))
     bool loop_timer;
 } eps_get_bool_t;
 
-// From line 113 of https://github.com/SPACE-HAUC/shflight/blob/flight_test/src/cmd_parser.c
-// Used for:
-// XBAND_SET_TX
-// XBAND_SET_RX
-// Not used for:       (uses this instead)
-// XBAND_DO_TX          xband_tx_data
-// XBAND_SET_MAX_ON     uint8_t
-// XBAND_SET_TMP_SHDN   uint8_t
-// XBAND_SET_TMP_OP     uint8_t
-// XBAND_SET_LOOP_TIME  uint8_t
 /**
- * @brief 
+ * @brief X-Band data structure.
+ * 
+ * From line 113 of https://github.com/SPACE-HAUC/shflight/blob/flight_test/src/cmd_parser.c
+ * Used for:
+ *  XBAND_SET_TX
+ *  XBAND_SET_RX
  * 
  */
 typedef struct __attribute__((packed))
@@ -291,7 +262,7 @@ typedef struct __attribute__((packed))
 } xband_set_data_t;
 
 /**
- * @brief Holds full integers from the user before we cast them to uint8_t.
+ * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
 typedef struct __attribute__((packed))
@@ -303,6 +274,10 @@ typedef struct __attribute__((packed))
     int phase[16];
 } xband_set_data_holder_t;
 
+/**
+ * @brief Set of possible data XBAND can set.
+ * 
+ */
 typedef struct __attribute__((packed))
 {
     xband_set_data_t RX;
@@ -311,10 +286,11 @@ typedef struct __attribute__((packed))
     xband_set_data_holder_t TXH;
 } xband_set_data_array_t;
 
-// Used for:
-// XBAND_DO_TX          xband_tx_data
 /**
- * @brief 
+ * @brief X-Band TX structure.
+ * 
+ * Used for:
+ *  XBAND_DO_TX
  * 
  */
 typedef struct __attribute__((packed))
@@ -325,7 +301,7 @@ typedef struct __attribute__((packed))
 } xband_tx_data_t;
 
 /**
- * @brief Holds full integers from the user before we cast them to uint8_t.
+ * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
 typedef struct __attribute__((packed))
@@ -333,13 +309,14 @@ typedef struct __attribute__((packed))
     int type;
 } xband_tx_data_holder_t;
 
-// Used for:
-// XBAND_SET_MAX_ON     uint8_t
-// XBAND_SET_TMP_SHDN   uint8_t
-// XBAND_SET_TMP_OP     uint8_t
-// XBAND_SET_LOOP_TIME  uint8_t
 /**
- * @brief 
+ * @brief General data for X-Band.
+ * 
+ * Used for:
+ *  XBAND_SET_MAX_ON
+ *  XBAND_SET_TMP_SHDN
+ *  XBAND_SET_TMP_OP
+ *  XBAND_SET_LOOP_TIME
  * 
  */
 typedef struct __attribute__((packed))
@@ -350,6 +327,10 @@ typedef struct __attribute__((packed))
     uint8_t loop_time;
 } xband_rxtx_data_t;
 
+/**
+ * @brief ImGui full-size integer interface; holds integers until cast. 
+ * 
+ */
 typedef struct __attribute__((packed))
 {
     int max_on;
@@ -359,7 +340,7 @@ typedef struct __attribute__((packed))
 } xband_rxtx_data_holder_t;
 
 /**
- * @brief 
+ * @brief Set of possible booleans XBAND can use.
  * 
  */
 typedef struct __attribute__((packed))
@@ -371,7 +352,7 @@ typedef struct __attribute__((packed))
 } xband_get_bool_t;
 
 /**
- * @brief 
+ * @brief Authentication structure, used to store auth-related information.
  * 
  */
 typedef struct __attribute__((packed))
@@ -382,62 +363,62 @@ typedef struct __attribute__((packed))
 } auth_t;
 
 /**
- * @brief 
+ * @brief Default ImGui callback function.
  * 
  * @param error 
  * @param description 
  */
-void glfw_error_callback(int error, const char* description);
+void glfw_error_callback(int error, const char *description);
 
 /**
- * @brief 
+ * @brief Checks the validity of the user-input password candidate.
  * 
- * @param arg 
- * @return void* 
+ * @param arg The entered password candidate.
+ * @return void* Pointer to the original argument.
  */
-void* gs_gui_check_password(void* arg);
+void *gs_gui_check_password(void *arg);
 
 /**
- * @brief 
+ * @brief Does the actual password checking.
  * 
- * @param message 
+ * @param message Data to be checked.
  * @return unsigned int 
  */
-unsigned int gs_helper(unsigned char *message);
+unsigned int gs_helper(unsigned char *a);
 
 /**
- * @brief 
+ * @brief Handles the asynchronous sending of the ACS update data retrieval command.
  * 
- * @param vp 
- * @return void* 
+ * @param vp Pointer to the acs_upd_input_t structure.
+ * @return void* Pointer to the original argument.
  */
-void* gs_acs_update_data_handler(void* vp);
+void *gs_acs_update_data_handler(void *vp);
 
 /**
- * @brief 
+ * @brief Transmits data to SPACE-HAUC.
  * 
- * @param input 
- * @return int 
+ * @param input The data to transmit.
+ * @return int Positive on success, negative on failure.
  */
 int gs_transmit(cmd_input_t *input);
 
 /**
- * @brief 
+ * @brief Handles the 'Transmit' section of panels, including display of queued data and the send button.
  * 
- * @param auth 
- * @param command_input 
- * @return int 
+ * @param auth Current authentication object.
+ * @param command_input The command to be augmented.
+ * @return int Positive on success, negative on failure.
  */
 int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
 
 /**
- * @brief 
+ * @brief Handles receiving data from SPACE-HAUC.
+ * 
+ * TODO: CURRENTLY UNIMPLEMENTED. Implement, and deploy where needed.
  * 
  * @param output 
  * @return int 
  */
 int gs_receive(cmd_output_t *output);
-
-// int gs_gui_init(GLFWwindow *window);
 
 #endif // GS_GUI_HPP
