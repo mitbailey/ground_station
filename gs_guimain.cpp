@@ -481,7 +481,7 @@ int main(int, char **)
                             }
                             default:
                             {
-                                printf("ACS ID ERROR!\n");
+                                // printf("ACS ID ERROR!\n");
                                 ACS_command_input.data_size = -1;
                                 break;
                             }
@@ -648,7 +648,6 @@ int main(int, char **)
                 {
                     if (allow_transmission)
                     {
-                        ImGui::Text("Send Command [Data-up]");
                         ImGui::Indent();
                         if (auth.access_level > 1)
                         {
@@ -665,13 +664,13 @@ int main(int, char **)
                             }
                             default:
                             {
-                                printf("ERROR!");
+                                // printf("ERROR!");
                                 EPS_command_input.data_size = -1;
                                 break;
                             }
                             }
                             ImGui::Unindent();
-                            
+
                             gs_gui_transmissions_handler(&auth, &EPS_command_input);
                         }
                         else
@@ -954,7 +953,6 @@ int main(int, char **)
                 {
                     if (allow_transmission)
                     {
-                        ImGui::Text("Send Command");
                         ImGui::Indent();
                         if (auth.access_level > 1)
                         {
@@ -1097,78 +1095,89 @@ int main(int, char **)
         {
             if (ImGui::Begin("System Control Panel", &SYS_CTRL_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
             {
-                if (auth.access_level > 2)
+                if (ImGui::CollapsingHeader("Data-down Commands"))
                 {
-                    // NOTE: Since IMGUI only accepts full integers, we have to use a temporary full integer structure to hold them before converting to uint8_t, which is what SPACE-HAUC requires.
-                    ImGui::RadioButton("Version Magic", &SYS_command_input_holder.mod, SYS_VER_MAGIC);
-                    ImGui::RadioButton("Restart Program", &SYS_command_input_holder.mod, SYS_RESTART_PROG);
-                    ImGui::RadioButton("Reboot", &SYS_command_input_holder.mod, SYS_REBOOT);
-                    ImGui::RadioButton("Clean SHBYTES", &SYS_command_input_holder.mod, SYS_CLEAN_SHBYTES);
-
-                    SYS_command_input.mod = (uint8_t)SYS_command_input_holder.mod;
-                }
-                else
-                {
-                    ImGui::Text("ACCESS DENIED");
+                    if (auth.access_level > 0)
+                    {
+                        if (ImGui::ArrowButton("get_version_magic", ImGuiDir_Right))
+                        {
+                            SYS_command_input.mod = SYS_VER_MAGIC;
+                            SYS_command_input.cmd = 0x0;
+                            SYS_command_input.unused = 0x0;
+                            SYS_command_input.data_size = 0x0;
+                            memset(SYS_command_input.data, 0x0, MAX_DATA_SIZE);
+                            gs_transmit(&SYS_command_input);
+                        }
+                        ImGui::SameLine();
+                        ImGui::Text("Get Version Magic");
+                    }
                 }
 
                 ImGui::Separator();
 
-                if (auth.access_level > 2)
+                if (ImGui::CollapsingHeader("Data-up Commands"))
+                {
+                    if (auth.access_level > 2)
+                    {
+                        // NOTE: Since IMGUI only accepts full integers, we have to use a temporary full integer structure to hold them before converting to uint8_t, which is what SPACE-HAUC requires.
+                        ImGui::RadioButton("Restart Program", &SYS_command_input_holder.mod, SYS_RESTART_PROG);
+                        ImGui::RadioButton("Reboot Flight", &SYS_command_input_holder.mod, SYS_REBOOT);
+                        ImGui::RadioButton("Clean SHBYTES", &SYS_command_input_holder.mod, SYS_CLEAN_SHBYTES);
+
+                        SYS_command_input.mod = (uint8_t)SYS_command_input_holder.mod;
+                    }
+                    else
+                    {
+                        ImGui::Text("ACCESS DENIED");
+                    }
+                }
+
+                ImGui::Separator();
+
+                if (ImGui::CollapsingHeader("Transmit"))
                 {
                     if (allow_transmission)
                     {
-                        ImGui::Text("Executable Commands");
                         ImGui::Indent();
                         if (auth.access_level > 2)
                         {
-                            ImGui::Text("Queued Transmission");
-                            ImGui::Text("Module ID:     0x%02x", SYS_command_input.mod);
-                            ImGui::Text("Command ID:    0x%02x", SYS_command_input.cmd);
-                            ImGui::Text("Unused:        0x%08x", SYS_command_input.unused);
-                            ImGui::Text("Data size:     0x%08x", SYS_command_input.data_size);
-
-                            if (ImGui::Button("SEND COMMAND"))
+                            switch (SYS_command_input.mod)
                             {
-                                switch (SYS_command_input.mod)
-                                {
-                                case SYS_VER_MAGIC:
-                                {
-                                    SYS_command_input.cmd = 0x0; // Not really necessary.
-                                    break;
-                                }
-                                case SYS_RESTART_PROG:
-                                {
-                                    SYS_command_input.cmd = SYS_RESTART_FUNC_MAGIC;
-                                    // SYS_command_input.data[0] = SYS_RESTART_FUNC_VAL;
-                                    long sys_restart_func_val_temp = SYS_RESTART_FUNC_VAL;
-                                    memcpy(SYS_command_input.data, &sys_restart_func_val_temp, sizeof(long));
-                                    break;
-                                }
-                                case SYS_REBOOT:
-                                {
-                                    SYS_command_input.cmd = SYS_REBOOT_FUNC_MAGIC;
-                                    // SYS_command_input.data[0] = SYS_REBOOT_FUNC_VAL;
-                                    long sys_reboot_func_val_temp = SYS_REBOOT_FUNC_VAL;
-                                    memcpy(SYS_command_input.data, &sys_reboot_func_val_temp, sizeof(long));
-                                    break;
-                                }
-                                case SYS_CLEAN_SHBYTES:
-                                {
-                                    SYS_command_input.cmd = SYS_CLEAN_SHBYTES;
-                                    break;
-                                }
-                                default:
-                                {
-                                    printf("ERROR!");
-                                    SYS_command_input.data_size = -1;
-                                    break;
-                                }
-                                }
-                                ImGui::Unindent();
-
-                                gs_transmit(&SYS_command_input);
+                            case SYS_RESTART_PROG:
+                            {
+                                SYS_command_input.data_size = 0;
+                                break;
                             }
+                            case SYS_REBOOT:
+                            {
+                                SYS_command_input.data_size = sizeof(uint64_t);
+                                SYS_command_input.cmd = SYS_REBOOT_FUNC_MAGIC;
+                                long temp = SYS_REBOOT_FUNC_VAL;
+                                memcpy(SYS_command_input.data, &temp, SYS_command_input.data_size);
+
+                                SYS_command_input.unused = 0x0;
+
+                                break;
+                            }
+                            case SYS_CLEAN_SHBYTES:
+                            {
+                                SYS_command_input.data_size = 0;
+                                SYS_command_input.cmd = SYS_CLEAN_SHBYTES;
+                                
+                                SYS_command_input.unused = 0x0;
+                                memset(SYS_command_input.data, 0x0, MAX_DATA_SIZE);
+                                break;
+                            }
+                            default:
+                            {
+                                // printf("SYS ERROR!\n");
+                                SYS_command_input.data_size = -1;
+                                break;
+                            }
+                            }
+                            ImGui::Unindent();
+
+                            gs_gui_transmissions_handler(&auth, &SYS_command_input);
                         }
                         else
                         {
@@ -1179,10 +1188,6 @@ int main(int, char **)
                     {
                         ImGui::Text("TRANSMISSIONS LOCKED");
                     }
-                }
-                else
-                {
-                    ImGui::Text("ACCESS DENIED");
                 }
             }
             ImGui::End();
@@ -1221,6 +1226,19 @@ int main(int, char **)
             if (ImGui::Begin("User Manual", &User_Manual, ImGuiWindowFlags_AlwaysVerticalScrollbar /* | ImGuiWindowFlags_HorizontalScrollbar*/))
             {
                 ImGui::BeginTabBar("Help Menu Tab Bar", ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_NoCloseWithMiddleMouseButton);
+                if (ImGui::BeginTabItem("Getting Started"))
+                {
+                    ImGui::TextWrapped("Overview");
+
+                    ImGui::Indent();
+
+                    // TODO: Implement a display to show the data retrieved when a data-down command is sent.
+                    ImGui::TextWrapped("The SPACE-HAUC Ground Station Client is provided to allow an operator to interface with the SPACE-HAUC satellite. Data-retrieval commands, referred to as 'data-down,' are sent automatically when the corresponding Arrow Button is pressed. These can be found in the corresponding 'Data-down' drop-down sections of the three 'Operations' panels (ACS, EPS, or XBAND). Once the data is received, it is displayed in the [NO DISPLAY IMPLEMENTED YET]. Value-setting commands, referred to as 'data-up,' are accessed in the 'Data-up' drop-down sections of the three 'Operations' panels. Unlike the 'data-down' commands, 'data-up' commands do not send automatically. Instead, the operator must choose which 'data-up' command they would like to make active using the Radio Buttons. Any number of 'data-up' command arguments can be edited simultaneously, but only one 'data-up' command can be selected for transmission at a time. The arguments are not cleared until the program is restarted. Once the transmit functionality is 'unlocked' via the 'Communications Control' panel, the operator can check the currently queued command in the 'Transmit' drop-down section. Pressing 'SEND DATA-UP TRANSMISSION' will confirm and send the queued transmission. Any return value or data received as a result of the 'data-up' transmission will also be displayed in the [NO DISPLAY IMPLEMENTED YET].");
+
+                    ImGui::Unindent();
+                    ImGui::EndTabItem();
+                }
+
                 if (ImGui::BeginTabItem("Authentication"))
                 {
                     ImGui::TextWrapped("Window");
@@ -1274,7 +1292,7 @@ int main(int, char **)
                     ImGui::TextWrapped("Commands where data will be sent down from SPACE-HAUC to the Ground Station. Typically, these are commands that poll one or more values.");
                     ImGui::Unindent();
 
-                    ImGui::TextWrapped("Data-down");
+                    ImGui::TextWrapped("Data-up");
                     ImGui::Indent();
                     ImGui::TextWrapped("Commands where data will be sent up from the Ground Station to SPACE-HAUC. Typically, these are commands that will set values on-board the spacecraft.");
                     ImGui::Unindent();
@@ -1285,6 +1303,13 @@ int main(int, char **)
                     ImGui::Unindent();
 
                     ImGui::Unindent();
+
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Copyright"))
+                {
+                    ImGui::TextWrapped("Mit Bailey Copyright (c) 2021");
 
                     ImGui::EndTabItem();
                 }
