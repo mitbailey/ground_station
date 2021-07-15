@@ -729,8 +729,8 @@ int main(int, char **)
                     {
                         ImGui::Indent();
 
-                        if (ImGui::CollapsingHeader("Set Transmit"))
-                        {
+                        // if (ImGui::CollapsingHeader("Set Transmit"))
+                        // {
                             ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
                             ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
                             ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
@@ -795,10 +795,11 @@ int main(int, char **)
                                 }
                                 xband_set_data.TX.phase[i] = (short)xband_set_data.TXH.phase[i];
                             }
-                        }
+                        // }
+                        ImGui::Separator();
 
-                        if (ImGui::CollapsingHeader("Set Receive"))
-                        {
+                        // if (ImGui::CollapsingHeader("Set Receive"))
+                        // {
                             ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
                             ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
                             ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
@@ -863,7 +864,8 @@ int main(int, char **)
                                 }
                                 xband_set_data.RX.phase[i] = (short)xband_set_data.RXH.phase[i];
                             }
-                        }
+                        // }
+                        ImGui::Separator();
 
                         ImGui::RadioButton("Set MAX ON", &XBAND_command, XBAND_SET_MAX_ON);
                         ImGui::InputInt("Max On", &xband_rxtx_data_holder.max_on);
