@@ -170,9 +170,22 @@ int gs_transmit(cmd_input_t *input)
         return;
     }
 
+    // Create a client_frame_t object and stuff our data into it.
+    client_frame_t tx_frame[1];
+    memset(tx_frame, 0x0, SIZE_FRAME_PAYLOAD);
+    memcpy(tx_frame->payload, input, SIZE_FRAME_PAYLOAD);
+    tx_frame->guid = CLIENT_FRAME_GUID;
+    tx_frame->crc1 = crc16(tx_frame->payload, SIZE_FRAME_PAYLOAD);
+    tx_frame->crc2 = tx_frame->crc1;
+    tx_frame->termination = 0xAAAA;
+
     // TODO: Change to actually transmitting.
     printf("Pretending to transmit the following:\n");
 
+    printf(FRAME_COLOR "____FRAME HEADER____\n" RESET_COLOR);
+    printf("test" "guid --------- 0x%04x\n", tx_frame->guid);
+    printf("crc1 --------- 0x%04x\n", tx_frame->crc1);
+    printf(PAYLOAD_COLOR "____PAYLOAD_________\n" RESET_COLOR);
     printf("mod ---------- 0x%02x\n", input->mod);
     printf("cmd ---------- 0x%02x\n", input->cmd);
     printf("unused ------- 0x%02x\n", input->unused);
@@ -183,7 +196,12 @@ int gs_transmit(cmd_input_t *input)
         printf("0x%02x ", input->data[i]);
     }
     printf("(END)\n");
+    printf(FRAME_COLOR "____FRAME FOOTER____\n" RESET_COLOR);
+    printf("crc2 --------- 0x%04x\n", tx_frame->crc2);
+    printf("term. -------- 0x%04x\n", tx_frame->termination);
+    printf("\n");
 
+    printf("____PAYLOAD AS CHAR____\n");
     printf("mod ---------- %d\n", input->mod);
     printf("cmd ---------- %d\n", input->cmd);
     printf("unused ------- %d\n", input->unused);
@@ -201,6 +219,7 @@ int gs_transmit(cmd_input_t *input)
         }
     }
     printf("(END)\n");
+    printf("\n");
 
     return 1;
 }

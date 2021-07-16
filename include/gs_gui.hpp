@@ -15,6 +15,19 @@
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
+#define SIZE_FRAME_PAYLOAD 56
+#define SIZE_FRAME 64
+#define CLIENT_FRAME_GUID 0x1A1C
+
+#ifndef dbprintlf
+#define dbprintlf(format, ...) \
+    fprintf(stderr, "[%s | %s:%d] " format "\x1b[0m\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+    fflush(stderr);
+#endif // dbprintlf
+
+#define FRAME_COLOR "\x1b[91m"
+#define PAYLOAD_COLOR "\x1b[94m"
+#define RESET_COLOR "\x1b[0m"
 
 /**
  * @brief Numeric identifiers for determining what module a command is for.
@@ -122,6 +135,25 @@ enum XBAND_FUNC_ID
     XBAND_GET_LOOP_TIME,
     XBAND_SET_LOOP_TIME,
 };
+
+// class ClientFrame
+// {
+// public:
+//     ClientFrame()
+//     {
+//         memset(frame, 0x0, sizeof(client_frame_t));
+//     }
+//     client_frame_t frame[1];
+// };
+
+typedef struct __attribute__((packed))
+{
+    uint16_t guid;
+    uint16_t crc1;
+    unsigned char payload[56]; // cmd_input_t or cmd_output_t goes here.
+    uint16_t crc2;
+    uint16_t termination;
+} client_frame_t;
 
 /**
  * @brief Command structure that SPACE-HAUC receives.
@@ -420,5 +452,51 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
  * @return int 
  */
 int gs_receive(cmd_output_t *output);
+
+/**
+ * @brief Generates a 16-bit CRC for the given data.
+ * 
+ * This is the CCITT CRC 16 polynomial X^16  + X^12  + X^5  + 1.
+ * This works out to be 0x1021, but the way the algorithm works
+ * lets us use 0x8408 (the reverse of the bit pattern).  The high
+ * bit is always assumed to be set, thus we only use 16 bits to
+ * represent the 17 bit value.
+ * 
+ * This is the same crc16 function used on-board SPACE-HAUC (line 116):
+ * https://github.com/SPACE-HAUC/uhf_modem/blob/aa361d13cf1cef9b295a6cd5e2d51c7ae6d59637/uhf_modem.h
+ * 
+ * @param data_p 
+ * @param length 
+ * @return uint16_t 
+ */
+static inline uint16_t crc16(unsigned char *data_p, uint16_t length)
+{
+#define CRC16_POLY 0x8408
+    unsigned char i;
+    unsigned int data;
+    unsigned int crc = 0xffff;
+
+    if (length == 0)
+        return (~crc);
+
+    do
+    {
+        for (i = 0, data = (unsigned int)0xff & *data_p++;
+             i < 8;
+             i++, data >>= 1)
+        {
+            if ((crc & 0x0001) ^ (data & 0x0001))
+                crc = (crc >> 1) ^ CRC16_POLY;
+            else
+                crc >>= 1;
+        }
+    } while (--length);
+
+    crc = ~crc;
+    data = crc;
+    crc = (crc << 8) | (data >> 8 & 0xff);
+
+    return (crc);
+}
 
 #endif // GS_GUI_HPP

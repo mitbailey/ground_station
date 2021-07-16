@@ -76,11 +76,6 @@ int main(int, char **)
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // // Debug window (default).
-        // {
-        //     ImGui::Text("%.1f FPS %.1f", ImGui::GetIO().Framerate, ImGui::GetTime());
-        // }
-
         // Level 0: Basic access, can retrieve data from acs_upd.
         // Level 1: Team Member access, can execute Data-down commands.
         // Level 2: Priority access, can set some values.
@@ -1031,6 +1026,10 @@ int main(int, char **)
                                 // xband_rxtx_data is just a convenient structure for collecting user input
                                 XBAND_command_input.data[0] = (uint8_t)xband_rxtx_data.tmp_op;
                                 break;
+                            }
+                            default:
+                            {
+                                XBAND_command_input.data_size = -1;
                             }
                             }
 
