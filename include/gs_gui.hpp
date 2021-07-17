@@ -20,7 +20,7 @@
 #define CLIENT_FRAME_GUID 0x1A1C
 
 #ifndef dbprintlf
-#define dbprintlf(format, ...) \
+#define dbprintlf(format, ...)                                                                        \
     fprintf(stderr, "[%s | %s:%d] " format "\x1b[0m\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
     fflush(stderr);
 #endif // dbprintlf
@@ -136,16 +136,6 @@ enum XBAND_FUNC_ID
     XBAND_SET_LOOP_TIME,
 };
 
-// class ClientFrame
-// {
-// public:
-//     ClientFrame()
-//     {
-//         memset(frame, 0x0, sizeof(client_frame_t));
-//     }
-//     client_frame_t frame[1];
-// };
-
 typedef struct __attribute__((packed))
 {
     uint16_t guid;
@@ -200,6 +190,42 @@ typedef struct __attribute__((packed))
     cmd_input_t cmd_input[1];
     bool ready;
 } acs_upd_input_t;
+
+/**
+ * @brief The ACS update data format sent from SPACE-HAUC to Ground.
+ * 
+ *  else if (module_id == ACS_UPD_ID)
+ *  {
+ *      acs_upd.vbatt = eps_vbatt;
+ *      acs_upd.vboost = eps_mvboost;
+ *      acs_upd.cursun = eps_cursun;
+ *      acs_upd.cursys = eps_cursys;
+ *      output->retval = 1;
+ *      output->data_size = sizeof(acs_uhf_packet);
+ *      memcpy(output->data, &acs_upd, output->data_size);
+ *  }
+ * 
+ * @return typedef struct 
+ */
+typedef struct __attribute__((packed))
+{
+    uint8_t ct;         // Set in acs.c.
+    uint8_t mode;       // Set in acs.c.
+    // __fp16 bx;       // Set in acs.c.
+    // __fp16 by;       // Set in acs.c.
+    // __fp16 bz;       // Set in acs.c.
+    // __fp16 wx;       // Set in acs.c.
+    // __fp16 wy;       // Set in acs.c.
+    // __fp16 wz;       // Set in acs.c.
+    // __fp16 sx;       // Set in acs.c.
+    // __fp16 sy;       // Set in acs.c.
+    // __fp16 sz;       // Set in acs.c.
+    unsigned char fp16_placeholder[18];
+    uint16_t vbatt;     // Set in cmd_parser.
+    uint16_t vboost;    // Set in cmd_parser. 
+    uint16_t cursun;    // Set in cmd_parser.
+    uint16_t cursys;    // Set in cmd_parser.
+} acs_upd_output_t;
 
 /**
  * @brief Set of possible data ACS can set.
@@ -394,6 +420,40 @@ typedef struct __attribute__((packed))
     char password[64];
 } auth_t;
 
+/// From https://github.com/SPACE-HAUC/mtq_tester/blob/master/guimain.cpp
+class ScrollBuf
+{
+public:
+    ScrollBuf();
+    ScrollBuf(int max_size);
+    
+    void AddPoint(float x, float y);
+    void Erase();
+    float Max();
+    float Min();
+
+    int max_sz;
+    int ofst;
+    ImVector<ImVec2> data;
+};
+/// ///
+
+// TODO: Overwrite old data regardless of ready status, but do not display data which is stale, ie isnt ready.
+class ACSDisplayData
+{
+public:
+    ACSDisplayData();
+
+    void filled();
+    void emptied();
+    bool status();
+
+    acs_upd_output_t data[1];
+private:
+    // This is so that we don't display the same data multiple times.
+    bool ready;
+};
+
 /**
  * @brief Default ImGui callback function.
  * 
@@ -448,10 +508,11 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
  * 
  * TODO: CURRENTLY UNIMPLEMENTED. Implement, and deploy where needed.
  * 
- * @param output 
+ * @param output SPACE-HAUC's down-sent data, wrapped in a server-to-client frame.
+ * @param acs_display_data Pointer to the class object holding data for the ACS display.
  * @return int 
  */
-int gs_receive(cmd_output_t *output);
+int gs_receive(client_frame_t *output, ACSDisplayData* acs_display_data);
 
 /**
  * @brief Generates a 16-bit CRC for the given data.

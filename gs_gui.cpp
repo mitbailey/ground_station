@@ -23,6 +23,85 @@ void glfw_error_callback(int error, const char *description)
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
+/// ScrollBuf Class
+ScrollBuf::ScrollBuf()
+{
+    max_sz = 600;
+    ofst = 0;
+    data.reserve(max_sz);
+}
+
+ScrollBuf::ScrollBuf(int max_size)
+{
+    max_sz = max_size;
+    ofst = 0;
+    data.reserve(max_sz);
+}
+
+void ScrollBuf::AddPoint(float x, float y)
+{
+    if (data.size() < max_sz)
+        data.push_back(ImVec2(x, y));
+    else
+    {
+        data[ofst] = ImVec2(x, y);
+        ofst = (ofst + 1) % max_sz;
+    }
+}
+
+void ScrollBuf::Erase()
+{
+    if (data.size() > 0)
+    {
+        data.shrink(0);
+        ofst = 0;
+    }
+}
+
+float ScrollBuf::Max()
+{
+    float max = data[0].y;
+    for (int i = 0; i < data.size(); i++)
+        if (data[i].y > max)
+            max = data[i].y;
+    return max;
+}
+
+float ScrollBuf::Min()
+{
+    float min = data[0].y;
+    for (int i = 0; i < data.size(); i++)
+        if (data[i].y < min)
+            min = data[i].y;
+    return min;
+}
+
+/// ///
+
+/// ACSDisplayData Class
+ACSDisplayData::ACSDisplayData()
+{
+    memset(data, 0x0, sizeof(acs_upd_output_t));
+    ready = false;
+}
+
+void ACSDisplayData::emptied()
+{
+    ready = false;
+}
+
+void ACSDisplayData::filled()
+{
+    ready = true;
+}
+
+bool ACSDisplayData::status()
+{
+    return ready;
+}
+
+/// ///
+
 void *gs_gui_check_password(void *auth)
 {
     auth_t *lauth = (auth_t *)auth;
@@ -183,7 +262,9 @@ int gs_transmit(cmd_input_t *input)
     printf("Pretending to transmit the following:\n");
 
     printf(FRAME_COLOR "____FRAME HEADER____\n" RESET_COLOR);
-    printf("test" "guid --------- 0x%04x\n", tx_frame->guid);
+    printf("test"
+           "guid --------- 0x%04x\n",
+           tx_frame->guid);
     printf("crc1 --------- 0x%04x\n", tx_frame->crc1);
     printf(PAYLOAD_COLOR "____PAYLOAD_________\n" RESET_COLOR);
     printf("mod ---------- 0x%02x\n", input->mod);
@@ -254,115 +335,41 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input)
     return 1;
 }
 
-int gs_receive(cmd_output_t *output)
+// This needs to act similarly to the cmd_parser.
+// TODO: If the data is from ACS update, be sure to set the values in the ACS Update data class!
+int gs_receive(client_frame_t *output, ACSDisplayData* acs_display_data)
 {
+    if (output->guid != CLIENT_FRAME_GUID)
+    {
+        printf("GUID Error: 0x%04x\n", output->guid);
+        return -1;
+    }
+    else if (output->crc1 != output->crc2)
+    {
+        printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, output->crc2);
+        return -2;
+    }
+    else if (output->crc1 != crc16(output->payload, SIZE_FRAME_PAYLOAD))
+    {
+        printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, crc16(output->payload, SIZE_FRAME_PAYLOAD));
+        return -3;
+    }
+
+    cmd_output_t *payload = (cmd_output_t *)output->payload;
+
+    // All data received goes one of two places: the ACS Update Data Display window, or the plaintext trash heap window.
+    if (payload->mod == ACS_UPD_ID)
+    {
+        // Set the data in acs_display_data to the data in output->payload.
+        memcpy(acs_display_data->data, payload->data, SIZE_FRAME_PAYLOAD);
+        
+        // Set the ready flag.
+        acs_display_data->emptied();
+    }
+    else
+    {
+        // TODO: Handle all other data by printing it out into a single window. This should probably be handled with another local-global like acs_display_data.
+    }
+
+    return 1;
 }
-
-// // TODO: Change each printout to actually send data to TX device.
-// void* gs_acs_data_down_handler(void* vp/*acs_get_bool_t *acs_get_bool*/)
-// {
-//     acs_get_bool_t *acs = (acs_get_bool_t *) vp;
-
-//     if (acs->moi)
-//     {
-//         printf("Pretending to poll for acs moi.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_MOI, 0x0, 0x0);
-//     }
-//     if (acs->imoi)
-//     {
-//         printf("Pretending to poll for acs imoi.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_IMOI, 0x0, 0x0);
-//     }
-//     if (acs->dipole)
-//     {
-//         printf("Pretending to poll for acs dipole.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_DIPOLE, 0x0, 0x0);
-//     }
-//     if (acs->tstep)
-//     {
-//         printf("Pretending to poll for acs tstep.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_TSTEP, 0x0, 0x0);
-//     }
-//     if (acs->measure_time)
-//     {
-//         printf("Pretending to poll for acs measure_time.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_MEASURE_TIME, 0x0, 0x0);
-//     }
-//     if (acs->leeway)
-//     {
-//         printf("Pretending to poll for acs leeway.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_LEEWAY, 0x0, 0x0);
-//     }
-//     if (acs->wtarget)
-//     {
-//         printf("Pretending to poll for acs wtarget.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_WTARGET, 0x0, 0x0);
-//     }
-//     if (acs->detumble_angle)
-//     {
-//         printf("Pretending to poll for acs detumble_angle.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_DETUMBLE_ANG, 0x0, 0x0);
-//     }
-//     if (acs->sun_angle)
-//     {
-//         printf("Pretending to poll for acs sun_angle.\n");
-//         printf("mod: 0x%02x, cmd: 0x%02x, unused: 0x%02x, data_size: 0x%02x\n", ACS_ID, ACS_GET_SUN_ANGLE, 0x0, 0x0);
-//     }
-
-//     return vp;
-// }
-
-// unsigned int crc32b(unsigned char *message) {
-//    int i, j;
-//    unsigned int byte, crc, mask;
-
-//    i = 0;
-//    crc = 0xFFFFFFFF;
-//    while (message[i] != 0) {
-//       byte = message[i];            // Get next byte.
-//       crc = crc ^ byte;
-//       for (j = 7; j >= 0; j--) {    // Do eight times.
-//          mask = -(crc & 1);
-//          crc = (crc >> 1) ^ (0xEDB88320 & mask);
-//       }
-//       i = i + 1;
-//    }
-//    return ~crc;
-// }
-
-// int gs_gui_init(GLFWwindow *window)
-// {
-//     // Setup the window.
-//     glfwSetErrorCallback(glfw_error_callback);
-//     if (!glfwInit())
-//     {
-//         return -1;
-//     }
-
-//     window = glfwCreateWindow(1280, 720, "SPACE-HAUC Ground Station", NULL, NULL);
-
-//     if (window == NULL)
-//     {
-//         return -1;
-//     }
-
-//     glfwMakeContextCurrent(window);
-//     // glfwSwapInterval(1); // Enables V-Sync.
-
-//     // Setup Dear ImGui context.
-//     IMGUI_CHECKVERSION();
-//     ImGui::CreateContext();
-//     ImGuiIO &io = ImGui::GetIO();
-//     (void)io;
-
-//     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enables keyboard navigation.
-
-//     // Setup Dear ImGui style.
-//     ImGui::StyleColorsDark();
-
-//     // Setup platform / renderer backends.
-//     ImGui_ImplGlfw_InitForOpenGL(window, true);
-//     ImGui_ImplOpenGL2_Init();
-
-//     return 1;
-// }

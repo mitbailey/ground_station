@@ -60,6 +60,7 @@ int main(int, char **)
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ACSDisplayData* acs_display_data = new ACSDisplayData();
 
     // Used by the Authentication Control Panel
     // char password_buffer[64];
@@ -726,139 +727,139 @@ int main(int, char **)
 
                         // if (ImGui::CollapsingHeader("Set Transmit"))
                         // {
-                            ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
-                            ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
-                            ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
-                            ImGui::InputInt("TX Samp", &xband_set_data.TXH.samp);
-                            if (xband_set_data.TXH.samp > 0xFFFF)
-                            {
-                                xband_set_data.TXH.samp = 0xFFFF;
-                            }
-                            else if (xband_set_data.TXH.samp < 0)
-                            {
-                                xband_set_data.TXH.samp = 0;
-                            }
-                            xband_set_data.TX.samp = (uint16_t)xband_set_data.TXH.samp;
+                        ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
+                        ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
+                        ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
+                        ImGui::InputInt("TX Samp", &xband_set_data.TXH.samp);
+                        if (xband_set_data.TXH.samp > 0xFFFF)
+                        {
+                            xband_set_data.TXH.samp = 0xFFFF;
+                        }
+                        else if (xband_set_data.TXH.samp < 0)
+                        {
+                            xband_set_data.TXH.samp = 0;
+                        }
+                        xband_set_data.TX.samp = (uint16_t)xband_set_data.TXH.samp;
 
-                            ImGui::InputInt("TX Phy Gain", &xband_set_data.TXH.phy_gain);
-                            if (xband_set_data.TXH.phy_gain > 0xFF)
-                            {
-                                xband_set_data.TXH.phy_gain = 0xFF;
-                            }
-                            else if (xband_set_data.TXH.phy_gain < 0)
-                            {
-                                xband_set_data.TXH.phy_gain = 0;
-                            }
-                            xband_set_data.TX.phy_gain = (uint8_t)xband_set_data.TXH.phy_gain;
+                        ImGui::InputInt("TX Phy Gain", &xband_set_data.TXH.phy_gain);
+                        if (xband_set_data.TXH.phy_gain > 0xFF)
+                        {
+                            xband_set_data.TXH.phy_gain = 0xFF;
+                        }
+                        else if (xband_set_data.TXH.phy_gain < 0)
+                        {
+                            xband_set_data.TXH.phy_gain = 0;
+                        }
+                        xband_set_data.TX.phy_gain = (uint8_t)xband_set_data.TXH.phy_gain;
 
-                            ImGui::InputInt("TX Adar Gain", &xband_set_data.TXH.adar_gain);
-                            if (xband_set_data.TXH.adar_gain > 0xFF)
-                            {
-                                xband_set_data.TXH.adar_gain = 0xFF;
-                            }
-                            else if (xband_set_data.TXH.adar_gain < 0)
-                            {
-                                xband_set_data.TXH.adar_gain = 0;
-                            }
-                            xband_set_data.TX.adar_gain = (uint8_t)xband_set_data.TXH.adar_gain;
+                        ImGui::InputInt("TX Adar Gain", &xband_set_data.TXH.adar_gain);
+                        if (xband_set_data.TXH.adar_gain > 0xFF)
+                        {
+                            xband_set_data.TXH.adar_gain = 0xFF;
+                        }
+                        else if (xband_set_data.TXH.adar_gain < 0)
+                        {
+                            xband_set_data.TXH.adar_gain = 0;
+                        }
+                        xband_set_data.TX.adar_gain = (uint8_t)xband_set_data.TXH.adar_gain;
 
-                            if (ImGui::BeginMenu("TX Filter Selection"))
-                            {
-                                ImGui::RadioButton("m_6144.ftr", &xband_set_data.TXH.ftr, 0);
-                                ImGui::RadioButton("m_3072.ftr", &xband_set_data.TXH.ftr, 1);
-                                ImGui::RadioButton("m_1000.ftr", &xband_set_data.TXH.ftr, 2);
-                                ImGui::RadioButton("m_lte5.ftr", &xband_set_data.TXH.ftr, 3);
-                                ImGui::RadioButton("m_lte1.ftr", &xband_set_data.TXH.ftr, 4);
+                        if (ImGui::BeginMenu("TX Filter Selection"))
+                        {
+                            ImGui::RadioButton("m_6144.ftr", &xband_set_data.TXH.ftr, 0);
+                            ImGui::RadioButton("m_3072.ftr", &xband_set_data.TXH.ftr, 1);
+                            ImGui::RadioButton("m_1000.ftr", &xband_set_data.TXH.ftr, 2);
+                            ImGui::RadioButton("m_lte5.ftr", &xband_set_data.TXH.ftr, 3);
+                            ImGui::RadioButton("m_lte1.ftr", &xband_set_data.TXH.ftr, 4);
 
-                                xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
+                            xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
 
-                                ImGui::EndMenu();
-                            }
-                            ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0]);
-                            ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4]);
-                            ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8]);
-                            ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_set_data.TXH.phase[12]);
-                            for (int i = 0; i < 16; i++)
+                            ImGui::EndMenu();
+                        }
+                        ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0]);
+                        ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4]);
+                        ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8]);
+                        ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_set_data.TXH.phase[12]);
+                        for (int i = 0; i < 16; i++)
+                        {
+                            if (xband_set_data.TXH.phase[i] > 32767)
                             {
-                                if (xband_set_data.TXH.phase[i] > 32767)
-                                {
-                                    xband_set_data.TXH.phase[i] = 32767;
-                                }
-                                else if (xband_set_data.TXH.phase[i] < -32768)
-                                {
-                                    xband_set_data.TXH.phase[i] = -32768;
-                                }
-                                xband_set_data.TX.phase[i] = (short)xband_set_data.TXH.phase[i];
+                                xband_set_data.TXH.phase[i] = 32767;
                             }
+                            else if (xband_set_data.TXH.phase[i] < -32768)
+                            {
+                                xband_set_data.TXH.phase[i] = -32768;
+                            }
+                            xband_set_data.TX.phase[i] = (short)xband_set_data.TXH.phase[i];
+                        }
                         // }
                         ImGui::Separator();
 
                         // if (ImGui::CollapsingHeader("Set Receive"))
                         // {
-                            ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
-                            ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
-                            ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
-                            ImGui::InputInt("RX Samp", &xband_set_data.RXH.samp);
-                            if (xband_set_data.RXH.samp > 0xFFFF)
-                            {
-                                xband_set_data.RXH.samp = 0xFFFF;
-                            }
-                            else if (xband_set_data.RXH.samp < 0)
-                            {
-                                xband_set_data.RXH.samp = 0;
-                            }
-                            xband_set_data.RX.samp = (uint16_t)xband_set_data.RXH.samp;
+                        ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
+                        ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
+                        ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
+                        ImGui::InputInt("RX Samp", &xband_set_data.RXH.samp);
+                        if (xband_set_data.RXH.samp > 0xFFFF)
+                        {
+                            xband_set_data.RXH.samp = 0xFFFF;
+                        }
+                        else if (xband_set_data.RXH.samp < 0)
+                        {
+                            xband_set_data.RXH.samp = 0;
+                        }
+                        xband_set_data.RX.samp = (uint16_t)xband_set_data.RXH.samp;
 
-                            ImGui::InputInt("RX Phy Gain", &xband_set_data.RXH.phy_gain);
-                            if (xband_set_data.RXH.phy_gain > 0xFF)
-                            {
-                                xband_set_data.RXH.phy_gain = 0xFF;
-                            }
-                            else if (xband_set_data.RXH.phy_gain < 0)
-                            {
-                                xband_set_data.RXH.phy_gain = 0;
-                            }
-                            xband_set_data.RX.phy_gain = (uint8_t)xband_set_data.RXH.phy_gain;
+                        ImGui::InputInt("RX Phy Gain", &xband_set_data.RXH.phy_gain);
+                        if (xband_set_data.RXH.phy_gain > 0xFF)
+                        {
+                            xband_set_data.RXH.phy_gain = 0xFF;
+                        }
+                        else if (xband_set_data.RXH.phy_gain < 0)
+                        {
+                            xband_set_data.RXH.phy_gain = 0;
+                        }
+                        xband_set_data.RX.phy_gain = (uint8_t)xband_set_data.RXH.phy_gain;
 
-                            ImGui::InputInt("RX Adar Gain", &xband_set_data.RXH.adar_gain);
-                            if (xband_set_data.RXH.adar_gain > 0xFF)
-                            {
-                                xband_set_data.RXH.adar_gain = 0xFF;
-                            }
-                            else if (xband_set_data.RXH.adar_gain < 0)
-                            {
-                                xband_set_data.RXH.adar_gain = 0;
-                            }
-                            xband_set_data.RX.adar_gain = (uint8_t)xband_set_data.RXH.adar_gain;
+                        ImGui::InputInt("RX Adar Gain", &xband_set_data.RXH.adar_gain);
+                        if (xband_set_data.RXH.adar_gain > 0xFF)
+                        {
+                            xband_set_data.RXH.adar_gain = 0xFF;
+                        }
+                        else if (xband_set_data.RXH.adar_gain < 0)
+                        {
+                            xband_set_data.RXH.adar_gain = 0;
+                        }
+                        xband_set_data.RX.adar_gain = (uint8_t)xband_set_data.RXH.adar_gain;
 
-                            if (ImGui::BeginMenu("RX Filter Selection"))
-                            {
-                                ImGui::RadioButton("m_6144.ftr", &xband_set_data.RXH.ftr, 0);
-                                ImGui::RadioButton("m_3072.ftr", &xband_set_data.RXH.ftr, 1);
-                                ImGui::RadioButton("m_1000.ftr", &xband_set_data.RXH.ftr, 2);
-                                ImGui::RadioButton("m_lte5.ftr", &xband_set_data.RXH.ftr, 3);
-                                ImGui::RadioButton("m_lte1.ftr", &xband_set_data.RXH.ftr, 4);
+                        if (ImGui::BeginMenu("RX Filter Selection"))
+                        {
+                            ImGui::RadioButton("m_6144.ftr", &xband_set_data.RXH.ftr, 0);
+                            ImGui::RadioButton("m_3072.ftr", &xband_set_data.RXH.ftr, 1);
+                            ImGui::RadioButton("m_1000.ftr", &xband_set_data.RXH.ftr, 2);
+                            ImGui::RadioButton("m_lte5.ftr", &xband_set_data.RXH.ftr, 3);
+                            ImGui::RadioButton("m_lte1.ftr", &xband_set_data.RXH.ftr, 4);
 
-                                xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
+                            xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
 
-                                ImGui::EndMenu();
-                            }
-                            ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0]);
-                            ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4]);
-                            ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8]);
-                            ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_set_data.RXH.phase[12]);
-                            for (int i = 0; i < 16; i++)
+                            ImGui::EndMenu();
+                        }
+                        ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0]);
+                        ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4]);
+                        ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8]);
+                        ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_set_data.RXH.phase[12]);
+                        for (int i = 0; i < 16; i++)
+                        {
+                            if (xband_set_data.RXH.phase[i] > 32767)
                             {
-                                if (xband_set_data.RXH.phase[i] > 32767)
-                                {
-                                    xband_set_data.RXH.phase[i] = 32767;
-                                }
-                                else if (xband_set_data.RXH.phase[i] < -32768)
-                                {
-                                    xband_set_data.RXH.phase[i] = -32768;
-                                }
-                                xband_set_data.RX.phase[i] = (short)xband_set_data.RXH.phase[i];
+                                xband_set_data.RXH.phase[i] = 32767;
                             }
+                            else if (xband_set_data.RXH.phase[i] < -32768)
+                            {
+                                xband_set_data.RXH.phase[i] = -32768;
+                            }
+                            xband_set_data.RX.phase[i] = (short)xband_set_data.RXH.phase[i];
+                        }
                         // }
                         ImGui::Separator();
 
@@ -1206,17 +1207,50 @@ int main(int, char **)
             ImGui::End();
         }
 
-        static bool COMMS_control_panel = true;
+        static bool RX_display = false;
 
-        if (COMMS_control_panel)
+        if (RX_display)
         {
-            if (ImGui::Begin("Communications Control Panel", &COMMS_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar /*| ImGuiWindowFlags_MenuBar*/))
+            if (ImGui::Begin("Plaintext RX Display"), &RX_display)
+            {
+
+            }
+            ImGui::End();
+        }
+
+        static bool ACS_UPD_display = false;
+
+        if (ACS_UPD_display)
+        {
+            if (ImGui::Begin("ACS Update Display"), &ACS_UPD_display)
+            {
+                // TODO: Implement some method of displaying the ACS update data. Probably a good idea to make a locally-global class with data that this window displays. The data is set by gs_receive.
+                // NOTE: This window must be opened independent of ACS's automated data retrieval option.
+
+                if (acs_display_data->status())
+                {
+                    // TODO: Display the data.
+                }
+            }   
+            ImGui::End();
+        }
+
+        static bool DISP_control_panel = true;
+
+        if (DISP_control_panel)
+        {
+            if (ImGui::Begin("Displays Control Panel", &DISP_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar /*| ImGuiWindowFlags_MenuBar*/))
             {
                 ImGui::Checkbox("Attitude Control System", &ACS_window); // Contains ACS and ACS_UPD
                 ImGui::Checkbox("Electrical Power Supply", &EPS_window);
                 ImGui::Checkbox("X-Band", &XBAND_window);
                 ImGui::Checkbox("Software Updater", &SW_UPD_window);
                 ImGui::Checkbox("System Control", &SYS_CTRL_window); // Contains SYS_VER, SYS_REBOOT, SYS_CLEAN_SHBYTES
+
+                ImGui::Separator();
+
+                ImGui::Checkbox("Plaintext RX Display", &RX_display);
+                ImGui::Checkbox("ACS Update Display", &ACS_UPD_display);
 
                 ImGui::Separator();
 
@@ -1314,17 +1348,23 @@ int main(int, char **)
                     ImGui::EndTabItem();
                 }
 
-                if (ImGui::BeginTabItem("Communications"))
+                if (ImGui::BeginTabItem("Displays Control"))
                 {
                     ImGui::TextWrapped("Window");
                     ImGui::Indent();
 
-                    ImGui::TextWrapped("The Communications Control window is unique, as it is the only window which allows for toggling the visibility of other windows. The Communications Control window itself can be toggled by the 'Communications' button on the Menu Bar at the top of the screen.");
+                    ImGui::TextWrapped("The Displays Control window is unique, as it is the only window which allows for toggling the visibility of other windows. The Displays Control window itself can be toggled by the 'Displays Control' button on the Menu Bar at the top of the screen.");
 
-                    ImGui::TextWrapped("The checkboxes each enable or disable the visibility of their respective windows. From top to bottom, the checkboxes control the visibility of the Attitude Control System, Electrical Power Supply, X-Band, Software Updater, and System Control windows. Toggling the visibility has no effect on the data or actions being performed, except that it disallows any further user interaction with that window's elements (until it is made visible again, of course).");
+                    ImGui::TextWrapped("The checkboxes each enable or disable the visibility of their respective windows. From top to bottom, the first section of checkboxes control the visibility of the Attitude Control System, Electrical Power Supply, X-Band, Software Updater, and System Control input windows. The second section of checkboxes controls the visibility of data output windows, which display the data the Client receives from SPACE-HAUC. Toggling the visibility has no effect on the data or actions being performed, except that it disallows any further user interaction with that window's elements (until it is made visible again, of course).");
 
                     ImGui::TextWrapped("Also in this window is the 'Enable Transmissions' checkbox. This acts as a safety which disallows all data-up transmissions when it is unchecked. This should remain unchecked at ALL TIMES unless one or more data-up transmissions are being made.");
 
+                    ImGui::Unindent();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Communications"))
+                {
                     ImGui::Unindent();
                     ImGui::Separator();
 
@@ -1414,9 +1454,9 @@ int main(int, char **)
             {
                 AUTH_control_panel = !AUTH_control_panel;
             }
-            if (ImGui::Button("Communications"))
+            if (ImGui::Button("Displays Control"))
             {
-                COMMS_control_panel = !COMMS_control_panel;
+                DISP_control_panel = !DISP_control_panel;
             }
             if (ImGui::Button("User Manual"))
             {
