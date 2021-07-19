@@ -10,10 +10,13 @@
  */
 
 // TODO: Add receive functionality where necessary.
+// TODO: See comic-mon for server send / receive functionality.
+// TODO: Implement __fp16 in acs_upd_output_t.
 
 #include "imgui/imgui.h"
 #include "backend/imgui_impl_glfw.h"
 #include "backend/imgui_impl_opengl2.h"
+#include "implot/implot.h"
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 #include "gs_gui.hpp"
@@ -43,6 +46,7 @@ int main(int, char **)
     // Setup Dear ImGui context.
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
 
@@ -134,14 +138,14 @@ int main(int, char **)
         }
 
         static bool allow_transmission = false;
-        static bool allow_receiving = true;
+        // static bool allow_receiving = true;
 
         static bool ACS_window = false;
         static int ACS_command = ACS_INVALID_ID;
         static cmd_input_t ACS_command_input = {.mod = INVALID_ID, .cmd = ACS_INVALID_ID, .unused = 0, .data_size = 0};
         static acs_set_data_t acs_set_data = {0};
         static acs_set_data_holder_t acs_set_data_holder = {0};
-        static acs_get_bool_t acs_get_bool = {0};
+        // static acs_get_bool_t acs_get_bool = {0};
 
         static bool acs_rxtx_automated = false;
         static bool acs_rxtx_automated_thread_alive = false;
@@ -506,7 +510,7 @@ int main(int, char **)
         static int EPS_command = EPS_INVALID_ID;
         static cmd_input_t EPS_command_input = {.mod = INVALID_ID, .cmd = EPS_INVALID_ID, .unused = 0, .data_size = 0};
         static eps_set_data_t eps_set_data = {0};
-        static eps_get_bool_t eps_get_bool = {0};
+        // static eps_get_bool_t eps_get_bool = {0};
 
         if (EPS_window)
         {
@@ -1051,7 +1055,7 @@ int main(int, char **)
         }
 
         static bool SW_UPD_window = false;
-        static int UPD_command = INVALID_ID;
+        // static int UPD_command = INVALID_ID;
         static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
         static char upd_filename_buffer[256] = {0};
 
@@ -1224,12 +1228,25 @@ int main(int, char **)
         {
             if (ImGui::Begin("ACS Update Display"), &ACS_UPD_display)
             {
-                // TODO: Implement some method of displaying the ACS update data. Probably a good idea to make a locally-global class with data that this window displays. The data is set by gs_receive.
+                // The implemented method of displaying the ACS update data includes a locally-global class (ACSDisplayData) with data that this window will display. The data is set by gs_receive.
                 // NOTE: This window must be opened independent of ACS's automated data retrieval option.
+                
+                // ImPlot::SetNextPlotLimits(0, 10, -5, 25, ImGuiCond_Always);
 
-                if (acs_display_data->status())
+                if (ImPlot::BeginPlot("Test Plot"))
                 {
-                    // TODO: Display the data.
+                    // int *xdata;
+                    // int *ydata;
+                    // *xdata = 1;
+                    // *ydata = 2;
+                    // ImPlot::PlotLine("Plot Line", xdata, ydata, 10);
+                    ImPlot::EndPlot();
+                }
+
+                if (acs_display_data->ready)
+                {
+                    // TODO: Display the data as a graph.
+
                 }
             }   
             ImGui::End();

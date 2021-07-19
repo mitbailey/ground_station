@@ -207,24 +207,26 @@ typedef struct __attribute__((packed))
  * 
  * @return typedef struct 
  */
+#ifndef COMPILING_SYSTEM
+#define __fp16 uint16_t
+#endif // COMPILING_SYSTEM
 typedef struct __attribute__((packed))
 {
-    uint8_t ct;         // Set in acs.c.
-    uint8_t mode;       // Set in acs.c.
-    // __fp16 bx;       // Set in acs.c.
-    // __fp16 by;       // Set in acs.c.
-    // __fp16 bz;       // Set in acs.c.
-    // __fp16 wx;       // Set in acs.c.
-    // __fp16 wy;       // Set in acs.c.
-    // __fp16 wz;       // Set in acs.c.
-    // __fp16 sx;       // Set in acs.c.
-    // __fp16 sy;       // Set in acs.c.
-    // __fp16 sz;       // Set in acs.c.
-    unsigned char fp16_placeholder[18];
-    uint16_t vbatt;     // Set in cmd_parser.
-    uint16_t vboost;    // Set in cmd_parser. 
-    uint16_t cursun;    // Set in cmd_parser.
-    uint16_t cursys;    // Set in cmd_parser.
+    uint8_t ct;      // Set in acs.c.
+    uint8_t mode;    // Set in acs.c.
+    __fp16 bx;       // Set in acs.c.
+    __fp16 by;       // Set in acs.c.
+    __fp16 bz;       // Set in acs.c.
+    __fp16 wx;       // Set in acs.c.
+    __fp16 wy;       // Set in acs.c.
+    __fp16 wz;       // Set in acs.c.
+    __fp16 sx;       // Set in acs.c.
+    __fp16 sy;       // Set in acs.c.
+    __fp16 sz;       // Set in acs.c.
+    uint16_t vbatt;  // Set in cmd_parser.
+    uint16_t vboost; // Set in cmd_parser.
+    uint16_t cursun; // Set in cmd_parser.
+    uint16_t cursys; // Set in cmd_parser.
 } acs_upd_output_t;
 
 /**
@@ -426,7 +428,7 @@ class ScrollBuf
 public:
     ScrollBuf();
     ScrollBuf(int max_size);
-    
+
     void AddPoint(float x, float y);
     void Erase();
     float Max();
@@ -444,12 +446,8 @@ class ACSDisplayData
 public:
     ACSDisplayData();
 
-    void filled();
-    void emptied();
-    bool status();
-
     acs_upd_output_t data[1];
-private:
+
     // This is so that we don't display the same data multiple times.
     bool ready;
 };
@@ -512,7 +510,7 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
  * @param acs_display_data Pointer to the class object holding data for the ACS display.
  * @return int 
  */
-int gs_receive(client_frame_t *output, ACSDisplayData* acs_display_data);
+int gs_receive(client_frame_t *output, ACSDisplayData *acs_display_data);
 
 /**
  * @brief Generates a 16-bit CRC for the given data.

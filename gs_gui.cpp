@@ -85,21 +85,6 @@ ACSDisplayData::ACSDisplayData()
     ready = false;
 }
 
-void ACSDisplayData::emptied()
-{
-    ready = false;
-}
-
-void ACSDisplayData::filled()
-{
-    ready = true;
-}
-
-bool ACSDisplayData::status()
-{
-    return ready;
-}
-
 /// ///
 
 void *gs_gui_check_password(void *auth)
@@ -364,7 +349,7 @@ int gs_receive(client_frame_t *output, ACSDisplayData* acs_display_data)
         memcpy(acs_display_data->data, payload->data, SIZE_FRAME_PAYLOAD);
         
         // Set the ready flag.
-        acs_display_data->emptied();
+        acs_display_data->ready = true;
     }
     else
     {

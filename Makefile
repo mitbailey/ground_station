@@ -16,7 +16,7 @@ endif
 
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS:= -I include/ -I imgui/include -I drivers/ -I imgui/include/imgui -I imgui/include/implot -I ./ -Wall -O2 -fpermissive
+CXXFLAGS:= -I include/ -I imgui/include -I drivers/ -I imgui/include/imgui -I imgui/include/implot -I ./ -Wall -O2 -fpermissive # -DCOMPILING_SYSTEM 
 LIBS = 
 
 ifeq ($(UNAME_S), Linux) #LINUX
@@ -43,7 +43,6 @@ EDLDFLAGS:= -lm -lpthread $(EDLDFLAGS)
 
 LIBS += -lm -lpthread
 
-# Uncomment once si446x_linux library is installed (`make install` in si446x_linux/) and `make` can be run in drivers/sw_upd_gs.
 # BUILDDRV=drivers/sw_upd_gs/src/sw_update_gs.o
 
 BUILDGUI=imgui/libimgui_glfw.a
