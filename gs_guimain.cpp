@@ -12,6 +12,7 @@
 // TODO: Add receive functionality where necessary.
 // TODO: See comic-mon for server send / receive functionality.
 // TODO: Implement __fp16 in acs_upd_output_t.
+// TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
 
 #include "imgui/imgui.h"
 #include "backend/imgui_impl_glfw.h"
@@ -22,6 +23,7 @@
 #include "gs_gui.hpp"
 #include <unistd.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 int main(int, char **)
 {
@@ -64,7 +66,11 @@ int main(int, char **)
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    ACSDisplayData* acs_display_data = new ACSDisplayData();
+
+    // Array of 1000 acs_upd_output_t's for graphing.
+    ACSRollingBuffer *acs_rolbuf = new ACSRollingBuffer();
+    // One acs_upd_output_t.
+    // acs_upd_output_t acs_display_data[1];
 
     // Used by the Authentication Control Panel
     // char password_buffer[64];
@@ -80,6 +86,9 @@ int main(int, char **)
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // TODO: Find a better place for this.
+        gs_receive(acs_rolbuf);
 
         // Level 0: Basic access, can retrieve data from acs_upd.
         // Level 1: Team Member access, can execute Data-down commands.
@@ -1217,7 +1226,6 @@ int main(int, char **)
         {
             if (ImGui::Begin("Plaintext RX Display"), &RX_display)
             {
-
             }
             ImGui::End();
         }
@@ -1226,6 +1234,7 @@ int main(int, char **)
 
         static float test_data_x[] = {0, 1, 2, 3, 4};
         static float test_data_y[] = {10, 20, 30, 40, 50};
+        static float test_data_z[] = {0, 50, 100, 150, 200};
 
         if (ACS_UPD_display)
         {
@@ -1233,22 +1242,108 @@ int main(int, char **)
             {
                 // The implemented method of displaying the ACS update data includes a locally-global class (ACSDisplayData) with data that this window will display. The data is set by gs_receive.
                 // NOTE: This window must be opened independent of ACS's automated data retrieval option.
-                
-                ImPlot::SetNextPlotLimits(0, 10, 0, 100, ImGuiCond_Always);
 
-                if (ImPlot::BeginPlot("Test Plot"))
+                // TODO: Remove these random data-adders and implement the actual data adding in gs_receive. ~Removed, but moved to gs_receive.
+
+                // TODO: Remove this once testing is complete.
+                // acs_rolbuf->x_index += 0.1;
+
+                double start_time = acs_rolbuf->x_index - 60;
+                if (start_time < 0)
                 {
-                    // ImGui::Text("Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);
-                    ImPlot::PlotLine("Line Graph", test_data_x, test_data_y, 5);
-                    ImPlot::EndPlot();
+                    start_time = 0;
                 }
 
-                if (acs_display_data->ready)
+                if (ImGui::CollapsingHeader("CT / Mode Graph"))
                 {
-                    // TODO: Display the data as a graph.
+                    ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->mode.Min(), acs_rolbuf->ct.Min()), getMax(acs_rolbuf->mode.Max(), acs_rolbuf->ct.Max()), ImGuiCond_Always);
+                    if (ImPlot::BeginPlot("CT / Mode Graph"))
+                    {
 
+                        ImPlot::PlotLine("CT", &acs_rolbuf->ct.data[0].x, &acs_rolbuf->ct.data[0].y, acs_rolbuf->ct.data.size(), acs_rolbuf->ct.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("Mode", &acs_rolbuf->mode.data[0].x, &acs_rolbuf->mode.data[0].y, acs_rolbuf->mode.data.size(), acs_rolbuf->mode.ofst, 2 * sizeof(float));
+
+                        ImPlot::EndPlot();
+                    }
                 }
-            }   
+
+                if (ImGui::CollapsingHeader("B (x, y, z) Graph"))
+                {
+                    ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->bx.Min(), acs_rolbuf->by.Min(), acs_rolbuf->bz.Min()), getMax(acs_rolbuf->bx.Max(), acs_rolbuf->by.Max(), acs_rolbuf->bz.Max()), ImGuiCond_Always);
+                    if (ImPlot::BeginPlot("B (x, y, z) Graph"))
+                    {
+
+                        ImPlot::PlotLine("x", &acs_rolbuf->bx.data[0].x, &acs_rolbuf->bx.data[0].y, acs_rolbuf->bx.data.size(), acs_rolbuf->bx.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("y", &acs_rolbuf->by.data[0].x, &acs_rolbuf->by.data[0].y, acs_rolbuf->by.data.size(), acs_rolbuf->by.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("z", &acs_rolbuf->bz.data[0].x, &acs_rolbuf->bz.data[0].y, acs_rolbuf->bz.data.size(), acs_rolbuf->bz.ofst, 2 * sizeof(float));
+
+                        ImPlot::EndPlot();
+                    }
+                }
+
+                if (ImGui::CollapsingHeader("W (x, y, z) Graph"))
+                {
+                    ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->wx.Min(), acs_rolbuf->wy.Min(), acs_rolbuf->wz.Min()), getMax(acs_rolbuf->wx.Max(), acs_rolbuf->wy.Max(), acs_rolbuf->wz.Max()), ImGuiCond_Always);
+                    if (ImPlot::BeginPlot("W (x, y, z) Graph"))
+                    {
+
+                        ImPlot::PlotLine("x", &acs_rolbuf->wx.data[0].x, &acs_rolbuf->wx.data[0].y, acs_rolbuf->wx.data.size(), acs_rolbuf->wx.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("y", &acs_rolbuf->wy.data[0].x, &acs_rolbuf->wy.data[0].y, acs_rolbuf->wy.data.size(), acs_rolbuf->wy.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("z", &acs_rolbuf->wz.data[0].x, &acs_rolbuf->wz.data[0].y, acs_rolbuf->wz.data.size(), acs_rolbuf->wz.ofst, 2 * sizeof(float));
+
+                        ImPlot::EndPlot();
+                    }
+                }
+
+                if (ImGui::CollapsingHeader("S (x, y, z) Graph"))
+                {
+                    ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->sx.Min(), acs_rolbuf->sy.Min(), acs_rolbuf->sz.Min()), getMax(acs_rolbuf->sx.Max(), acs_rolbuf->sy.Max(), acs_rolbuf->sz.Max()), ImGuiCond_Always);
+                    if (ImPlot::BeginPlot("S (x, y, z) Graph"))
+                    {
+
+                        ImPlot::PlotLine("x", &acs_rolbuf->sx.data[0].x, &acs_rolbuf->sx.data[0].y, acs_rolbuf->sx.data.size(), acs_rolbuf->sx.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("y", &acs_rolbuf->sy.data[0].x, &acs_rolbuf->sy.data[0].y, acs_rolbuf->sy.data.size(), acs_rolbuf->sy.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("z", &acs_rolbuf->sz.data[0].x, &acs_rolbuf->sz.data[0].y, acs_rolbuf->sz.data.size(), acs_rolbuf->sz.ofst, 2 * sizeof(float));
+
+                        ImPlot::EndPlot();
+                    }
+                }
+
+                if (ImGui::CollapsingHeader("Battery Graph"))
+                {
+                    ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->vbatt.Min(), acs_rolbuf->vboost.Min()), getMax(acs_rolbuf->vbatt.Max(), acs_rolbuf->vbatt.Max()), ImGuiCond_Always);
+                    if (ImPlot::BeginPlot("Battery Graph"))
+                    {
+
+                        ImPlot::PlotLine("VBatt", &acs_rolbuf->vbatt.data[0].x, &acs_rolbuf->vbatt.data[0].y, acs_rolbuf->vbatt.data.size(), acs_rolbuf->vbatt.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("VBoost", &acs_rolbuf->vboost.data[0].x, &acs_rolbuf->vboost.data[0].y, acs_rolbuf->vboost.data.size(), acs_rolbuf->vboost.ofst, 2 * sizeof(float));
+
+                        ImPlot::EndPlot();
+                    }
+                }
+
+                if (ImGui::CollapsingHeader("Solar Current Graph"))
+                {
+                    ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->cursun.Min(), acs_rolbuf->cursun.Min()), getMax(acs_rolbuf->cursys.Max(), acs_rolbuf->cursys.Max()), ImGuiCond_Always);
+                    if (ImPlot::BeginPlot("Solar Current Graph"))
+                    {
+
+                        ImPlot::PlotLine("CurSun", &acs_rolbuf->cursun.data[0].x, &acs_rolbuf->cursun.data[0].y, acs_rolbuf->cursun.data.size(), acs_rolbuf->cursun.ofst, 2 * sizeof(float));
+
+                        ImPlot::PlotLine("CurSys", &acs_rolbuf->cursys.data[0].x, &acs_rolbuf->cursys.data[0].y, acs_rolbuf->cursys.data.size(), acs_rolbuf->cursys.ofst, 2 * sizeof(float));
+
+                        ImPlot::EndPlot();
+                    }
+                }
+            }
             ImGui::End();
         }
 

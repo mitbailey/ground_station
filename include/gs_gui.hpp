@@ -18,7 +18,7 @@
 #define SIZE_FRAME_PAYLOAD 56
 #define SIZE_FRAME 64
 #define CLIENT_FRAME_GUID 0x1A1C
-#define MAX_ROLLBUF_LEN 1000
+#define MAX_ROLLBUF_LEN 500
 
 #ifndef dbprintlf
 #define dbprintlf(format, ...)                                                                        \
@@ -448,40 +448,60 @@ public:
     ACSRollingBuffer();
 
     /**
-     * @brief Adds a value to the rolling buffer.
+     * @brief Adds a value set to the rolling buffer.
      * 
      * @param data The data to be copied into the buffer.
      */
-    void addValue(acs_upd_output_t data);
+    void addValueSet(acs_upd_output_t data);
 
     /**
-     * @brief Reads a value from the rolling buffer.
-     * 
-     * THE DATA IS LOST ONCE IT IS READ OUT OF THE BUFFER.
+     * @brief Reads a value set from the rolling buffer.
      * 
      * @param data Memory to copy the data into.
      */
-    void readValue(acs_upd_output_t* data);
-    
+    // void getValueSet(acs_upd_output_t* data);
+
+    // double minmax_ct_mode[2];
+    // double minmax_b[2];
+    // double minmax_w[2];
+    // double minmax_s[2];
+    // double minmax_v[2];
+    // double minmax_cur[2];
+
+    // Separated by the graphs they'll appear in.
+    ScrollBuf ct, mode;
+    ScrollBuf bx, by, bz;
+    ScrollBuf wx, wy, wz;
+    ScrollBuf sx, sy, sz;
+    ScrollBuf vbatt, vboost;
+    ScrollBuf cursun, cursys;
+
+    float x_index;
 private:
-    // 1000 points of data, each an ACS Update struct.
-    acs_upd_output_t data[1000];
 
     // This is not any one data point, but rather each member should be set independently to the maximum seen.
-    acs_upd_output_t max_values;
+    // acs_upd_output_t max_values;
     // This is not any one data point, but rather each member should be set independently to the minimum seen.
-    acs_upd_output_t min_values;
+    // acs_upd_output_t min_values;
 
     // 'Head' index.
-    int read_index;
+    // int read_index;
     // 'Tail' index.
-    int write_index;
+    // int write_index;
 
     // Current number of items.
-    int length;
+    // int length;
     // Maximum number of items.
-    int max_length;
+    // int max_length;
 };
+
+float getMin(float a, float b);
+
+float getMin(float a, float b, float c);
+
+float getMax(float a, float b);
+
+float getMax(float a, float b, float c);
 
 // TODO: Overwrite old data regardless of ready status, but do not display data which is stale, ie isnt ready.
 class ACSDisplayData
@@ -553,7 +573,7 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
  * @param acs_display_data Pointer to the class object holding data for the ACS display.
  * @return int 
  */
-int gs_receive(client_frame_t *output, ACSDisplayData *acs_display_data);
+int gs_receive(ACSRollingBuffer* acs_rolbuf);
 
 /**
  * @brief Generates a 16-bit CRC for the given data.

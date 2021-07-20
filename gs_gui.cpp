@@ -12,6 +12,7 @@
 #include "imgui/imgui.h"
 #include "backend/imgui_impl_glfw.h"
 #include "backend/imgui_impl_opengl2.h"
+#include "implot/implot.h"
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 #include "gs_gui.hpp"
@@ -82,38 +83,126 @@ float ScrollBuf::Min()
 
 ACSRollingBuffer::ACSRollingBuffer()
 {
-    read_index = 0;
-    write_index = 0;
-    max_length = 1000;
-    length = 0;
-    memset(data, 0x0, max_length * sizeof(acs_upd_output_t));
+    x_index = 0;
+
+    acs_upd_output_t dummy[1];
+    memset(dummy, 0x0, sizeof(acs_upd_output_t));
+
+    addValueSet(*dummy);
 }
 
-void ACSRollingBuffer::addValue(acs_upd_output_t data)
+void ACSRollingBuffer::addValueSet(acs_upd_output_t data)
 {
-    this->data[write_index] = data;
-    length++;
-    if (++write_index >= max_length)
-    {
-        write_index = 0;
-    }
+    ct.AddPoint(x_index, data.ct);
+    mode.AddPoint(x_index, data.mode);
+    bx.AddPoint(x_index, data.bx);
+    by.AddPoint(x_index, data.by);
+    bz.AddPoint(x_index, data.bz);
+    wx.AddPoint(x_index, data.wx);
+    wy.AddPoint(x_index, data.wy);
+    wz.AddPoint(x_index, data.wz);
+    sx.AddPoint(x_index, data.sx);
+    sy.AddPoint(x_index, data.sy);
+    sz.AddPoint(x_index, data.sz);
+    vbatt.AddPoint(x_index, data.vbatt);
+    vboost.AddPoint(x_index, data.vboost);
+    cursun.AddPoint(x_index, data.cursun);
+    cursys.AddPoint(x_index, data.cursys);
 
-    // TODO: Add min/max checking and setting.
+    x_index += 0.1;
 }
 
-void ACSRollingBuffer::readValue(acs_upd_output_t* data)
-{
-    memcpy(data, &this->data[read_index], sizeof(acs_upd_output_t));
-    length--;
-    if (++read_index >= max_length)
-    {
-        read_index = 0;
-    }
+// void ACSRollingBuffer::getValueSet(acs_upd_output_t* data)
+// {
+//     ct.
 
-    // TODO: Add min/max checking and setting.
-}
+//     memcpy(data, &this->data[read_index], sizeof(acs_upd_output_t));
+//     length--;
+//     if (++read_index >= max_length)
+//     {
+//         read_index = 0;
+//     }
+
+//     // TODO: Add min/max checking and setting.
+// }
 
 /// ///
+
+float getMin(float a, float b)
+{
+    if (a > b)
+    {
+        return b;
+    }
+    else
+    {
+        return a;
+    }
+}
+
+float getMin(float a, float b, float c)
+{
+    if (a < b)
+    {
+        if (a < c)
+        {
+            return a;
+        }
+        else
+        {
+            return c;
+        }
+    }
+    else
+    {
+        if (b < c)
+        {
+            return b;
+        }
+        else
+        {
+            return c;
+        }
+    }
+}
+
+float getMax(float a, float b)
+{
+    if (a > b)
+    {
+        return a;
+    }
+    else
+    {
+        return b;
+    }
+}
+
+float getMax(float a, float b, float c)
+{
+    if (a > b)
+    {
+        if (a > c)
+        {
+            return a;
+        }
+        else
+        {
+            return c;
+        }
+    }
+    else
+    {
+        if (b > c)
+        {
+            return b;
+        }
+        else
+        {
+            return c;
+        }
+    }
+}
 
 /// ACSDisplayData Class
 ACSDisplayData::ACSDisplayData()
@@ -359,8 +448,21 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input)
 
 // This needs to act similarly to the cmd_parser.
 // TODO: If the data is from ACS update, be sure to set the values in the ACS Update data class!
-int gs_receive(client_frame_t *output, ACSDisplayData* acs_display_data)
+int gs_receive(ACSRollingBuffer *acs_rolbuf)
 {
+    client_frame_t output[1];
+    memset(output, 0x0, sizeof(client_frame_t));
+
+    // TODO: Read in data to output.
+    // receive into 'output'
+
+    // This function receives some data, which we assume fits as a client_frame_t, called output.
+
+    // TODO: REMOVE this code block once debug testing is complete.
+    output->guid = CLIENT_FRAME_GUID;
+    output->crc1 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
+    output->crc2 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
+
     if (output->guid != CLIENT_FRAME_GUID)
     {
         printf("GUID Error: 0x%04x\n", output->guid);
@@ -379,14 +481,37 @@ int gs_receive(client_frame_t *output, ACSDisplayData* acs_display_data)
 
     cmd_output_t *payload = (cmd_output_t *)output->payload;
 
+    // TODO: REMOVE this code block once debug testing is complete.
+    payload->mod = ACS_UPD_ID;
+
     // All data received goes one of two places: the ACS Update Data Display window, or the plaintext trash heap window.
     if (payload->mod == ACS_UPD_ID)
     {
         // Set the data in acs_display_data to the data in output->payload.
-        memcpy(acs_display_data->data, payload->data, SIZE_FRAME_PAYLOAD);
-        
+        acs_upd_output_t *acs_upd_output = (acs_upd_output_t *)payload->data;
+
+        // TODO: REMOVE this block of code once debug testing is complete.
+        acs_upd_output->ct = rand() % 0xf;
+        acs_upd_output->mode = rand() % 0xf;
+        acs_upd_output->bx = rand() % 0xffff;
+        acs_upd_output->by = rand() % 0xffff;
+        acs_upd_output->bz = rand() % 0xffff;
+        acs_upd_output->wx = rand() % 0xffff;
+        acs_upd_output->wy = rand() % 0xffff;
+        acs_upd_output->wz = rand() % 0xffff;
+        acs_upd_output->sx = rand() % 0xffff;
+        acs_upd_output->sy = rand() % 0xffff;
+        acs_upd_output->sz = rand() % 0xffff;
+        acs_upd_output->vbatt = rand() % 0xff;
+        acs_upd_output->vboost = rand() % 0xff;
+        acs_upd_output->cursun = rand() % 0xff;
+        acs_upd_output->cursys = rand() % 0xff;
+
+        // Add the ACS update data
+        acs_rolbuf->addValueSet(*acs_upd_output);
+
         // Set the ready flag.
-        acs_display_data->ready = true;
+        // acs_display_data->ready = true;
     }
     else
     {
