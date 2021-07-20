@@ -78,6 +78,43 @@ float ScrollBuf::Min()
 
 /// ///
 
+/// ACSRollingBuffer Class
+
+ACSRollingBuffer::ACSRollingBuffer()
+{
+    read_index = 0;
+    write_index = 0;
+    max_length = 1000;
+    length = 0;
+    memset(data, 0x0, max_length * sizeof(acs_upd_output_t));
+}
+
+void ACSRollingBuffer::addValue(acs_upd_output_t data)
+{
+    this->data[write_index] = data;
+    length++;
+    if (++write_index >= max_length)
+    {
+        write_index = 0;
+    }
+
+    // TODO: Add min/max checking and setting.
+}
+
+void ACSRollingBuffer::readValue(acs_upd_output_t* data)
+{
+    memcpy(data, &this->data[read_index], sizeof(acs_upd_output_t));
+    length--;
+    if (++read_index >= max_length)
+    {
+        read_index = 0;
+    }
+
+    // TODO: Add min/max checking and setting.
+}
+
+/// ///
+
 /// ACSDisplayData Class
 ACSDisplayData::ACSDisplayData()
 {

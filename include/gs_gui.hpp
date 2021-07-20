@@ -18,6 +18,7 @@
 #define SIZE_FRAME_PAYLOAD 56
 #define SIZE_FRAME 64
 #define CLIENT_FRAME_GUID 0x1A1C
+#define MAX_ROLLBUF_LEN 1000
 
 #ifndef dbprintlf
 #define dbprintlf(format, ...)                                                                        \
@@ -440,12 +441,54 @@ public:
 };
 /// ///
 
+// TODO: Implement this rolling buffer.
+class ACSRollingBuffer
+{
+public:
+    ACSRollingBuffer();
+
+    /**
+     * @brief Adds a value to the rolling buffer.
+     * 
+     * @param data The data to be copied into the buffer.
+     */
+    void addValue(acs_upd_output_t data);
+
+    /**
+     * @brief Reads a value from the rolling buffer.
+     * 
+     * THE DATA IS LOST ONCE IT IS READ OUT OF THE BUFFER.
+     * 
+     * @param data Memory to copy the data into.
+     */
+    void readValue(acs_upd_output_t* data);
+    
+private:
+    // 1000 points of data, each an ACS Update struct.
+    acs_upd_output_t data[1000];
+
+    // This is not any one data point, but rather each member should be set independently to the maximum seen.
+    acs_upd_output_t max_values;
+    // This is not any one data point, but rather each member should be set independently to the minimum seen.
+    acs_upd_output_t min_values;
+
+    // 'Head' index.
+    int read_index;
+    // 'Tail' index.
+    int write_index;
+
+    // Current number of items.
+    int length;
+    // Maximum number of items.
+    int max_length;
+};
+
 // TODO: Overwrite old data regardless of ready status, but do not display data which is stale, ie isnt ready.
 class ACSDisplayData
 {
 public:
     ACSDisplayData();
-
+    
     acs_upd_output_t data[1];
 
     // This is so that we don't display the same data multiple times.

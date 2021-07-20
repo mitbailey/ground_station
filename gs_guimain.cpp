@@ -1224,6 +1224,9 @@ int main(int, char **)
 
         static bool ACS_UPD_display = false;
 
+        static float test_data_x[] = {0, 1, 2, 3, 4};
+        static float test_data_y[] = {10, 20, 30, 40, 50};
+
         if (ACS_UPD_display)
         {
             if (ImGui::Begin("ACS Update Display"), &ACS_UPD_display)
@@ -1231,15 +1234,12 @@ int main(int, char **)
                 // The implemented method of displaying the ACS update data includes a locally-global class (ACSDisplayData) with data that this window will display. The data is set by gs_receive.
                 // NOTE: This window must be opened independent of ACS's automated data retrieval option.
                 
-                // ImPlot::SetNextPlotLimits(0, 10, -5, 25, ImGuiCond_Always);
+                ImPlot::SetNextPlotLimits(0, 10, 0, 100, ImGuiCond_Always);
 
                 if (ImPlot::BeginPlot("Test Plot"))
                 {
-                    // int *xdata;
-                    // int *ydata;
-                    // *xdata = 1;
-                    // *ydata = 2;
-                    // ImPlot::PlotLine("Plot Line", xdata, ydata, 10);
+                    // ImGui::Text("Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);
+                    ImPlot::PlotLine("Line Graph", test_data_x, test_data_y, 5);
                     ImPlot::EndPlot();
                 }
 
