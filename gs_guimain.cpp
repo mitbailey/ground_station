@@ -66,7 +66,6 @@ int main(int, char **)
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    
 
     // Array of 1000 acs_upd_output_t's for graphing.
     ACSRollingBuffer *acs_rolbuf = new ACSRollingBuffer();
@@ -148,20 +147,16 @@ int main(int, char **)
         }
 
         static bool allow_transmission = false;
-        // static bool allow_receiving = true;
 
         static bool ACS_window = false;
         static int ACS_command = ACS_INVALID_ID;
         static cmd_input_t ACS_command_input = {.mod = INVALID_ID, .cmd = ACS_INVALID_ID, .unused = 0, .data_size = 0};
         static acs_set_data_t acs_set_data = {0};
         static acs_set_data_holder_t acs_set_data_holder = {0};
-        // static acs_get_bool_t acs_get_bool = {0};
 
         static bool acs_rxtx_automated = false;
-        static bool acs_rxtx_automated_thread_alive = false;
         static int acs_automated_rate = ACS_UPD_DATARATE;
         static pthread_t acs_thread_id;
-        static acs_upd_input_t acs_update_data = {0};
 
         if (ACS_window)
         {
@@ -172,7 +167,6 @@ int main(int, char **)
 
                     if (auth.access_level > 0)
                     {
-                        // ImGui::Text("Data-down Commands");
 
                         if (ImGui::ArrowButton("get_moi_button", ImGuiDir_Right))
                         {
@@ -301,7 +295,6 @@ int main(int, char **)
 
                 if (ImGui::CollapsingHeader("Data-up Commands"))
                 {
-
                     if (auth.access_level > 1)
                     {
                         ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI);    // 9x floats
@@ -411,10 +404,9 @@ int main(int, char **)
                         // If the operator wants to activate the automatic ACS update system...
                         if (acs_rxtx_automated)
                         {
-                            // Spawn a new thread to run 
-                            if (acs_rolbuf->thread_finished)
+                            // Spawn a new thread to run
+                            if (pthread_mutex_trylock(&acs_rolbuf->acs_upd_inhibitor) == 0)
                             {
-                                acs_rolbuf->thread_finished = false;
                                 pthread_create(&acs_thread_id, NULL, gs_acs_update_data_handler, acs_rolbuf);
                             }
                         }
@@ -450,26 +442,22 @@ int main(int, char **)
                             {
                                 ACS_command_input.data[0] = (uint8_t)acs_set_data.tstep;
                                 ACS_command_input.data_size = sizeof(uint8_t);
-                                // memcpy(&ACS_command_input.data[0], &acs_set_data.tstep, ACS_command_input.data_size);
                                 break;
                             }
                             case ACS_SET_MEASURE_TIME:
                             {
                                 ACS_command_input.data[0] = (uint8_t)acs_set_data.measure_time;
                                 ACS_command_input.data_size = sizeof(uint8_t);
-                                // memcpy(&ACS_command_input.data[0], &acs_set_data.measure_time, ACS_command_input.data_size);
                                 break;
                             }
                             case ACS_SET_LEEWAY:
                             {
                                 ACS_command_input.data[0] = (uint8_t)acs_set_data.leeway;
                                 ACS_command_input.data_size = sizeof(uint8_t);
-                                // memcpy(&ACS_command_input.data[0], &acs_set_data.leeway, ACS_command_input.data_size);
                                 break;
                             }
                             case ACS_SET_WTARGET:
                             {
-                                // ACS_command_input.data[0] = acs_set_data.wtarget;
                                 ACS_command_input.data_size = sizeof(float);
                                 memcpy(ACS_command_input.data, &acs_set_data.wtarget, ACS_command_input.data_size);
                                 break;
@@ -478,14 +466,12 @@ int main(int, char **)
                             {
                                 ACS_command_input.data[0] = (uint8_t)acs_set_data.detumble_angle;
                                 ACS_command_input.data_size = sizeof(uint8_t);
-                                // memcpy(&ACS_command_input.data[0], &acs_set_data.detumble_angle, ACS_command_input.data_size);
                                 break;
                             }
                             case ACS_SET_SUN_ANGLE:
                             {
                                 ACS_command_input.data[0] = (uint8_t)acs_set_data.sun_angle;
                                 ACS_command_input.data_size = sizeof(uint8_t);
-                                // memcpy(&ACS_command_input.data[0], &acs_set_data.sun_angle, ACS_command_input.data_size);
                                 break;
                             }
                             default:
@@ -1229,10 +1215,6 @@ int main(int, char **)
         }
 
         static bool ACS_UPD_display = false;
-
-        static float test_data_x[] = {0, 1, 2, 3, 4};
-        static float test_data_y[] = {10, 20, 30, 40, 50};
-        static float test_data_z[] = {0, 50, 100, 150, 200};
 
         if (ACS_UPD_display)
         {

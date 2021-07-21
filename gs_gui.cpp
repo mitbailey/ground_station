@@ -18,6 +18,7 @@
 #include "gs_gui.hpp"
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 void glfw_error_callback(int error, const char *description)
 {
@@ -91,7 +92,7 @@ ACSRollingBuffer::ACSRollingBuffer()
     // Avoids a crash.
     addValueSet(*dummy);
 
-    thread_finished = true;
+    pthread_mutex_init(&acs_upd_inhibitor, NULL);
 }
 
 void ACSRollingBuffer::addValueSet(acs_upd_output_t data)
@@ -128,6 +129,11 @@ void ACSRollingBuffer::addValueSet(acs_upd_output_t data)
 
 //     // TODO: Add min/max checking and setting.
 // }
+
+ACSRollingBuffer::~ACSRollingBuffer()
+{
+    pthread_mutex_destroy(&acs_upd_inhibitor);
+}
 
 /// ///
 
@@ -226,17 +232,17 @@ void *gs_gui_check_password(void *auth)
     // If valid, grant access.
     // Return access level granted.
 
-    if (gs_helper((unsigned char *)lauth->password) == -07723727136)
+    if (gs_helper(lauth->password) == -07723727136)
     {
         usleep(0.25 SEC);
         lauth->access_level = 1;
     }
-    else if (gs_helper((unsigned char *)lauth->password) == 013156200030)
+    else if (gs_helper(lauth->password) == 013156200030)
     {
         usleep(0.25 SEC);
         lauth->access_level = 2;
     }
-    else if (gs_helper((unsigned char *)lauth->password) == 05657430216)
+    else if (gs_helper(lauth->password) == 05657430216)
     {
         usleep(0.25 SEC);
         lauth->access_level = 3;
@@ -314,8 +320,10 @@ int gs_gui_check_password_old(char *password)
 }
 
 // Mildly Obfuscated
-unsigned int gs_helper(unsigned char *a)
+int gs_helper(void *aa)
 {
+    char* a = (char *) aa;
+
     int b, c;
     unsigned int d, e, f;
 
@@ -339,24 +347,25 @@ void *gs_acs_update_data_handler(void *vp)
 {
     ACSRollingBuffer *acs_rolbuf = (ACSRollingBuffer *) vp;
 
-    acs_upd_input_t acs[1];
-    memset(acs, 0x0, sizeof(acs_upd_input_t));
+    cmd_input_t acs_cmd[1];
+    memset(acs_cmd, 0x0, sizeof(cmd_input_t));
 
-    acs->cmd_input->mod = ACS_ID;
-    acs->cmd_input->cmd = ACS_UPD_ID;
-    acs->cmd_input->unused = 0x0;
-    acs->cmd_input->data_size = 0x0;
-    memset(acs->cmd_input->data, 0x0, MAX_DATA_SIZE);
+    acs_cmd->mod = ACS_ID;
+    acs_cmd->cmd = ACS_UPD_ID;
+    acs_cmd->unused = 0x0;
+    acs_cmd->data_size = 0x0;
+    memset(acs_cmd->data, 0x0, MAX_DATA_SIZE);
 
-    usleep(100000);
+    // usleep(100000);
+    sleep(1);
 
     // Transmit an ACS update request to the server.
-    gs_transmit(acs->cmd_input);
+    gs_transmit(acs_cmd);
 
     // Receive an ACS update from the server.
     gs_receive(acs_rolbuf);
 
-    acs_rolbuf->thread_finished = true;
+    pthread_mutex_unlock(&acs_rolbuf->acs_upd_inhibitor);
 
     return vp;
 }
@@ -367,7 +376,7 @@ int gs_transmit(cmd_input_t *input)
     {
         printf("Error: input->data_size is %d.\n", input->data_size);
         printf("Cancelling transmit.\n");
-        return;
+        return -1;
     }
 
     // Create a client_frame_t object and stuff our data into it.
@@ -444,7 +453,7 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input)
             ImGui::SameLine(0.0F, 0.0F);
             ImGui::Text("%02x", command_input->data[i]);
         }
-        sizeof(xband_tx_data_t);
+
         ImGui::Unindent();
         if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
         {

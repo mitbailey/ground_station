@@ -12,6 +12,8 @@
 #ifndef GS_GUI_HPP
 #define GS_GUI_HPP
 
+#include <pthread.h>
+
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
@@ -163,7 +165,7 @@ typedef struct __attribute__((packed))
  * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     int mod;
     int cmd;
@@ -182,15 +184,15 @@ typedef struct __attribute__((packed))
     unsigned char data[46]; // 46
 } cmd_output_t;
 
-/**
- * @brief Used for asynchronous transmission of acs_upd requests.
- * 
- */
-typedef struct __attribute__((packed))
-{
-    cmd_input_t cmd_input[1];
-    bool ready;
-} acs_upd_input_t;
+// /**
+//  * @brief Used for asynchronous transmission of acs_upd requests.
+//  * 
+//  */
+// typedef struct __attribute__((packed))
+// {
+//     cmd_input_t cmd_input[1];
+//     bool ready;
+// } acs_upd_input_t;
 
 /**
  * @brief The ACS update data format sent from SPACE-HAUC to Ground.
@@ -234,7 +236,7 @@ typedef struct __attribute__((packed))
  * @brief Set of possible data ACS can set.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     float moi[9];
     float imoi[9];
@@ -251,7 +253,7 @@ typedef struct __attribute__((packed))
  * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     int tstep;
     int measure_time;
@@ -264,7 +266,7 @@ typedef struct __attribute__((packed))
  * @brief Set of possible booleans ACS can use.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     bool moi;
     bool imoi;
@@ -281,7 +283,7 @@ typedef struct __attribute__((packed))
  * @brief Set of possible data EPS can set.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     int loop_timer;
 } eps_set_data_t;
@@ -290,7 +292,7 @@ typedef struct __attribute__((packed))
  * @brief Set of possible booleans EPS can use.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     bool min_hk;
     bool vbatt;
@@ -326,7 +328,7 @@ typedef struct __attribute__((packed))
  * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     int samp;
     int phy_gain;
@@ -339,7 +341,7 @@ typedef struct __attribute__((packed))
  * @brief Set of possible data XBAND can set.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     xband_set_data_t RX;
     xband_set_data_holder_t RXH;
@@ -353,6 +355,8 @@ typedef struct __attribute__((packed))
  * Used for:
  *  XBAND_DO_TX
  * 
+ * Packed (see line 126: https://github.com/SPACE-HAUC/shflight/blob/flight_test/src/cmd_parser.c)
+ * 
  */
 typedef struct __attribute__((packed))
 {
@@ -365,7 +369,7 @@ typedef struct __attribute__((packed))
  * @brief ImGui full-size integer interface; holds integers until cast.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     int type;
 } xband_tx_data_holder_t;
@@ -392,7 +396,7 @@ typedef struct __attribute__((packed))
  * @brief ImGui full-size integer interface; holds integers until cast. 
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     int max_on;
     int tmp_shdn;
@@ -404,7 +408,7 @@ typedef struct __attribute__((packed))
  * @brief Set of possible booleans XBAND can use.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     bool max_on;
     bool tmp_shdn;
@@ -416,7 +420,7 @@ typedef struct __attribute__((packed))
  * @brief Authentication structure, used to store auth-related information.
  * 
  */
-typedef struct __attribute__((packed))
+typedef struct
 {
     bool busy;
     uint8_t access_level;
@@ -478,7 +482,11 @@ public:
 
     float x_index;
 
-    bool thread_finished;
+    // bool thread_finished;
+    
+    pthread_mutex_t acs_upd_inhibitor;
+
+    ~ACSRollingBuffer();
 private:
 
     // This is not any one data point, but rather each member should be set independently to the maximum seen.
@@ -497,12 +505,42 @@ private:
     // int max_length;
 };
 
+/**
+ * @brief Get the Min object
+ * 
+ * @param a 
+ * @param b 
+ * @return float 
+ */
 float getMin(float a, float b);
 
+/**
+ * @brief Get the Min object
+ * 
+ * @param a 
+ * @param b 
+ * @param c 
+ * @return float 
+ */
 float getMin(float a, float b, float c);
 
+/**
+ * @brief Get the Max object
+ * 
+ * @param a 
+ * @param b 
+ * @return float 
+ */
 float getMax(float a, float b);
 
+/**
+ * @brief Get the Max object
+ * 
+ * @param a 
+ * @param b 
+ * @param c 
+ * @return float 
+ */
 float getMax(float a, float b, float c);
 
 // TODO: Overwrite old data regardless of ready status, but do not display data which is stale, ie isnt ready.
@@ -539,7 +577,7 @@ void *gs_gui_check_password(void *arg);
  * @param message Data to be checked.
  * @return unsigned int 
  */
-unsigned int gs_helper(unsigned char *a);
+int gs_helper(void *aa);
 
 /**
  * @brief Handles the asynchronous sending of the ACS update data retrieval command.
