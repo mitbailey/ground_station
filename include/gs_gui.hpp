@@ -21,6 +21,7 @@
 #define SIZE_FRAME 64
 #define CLIENT_FRAME_GUID 0x1A1C
 #define MAX_ROLLBUF_LEN 500
+#define SIZE_RX_BUF 8192
 
 #ifndef dbprintlf
 #define dbprintlf(format, ...)                                                                        \
@@ -186,7 +187,7 @@ typedef struct __attribute__((packed))
 
 // /**
 //  * @brief Used for asynchronous transmission of acs_upd requests.
-//  * 
+//  *
 //  */
 // typedef struct __attribute__((packed))
 // {
@@ -483,12 +484,12 @@ public:
     float x_index;
 
     // bool thread_finished;
-    
+
     pthread_mutex_t acs_upd_inhibitor;
 
     ~ACSRollingBuffer();
-private:
 
+private:
     // This is not any one data point, but rather each member should be set independently to the maximum seen.
     // acs_upd_output_t max_values;
     // This is not any one data point, but rather each member should be set independently to the minimum seen.
@@ -548,7 +549,7 @@ class ACSDisplayData
 {
 public:
     ACSDisplayData();
-    
+
     acs_upd_output_t data[1];
 
     // This is so that we don't display the same data multiple times.
@@ -585,7 +586,7 @@ int gs_helper(void *aa);
  * @param vp Pointer to the acs_upd_input_t structure.
  * @return void* Pointer to the original argument.
  */
-void *gs_acs_update_data_handler(void *vp);
+void *gs_acs_update_thread(void *vp);
 
 /**
  * @brief Transmits data to SPACE-HAUC.
@@ -613,7 +614,99 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
  * @param acs_display_data Pointer to the class object holding data for the ACS display.
  * @return int 
  */
-int gs_receive(ACSRollingBuffer* acs_rolbuf);
+int gs_receive(ACSRollingBuffer *acs_rolbuf);
+
+/**
+ * @brief 
+ * 
+ * @param AUTH_control_panel 
+ * @param auth 
+ */
+void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t *auth);
+
+/**
+ * @brief 
+ * 
+ * @param ACS_window 
+ * @param auth 
+ * @param acs_rolbuf 
+ * @param allow_transmission 
+ */
+void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rolbuf, bool *allow_transmission);
+
+/**
+ * @brief 
+ * 
+ * @param EPS_window 
+ * @param auth 
+ * @param allow_transmission 
+ */
+void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission);
+
+/**
+ * @brief 
+ * 
+ * @param XBAND_window 
+ * @param auth 
+ * @param allow_transmission 
+ */
+void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmission);
+
+/**
+ * @brief 
+ * 
+ * @param SW_UPD_window 
+ * @param auth 
+ * @param allow_transmission 
+ */
+void gs_gui_sw_upd_window(bool *SW_UPD_window, auth_t *auth, bool *allow_transmission);
+
+/**
+ * @brief 
+ * 
+ * @param SYS_CTRL_window 
+ * @param auth 
+ * @param allow_transmission 
+ */
+void gs_gui_sys_ctrl_window(bool *SYS_CTRL_window, auth_t *auth, bool *allow_transmission);
+
+/**
+ * @brief 
+ * 
+ * @param RX_display 
+ */
+void gs_gui_rx_display_window(bool *RX_display);
+
+/**
+ * @brief 
+ * 
+ * @param ACS_UPD_display 
+ * @param acs_rolbuf 
+ */
+void gs_gui_acs_upd_display_window(bool *ACS_UPD_display, ACSRollingBuffer *acs_rolbuf);
+
+/**
+ * @brief 
+ * 
+ * @param DISP_control_panel 
+ * @param ACS_window 
+ * @param EPS_window 
+ * @param XBAND_window 
+ * @param SW_UPD_window 
+ * @param SYS_CTRL_window 
+ * @param RX_display 
+ * @param ACS_UPD_display 
+ * @param allow_transmission 
+ * @param auth 
+ */
+void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, auth_t *auth);
+
+/**
+ * @brief 
+ * 
+ * @param User_Manual 
+ */
+void gs_gui_user_manual_window(bool *User_Manual);
 
 /**
  * @brief Generates a 16-bit CRC for the given data.
