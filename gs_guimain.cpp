@@ -66,6 +66,7 @@ int main(int, char **)
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    
 
     // Array of 1000 acs_upd_output_t's for graphing.
     ACSRollingBuffer *acs_rolbuf = new ACSRollingBuffer();
@@ -88,7 +89,7 @@ int main(int, char **)
         ImGui::NewFrame();
 
         // TODO: Find a better place for this.
-        gs_receive(acs_rolbuf);
+        // gs_receive(acs_rolbuf);
 
         // Level 0: Basic access, can retrieve data from acs_upd.
         // Level 1: Team Member access, can execute Data-down commands.
@@ -403,21 +404,18 @@ int main(int, char **)
                         ImGui::Text("ACS Data-down Update");
                         ImGui::Indent();
                         ImGui::Checkbox("Automated", &acs_rxtx_automated);
-                        // ImGui::InputInt("Rate (ms)", &acs_automated_rate);
 
                         ImGui::Text("(%s) Polling for Data-down every %d ms.", acs_rxtx_automated ? "ON" : "OFF", acs_automated_rate);
 
+                        // TODO: Spawn a thread to execute gs_acs_update_data_handler(...) once.
+                        // If the operator wants to activate the automatic ACS update system...
                         if (acs_rxtx_automated)
                         {
-                            if (!acs_rxtx_automated_thread_alive)
+                            // Spawn a new thread to run 
+                            if (acs_rolbuf->thread_finished)
                             {
-                                acs_update_data.ready = false;
-                                pthread_create(&acs_thread_id, NULL, gs_acs_update_data_handler, &acs_update_data);
-                            }
-                            else if (acs_update_data.ready)
-                            {
-                                printf("Getting and printing ACS update data...");
-                                acs_update_data.ready = false;
+                                acs_rolbuf->thread_finished = false;
+                                pthread_create(&acs_thread_id, NULL, gs_acs_update_data_handler, acs_rolbuf);
                             }
                         }
 

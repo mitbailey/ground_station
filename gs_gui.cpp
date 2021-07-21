@@ -88,7 +88,10 @@ ACSRollingBuffer::ACSRollingBuffer()
     acs_upd_output_t dummy[1];
     memset(dummy, 0x0, sizeof(acs_upd_output_t));
 
+    // Avoids a crash.
     addValueSet(*dummy);
+
+    thread_finished = true;
 }
 
 void ACSRollingBuffer::addValueSet(acs_upd_output_t data)
@@ -334,7 +337,10 @@ unsigned int gs_helper(unsigned char *a)
 
 void *gs_acs_update_data_handler(void *vp)
 {
-    acs_upd_input_t *acs = (acs_upd_input_t *)vp;
+    ACSRollingBuffer *acs_rolbuf = (ACSRollingBuffer *) vp;
+
+    acs_upd_input_t acs[1];
+    memset(acs, 0x0, sizeof(acs_upd_input_t));
 
     acs->cmd_input->mod = ACS_ID;
     acs->cmd_input->cmd = ACS_UPD_ID;
@@ -342,11 +348,15 @@ void *gs_acs_update_data_handler(void *vp)
     acs->cmd_input->data_size = 0x0;
     memset(acs->cmd_input->data, 0x0, MAX_DATA_SIZE);
 
-    usleep(100);
+    usleep(100000);
 
+    // Transmit an ACS update request to the server.
     gs_transmit(acs->cmd_input);
 
-    acs->ready = true;
+    // Receive an ACS update from the server.
+    gs_receive(acs_rolbuf);
+
+    acs_rolbuf->thread_finished = true;
 
     return vp;
 }

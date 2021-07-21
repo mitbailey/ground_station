@@ -477,6 +477,8 @@ public:
     ScrollBuf cursun, cursys;
 
     float x_index;
+
+    bool thread_finished;
 private:
 
     // This is not any one data point, but rather each member should be set independently to the maximum seen.
