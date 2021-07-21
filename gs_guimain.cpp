@@ -11,7 +11,7 @@
 
 // TODO: Add receive functionality where necessary.
 // TODO: See comic-mon for server send / receive functionality.
-// TODO: Implement __fp16 in acs_upd_output_t.
+// Implemented __fp16 in acs_upd_output_t as uint16_t.
 // TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
 
 #include "imgui/imgui.h"
