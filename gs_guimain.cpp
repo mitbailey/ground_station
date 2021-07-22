@@ -86,6 +86,9 @@ int main(int, char **)
     bool DISP_control_panel = true;
     bool User_Manual = false;
 
+    pthread_t rx_thread_id;
+    pthread_create(&rx_thread_id, NULL, gs_rx_thread, global_data);
+
     // Start the receiver thread, passing it our acs_rolbuf (where we will read ACS Update data from) and (perhaps a cmd_output_t for all other data?).
 
 

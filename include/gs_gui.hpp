@@ -20,7 +20,7 @@
 // #define SIZE_FRAME_PAYLOAD 56
 // #define SIZE_FRAME 64
 #define CLIENTSERVER_FRAME_GUID 0x1A1C
-#define MAX_SIZE_CLIENTSERVER_PAYLOAD 0x400
+#define CLIENTSERVER_MAX_PAYLOAD_SIZE 0x64
 #define MAX_ROLLBUF_LEN 500
 #define SIZE_RX_BUF 8192
 
@@ -174,6 +174,7 @@ enum CLIENTSERVER_FRAME_ENDPOINT
 
 enum CLIENTSERVER_FRAME_MODE
 {
+    CS_MODE_ERROR = -1,
     CS_MODE_RX = 0,
     CS_MODE_TX = 1
 };
@@ -213,7 +214,7 @@ public:
      * @param size Size of the data to be copied.
      * @return int Positive on success, negative on failure.
      */
-    int storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, unsigned char* data, int size);
+    int storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void* data, int size);
 
     /**
      * @brief Copies payload to the passed space in memory.
@@ -244,6 +245,20 @@ public:
      * @return int Positive if valid, negative if invalid.
      */
     int checkIntegrity();
+
+    /**
+     * @brief Prints the class.
+     * 
+     * @return int 
+     */
+    void print();
+
+    /**
+     * @brief Sends the object's data.
+     * 
+     * @return int 
+     */
+    int send();
 private:
     // 0x????
     uint16_t guid;
@@ -257,8 +272,8 @@ private:
     CLIENTSERVER_FRAME_TYPE type;
     // CRC16 of payload.
     uint16_t crc1;
-    // Variably sized payload, set by constructor.
-    unsigned char *payload;
+    // Constant sized payload.
+    unsigned char payload[CLIENTSERVER_MAX_PAYLOAD_SIZE];
     uint16_t crc2;
     // 0xAAAA
     uint16_t termination;
@@ -289,20 +304,6 @@ typedef struct
 // {
 
 // } cs_config_uhf_t
-
-/**
- * @brief Contains structures and classes that will be populated with data by the receive thread; these structures and classes also provide the data which the client will display.
- * 
- */
-typedef struct
-{
-    ACSRollingBuffer *acs_rolbuf;
-    cs_status_t cs_status[1];
-    cs_ack_t cs_ack[1];
-    cmd_output_t cmd_output[1]; // DATA type.
-
-    bool rx_active; // Only able to receive when this is true.
-} global_data_t;
 
 /**
  * @brief Command structure that SPACE-HAUC receives.
@@ -583,7 +584,7 @@ typedef struct
     char password[64];
 } auth_t;
 
-/// From https://github.com/SPACE-HAUC/mtq_tester/blob/master/guimain.cpp
+// From https://github.com/SPACE-HAUC/mtq_tester/blob/master/guimain.cpp
 class ScrollBuf
 {
 public:
@@ -599,7 +600,6 @@ public:
     int ofst;
     ImVector<ImVec2> data;
 };
-/// ///
 
 // TODO: Implement this rolling buffer.
 class ACSRollingBuffer
@@ -628,6 +628,20 @@ public:
 
     pthread_mutex_t acs_upd_inhibitor;
 };
+
+/**
+ * @brief Contains structures and classes that will be populated with data by the receive thread; these structures and classes also provide the data which the client will display.
+ * 
+ */
+typedef struct
+{
+    ACSRollingBuffer *acs_rolbuf;
+    cs_status_t cs_status[1];
+    cs_ack_t cs_ack[1];
+    cmd_output_t cmd_output[1]; // DATA type.
+
+    bool rx_active; // Only able to receive when this is true.
+} global_data_t;
 
 /**
  * @brief Get the Min object
@@ -666,18 +680,6 @@ float getMax(float a, float b);
  * @return float 
  */
 float getMax(float a, float b, float c);
-
-// // TODO: Overwrite old data regardless of ready status, but do not display data which is stale, ie isnt ready.
-// class ACSDisplayData
-// {
-// public:
-//     ACSDisplayData();
-
-//     acs_upd_output_t data[1];
-
-//     // This is so that we don't display the same data multiple times.
-//     bool ready;
-// };
 
 /**
  * @brief Default ImGui callback function.
@@ -729,7 +731,7 @@ void *gs_acs_update_thread(void *vp);
  * @param input The data to transmit.
  * @return int Positive on success, negative on failure.
  */
-int gs_transmit(cmd_input_t *input);
+int gs_transmit(CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int data_size);
 
 /**
  * @brief Handles the 'Transmit' section of panels, including display of queued data and the send button.
@@ -738,7 +740,15 @@ int gs_transmit(cmd_input_t *input);
  * @param command_input The command to be augmented.
  * @return int Positive on success, negative on failure.
  */
-int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input);
+int gs_gui_gs2sh_tx_handler(auth_t *auth, cmd_input_t *command_input);
+
+/**
+ * @brief 
+ * 
+ * @param args 
+ * @return void* 
+ */
+void *gs_rx_thread(void *args);
 
 /**
  * @brief Handles receiving data from SPACE-HAUC.
