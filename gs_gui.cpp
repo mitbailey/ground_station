@@ -25,6 +25,14 @@ void glfw_error_callback(int error, const char *description)
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
+void gs_gui_init()
+{
+}
+
+void gs_gui_destroy()
+{
+}
+
 /// ScrollBuf Class
 ScrollBuf::ScrollBuf()
 {
@@ -119,6 +127,117 @@ void ACSRollingBuffer::addValueSet(acs_upd_output_t data)
 ACSRollingBuffer::~ACSRollingBuffer()
 {
     pthread_mutex_destroy(&acs_upd_inhibitor);
+}
+
+/// ///
+
+/// ClientServerFrame Class
+
+ClientServerFrame::ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_size)
+{
+    if (type < 0)
+    {
+        printf("ClientServerFrame initialized with error type (%d).\n", (int)type);
+        return;
+    }
+
+    if (payload_size > MAX_SIZE_CLIENTSERVER_PAYLOAD)
+    {
+        printf("Cannot allocate payload larger than %d bytes.\n", MAX_SIZE_CLIENTSERVER_PAYLOAD);
+        return;
+    }
+
+    this->payload_size = payload_size;
+    this->type = type;
+    crc1 = -1;
+    crc2 = -1;
+    guid = CLIENTSERVER_FRAME_GUID;
+    termination = 0xAAAA;
+
+    payload = (unsigned char *)malloc(this->payload_size);
+    memset(payload, 0x0, this->payload_size);
+}
+
+ClientServerFrame::~ClientServerFrame()
+{
+    free(payload);
+}
+
+int ClientServerFrame::storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, unsigned char *data, int size)
+{
+    if (size > payload_size)
+    {
+        printf("Cannot store data of size larger than allocated payload size (%d > %d).\n", size, payload_size);
+        return -1;
+    }
+
+    memcpy(payload, data, size);
+
+    crc1 = crc16(payload, payload_size);
+    crc2 = crc16(payload, payload_size);
+
+    this->endpoint = endpoint;
+
+    return 1;
+}
+
+int ClientServerFrame::retrievePayload(unsigned char *data_space, int size)
+{
+    if (size != payload_size)
+    {
+        printf("Data space size not equal to payload size (%d != %d).\n", size, payload_size);
+        return -1;
+    }
+
+    memcpy(data_space, payload, payload_size);
+
+    return 1;
+}
+
+int ClientServerFrame::getPayloadSize()
+{
+    return payload_size;
+}
+
+CLIENTSERVER_FRAME_TYPE ClientServerFrame::getType()
+{
+    return type;
+}
+
+int ClientServerFrame::checkIntegrity()
+{
+    if (guid != CLIENTSERVER_FRAME_GUID)
+    {
+        return -1;
+    }
+    else if (endpoint < 0)
+    {
+        return -2;
+    }
+    else if (mode < 0)
+    {
+        return -3;
+    }
+    else if (payload_size < 0 || payload_size > MAX_SIZE_CLIENTSERVER_PAYLOAD)
+    {
+        return -4;
+    }
+    else if (type < 0)
+    {
+        return -5;
+    }
+    else if (crc1 != crc2)
+    {
+        return -6;
+    }
+    else if (crc1 != crc16(payload, payload_size))
+    {
+        return -7;
+    }
+    else if (termination != 0xAAAA)
+    {
+        return -8;
+    }
 }
 
 /// ///
@@ -263,7 +382,7 @@ void *gs_gui_check_password(void *auth)
 // Mildly Obfuscated
 int gs_helper(void *aa)
 {
-    char* a = (char *) aa;
+    char *a = (char *)aa;
 
     int b, c;
     unsigned int d, e, f;
@@ -286,7 +405,7 @@ int gs_helper(void *aa)
 
 void *gs_acs_update_thread(void *vp)
 {
-    ACSRollingBuffer *acs_rolbuf = (ACSRollingBuffer *) vp;
+    ACSRollingBuffer *acs_rolbuf = (ACSRollingBuffer *)vp;
 
     cmd_input_t acs_cmd[1];
     memset(acs_cmd, 0x0, sizeof(cmd_input_t));
@@ -297,8 +416,7 @@ void *gs_acs_update_thread(void *vp)
     acs_cmd->data_size = 0x0;
     memset(acs_cmd->data, 0x0, MAX_DATA_SIZE);
 
-    // usleep(100000);
-    sleep(1);
+    usleep(100000);
 
     // Transmit an ACS update request to the server.
     gs_transmit(acs_cmd);
@@ -406,59 +524,94 @@ int gs_gui_transmissions_handler(auth_t *auth, cmd_input_t *command_input)
     return 1;
 }
 
+void *gs_rx_thread(void *args)
+{
+    // Convert the passed void pointer into something useful; in this case, a struct of whatever arguments gs_rx_thread(...) will need.
+    // TODO: Create a rx_thread_args_t struct.
+    global_data_t *global_data = (global_data_t *) args;
+
+    int buffer_size = MAX_SIZE_CLIENTSERVER_PAYLOAD + 0x80;
+    unsigned char buffer[buffer_size];
+
+    while (global_data->rx_active)
+    {
+        printf("Beginning receive...\n");
+
+        // TODO: Implement port reading.
+        // int retval = read(buffer, buffer_size);
+        // if (retval < 0)
+        // {
+        //     printf("Error while receiving.\n");
+        // }
+        // else if (retval == 0)
+        // {
+        //     printf("Received nothing.\n");
+        // }
+
+        // TODO: Parse the data.
+        ClientServerFrame *clientserver_frame = (ClientServerFrame *) buffer;
+        if (clientserver_frame->checkIntegrity() < 0)
+        {
+            printf("Integrity check failed.\n");
+            continue;
+        }
+        printf("Integrity check successful.\n");
+
+        int payload_size = clientserver_frame->getPayloadSize();
+        unsigned char *payload = (unsigned char *)malloc(payload_size);
+        if (clientserver_frame->retrievePayload(payload, payload_size) < 0)
+        {
+            printf("Error retrieving data.");
+            continue;
+        }
+
+        CLIENTSERVER_FRAME_TYPE type = clientserver_frame->getType();
+        // TODO: Based on what we got, set things to display the data.
+        switch (type)
+        {
+        case CS_TYPE_NULL:
+        {
+            printf("Received NULL frame.\n");
+            break;
+        }
+        case CS_TYPE_ACK:
+        case CS_TYPE_NACK:
+        {
+            // cs_ack_t *cs_ack = (cs_ack_t *) payload;
+            memcpy(global_data->cs_ack, payload, payload_size);
+            break;
+        }
+        case CS_TYPE_CONFIG:
+        {
+            break;
+        }
+        case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
+        {
+            // cmd_output_t *cmd_output = (cmd_output_t *) payload;
+            memcpy(global_data->cmd_output, payload, payload_size);
+            break;
+        }
+        case CS_TYPE_STATUS:
+        {
+            cs_status_t *status = (cs_status_t *)payload;
+
+            break;
+        }
+        case CS_TYPE_ERROR:
+        default:
+        {
+            break;
+        }
+        }
+    }
+
+    return;
+}
+
 // This needs to act similarly to the cmd_parser.
 // TODO: If the data is from ACS update, be sure to set the values in the ACS Update data class!
 int gs_receive(ACSRollingBuffer *acs_rolbuf)
 {
-    // /// /// Inspired by line 64: https://github.com/SPACE-HAUC/modem/blob/50edaa2f5c6b824f5d89bd1a74cc7b4503c9f11e/src/guimain.cpp /// ///
-
-
-    // char rx_buf[SIZE_RX_BUF]
-    // ssize_t rx_buf_sz = 1;
-    // rxmodem rxdev[1];
-    // // pthread_mutex_t rx_buf_access[1];
-
-    // if (rxmodem_init(rxdev, uio_get_id("rx_ipcore"), uio_get_id("rx_dma")) < 0)
-    // {
-    //     printf("Error initializing modem.\n");
-    //     return -1;
-    // }
-
-    // while(!done)
-    // {
-    //     ssize_t rcv_sz = rxmodem_receive(rxdev);
-    //     if (rcv_sz <= 0)
-    //     {
-    //         printf("Receive size invalid.\n");
-    //         continue;
-    //     }
-
-    //     char *buf = (char*)malloc(rcv_sz);
-    //     memset(buf, 0x0, rcv_sz);
-    //     ssize_t rd_sz = rxmodem_read(rxdev, (uint8_t *) buf, rcv_sz);
-    //     memset(output, 0x0, SIZE_FRAME);
-    //     snprintf(output, rd_sz, "%s", buf);
-    //     rx_buf_sz = rd_sz;
-    //     if (rd_sz != rcv_sz)
-    //     {
-    //         printf("Invalid read.\n");
-    //         return -1;
-    //     }
-    //     free(buf);
-    // }
-
-    // /// /// (END) /// ///
-
-
-
-
-
-
-
-
-
-
-
     client_frame_t output[1];
     memset(output, 0x0, sizeof(client_frame_t));
 
@@ -579,7 +732,17 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
 // TODO: Add functionality.
 void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth)
 {
-
+    if (ImGui::Begin("Settings", SETTINGS_window))
+    {
+        // static int test1 = 0, test2 = 0, test3 = 0;
+        // ImGui::Columns(3, "first_column_set", true);
+        // ImGui::InputInt("test1", &test1);
+        // ImGui::NextColumn();
+        // ImGui::InputInt("test2", &test2);
+        // ImGui::NextColumn();
+        // ImGui::InputInt("test3", &test3);
+    }
+    ImGui::End();
 }
 
 void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rolbuf, bool *allow_transmission)
@@ -602,7 +765,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_moi_button", ImGuiDir_Right))
                 {
-                    //printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_MOI;
                     ACS_command_input.unused = 0x0;
@@ -615,7 +777,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_imoi_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_IMOI;
                     ACS_command_input.unused = 0x0;
@@ -628,7 +789,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_dipole_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_DIPOLE;
                     ACS_command_input.unused = 0x0;
@@ -641,7 +801,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_timestep_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_TSTEP;
                     ACS_command_input.unused = 0x0;
@@ -654,7 +813,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_measure_time_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_MEASURE_TIME;
                     ACS_command_input.unused = 0x0;
@@ -667,7 +825,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_leeway_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_LEEWAY;
                     ACS_command_input.unused = 0x0;
@@ -680,7 +837,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_wtarget_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_WTARGET;
                     ACS_command_input.unused = 0x0;
@@ -693,7 +849,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_detumble_angle_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_DETUMBLE_ANG;
                     ACS_command_input.unused = 0x0;
@@ -706,7 +861,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
 
                 if (ImGui::ArrowButton("get_sun_angle_button", ImGuiDir_Right))
                 {
-                    // printf("Pretending to poll SPACE-HAUC...\n");
                     ACS_command_input.mod = ACS_ID;
                     ACS_command_input.cmd = ACS_GET_SUN_ANGLE;
                     ACS_command_input.unused = 0x0;
@@ -865,7 +1019,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     }
                     case ACS_SET_DIPOLE:
                     {
-                        // ACS_command_input.data[0] = acs_set_data.dipole;
                         ACS_command_input.data_size = sizeof(float);
                         memcpy(ACS_command_input.data, &acs_set_data.dipole, ACS_command_input.data_size);
                         break;
@@ -908,7 +1061,6 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     }
                     default:
                     {
-                        // printf("ACS ID ERROR!\n");
                         ACS_command_input.data_size = -1;
                         break;
                     }
@@ -939,7 +1091,6 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
 
     if (ImGui::Begin("EPS Operations", EPS_window))
     {
-        // ImGui::Text("Data-down Commands");
         if (ImGui::CollapsingHeader("Data-down Commands"))
         {
 
@@ -1067,7 +1218,6 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
 
         ImGui::Separator();
 
-        // ImGui::Text("Transmit");
         if (ImGui::CollapsingHeader("Transmit"))
         {
             if (allow_transmission)
@@ -1081,14 +1231,12 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     {
                         // TODO: Remove all .data[0] = some_variable, because this will only set the first byte of .data because its in section of bytes.
                         // TODO: ~DO NOT REMOVE~ UNLESS it is a one-byte kind of data, ie uint8_t.
-                        // EPS_command_input.data[0] = eps_set_data.loop_timer;
                         EPS_command_input.data_size = sizeof(int);
                         memcpy(EPS_command_input.data, &eps_set_data.loop_timer, EPS_command_input.data_size);
                         break;
                     }
                     default:
                     {
-                        // printf("ERROR!");
                         EPS_command_input.data_size = -1;
                         break;
                     }
@@ -1124,7 +1272,6 @@ void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmiss
 
     if (ImGui::Begin("X-Band Operations", XBAND_window))
     {
-        // ImGui::Text("Data-down Commands");
         // TODO: Change to arrow-button implementation.
         if (ImGui::CollapsingHeader("Data-down Commands"))
         {
@@ -1143,15 +1290,12 @@ void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmiss
 
         ImGui::Separator();
 
-        // ImGui::Text("Data-up Commands");
         if (ImGui::CollapsingHeader("Data-up Commands"))
         {
             if (auth->access_level > 1)
             {
                 ImGui::Indent();
 
-                // if (ImGui::CollapsingHeader("Set Transmit"))
-                // {
                 ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
                 ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
                 ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
@@ -1216,11 +1360,9 @@ void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmiss
                     }
                     xband_set_data.TX.phase[i] = (short)xband_set_data.TXH.phase[i];
                 }
-                // }
+
                 ImGui::Separator();
 
-                // if (ImGui::CollapsingHeader("Set Receive"))
-                // {
                 ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
                 ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
                 ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);

@@ -17,9 +17,10 @@
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
-#define SIZE_FRAME_PAYLOAD 56
-#define SIZE_FRAME 64
-#define CLIENT_FRAME_GUID 0x1A1C
+// #define SIZE_FRAME_PAYLOAD 56
+// #define SIZE_FRAME 64
+#define CLIENTSERVER_FRAME_GUID 0x1A1C
+#define MAX_SIZE_CLIENTSERVER_PAYLOAD 0x400
 #define MAX_ROLLBUF_LEN 500
 #define SIZE_RX_BUF 8192
 
@@ -148,6 +149,160 @@ typedef struct __attribute__((packed))
     uint16_t crc2;
     uint16_t termination;
 } client_frame_t;
+
+enum CLIENTSERVER_FRAME_TYPE
+{
+    CS_TYPE_ERROR = -1,
+    CS_TYPE_NULL = 0,
+    CS_TYPE_ACK = 1,
+    CS_TYPE_NACK = 2,
+    CS_TYPE_CONFIG = 3,
+    CS_TYPE_DATA = 4,
+    CS_TYPE_STATUS = 5
+};
+
+enum CLIENTSERVER_FRAME_ENDPOINT
+{
+    CS_ENDPOINT_ERROR = -1,
+    CS_ENDPOINT_CLIENT = 0,
+    CS_ENDPOINT_SERVER = 1,
+    CS_ENDPOINT_HAYSTACK = 2,
+    CS_ENDPOINT_ROOFXBAND = 3,
+    CS_ENDPOINT_ROOFUHF = 4,
+    CS_ENDPOINT_SPACEHAUC = 5
+};
+
+enum CLIENTSERVER_FRAME_MODE
+{
+    CS_MODE_RX = 0,
+    CS_MODE_TX = 1
+};
+
+// Client<->Server Frame can be of unlimited and variable size.
+// It is made up of three sections:
+// Header
+// Some data in an unsigned char array.
+// Footer
+// TODO: Will need ACK, NACK, CONFIG, DATA, STATUS sub-structs to be mapped onto the payload when necessary. NULL should just be all zeroes. 
+class ClientServerFrame
+{
+public:
+    /**
+     * @brief Sets the payload_size, type, GUID, and termination values.
+     * 
+     * @param payload_size The desired payload size.
+     * @param type The type of data this frame will carry (see: CLIENTSERVER_FRAME_TYPE).
+     */
+    ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_size);
+
+    /**
+     * @brief Frees dynamically allocated payload memory.
+     * 
+     */
+    ~ClientServerFrame();
+
+    /**
+     * @brief Copies data to the payload.
+     * 
+     * Returns and error if the passed data size does not equal the internal payload_size variable set during class construction.
+     * 
+     * Sets the CRC16s.
+     * 
+     * @param endpoint The final destination for the payload (see: CLIENTSERVER_FRAME_ENDPOINT).
+     * @param data Data to be copied into the payload.
+     * @param size Size of the data to be copied.
+     * @return int Positive on success, negative on failure.
+     */
+    int storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, unsigned char* data, int size);
+
+    /**
+     * @brief Copies payload to the passed space in memory.
+     * 
+     * @param data_space Pointer to memory into which the payload is copied.
+     * @param size The size of the memory space being passed.
+     * @return int Positive on success, negative on failure.
+     */
+    int retrievePayload(unsigned char* data_space, int size);
+
+    /**
+     * @brief Get the payload size.
+     * 
+     * @return int Payload size.
+     */
+    int getPayloadSize();
+
+    /**
+     * @brief Get the type.
+     * 
+     * @return CLIENTSERVER_FRAME_TYPE Type.
+     */
+    CLIENTSERVER_FRAME_TYPE getType();
+
+    /**
+     * @brief Checks the validity of itself.
+     * 
+     * @return int Positive if valid, negative if invalid.
+     */
+    int checkIntegrity();
+private:
+    // 0x????
+    uint16_t guid;
+    // Where is this going?
+    CLIENTSERVER_FRAME_ENDPOINT endpoint;
+    // RX or TX?
+    CLIENTSERVER_FRAME_MODE mode;
+    // Variably sized payload, this value tracks the size.
+    int payload_size;
+    // NULL, ACK, NACK, CONFIG, DATA, STATUS
+    CLIENTSERVER_FRAME_TYPE type;
+    // CRC16 of payload.
+    uint16_t crc1;
+    // Variably sized payload, set by constructor.
+    unsigned char *payload;
+    uint16_t crc2;
+    // 0xAAAA
+    uint16_t termination;
+};
+
+// CLIENTSERVER payload types.
+typedef struct
+{
+    // -1 = Error, 0 = Offline, 1 = Online
+    uint8_t haystack;
+    uint8_t roof_uhf;
+    uint8_t roof_xband;
+} cs_status_t;
+
+typedef struct
+{
+    uint8_t ack; // 0 = NAck, 1 = Ack
+    int code; // Error code or some other info.
+} cs_ack_t; // (N/ACK)
+
+// // Config types.
+// typedef struct
+// {
+
+// } cs_config_xband_t
+
+// typedef struct
+// {
+
+// } cs_config_uhf_t
+
+/**
+ * @brief Contains structures and classes that will be populated with data by the receive thread; these structures and classes also provide the data which the client will display.
+ * 
+ */
+typedef struct
+{
+    ACSRollingBuffer *acs_rolbuf;
+    cs_status_t cs_status[1];
+    cs_ack_t cs_ack[1];
+    cmd_output_t cmd_output[1]; // DATA type.
+
+    bool rx_active; // Only able to receive when this is true.
+} global_data_t;
 
 /**
  * @brief Command structure that SPACE-HAUC receives.
@@ -452,26 +607,14 @@ class ACSRollingBuffer
 public:
     ACSRollingBuffer();
 
+    ~ACSRollingBuffer();
+
     /**
      * @brief Adds a value set to the rolling buffer.
      * 
      * @param data The data to be copied into the buffer.
      */
     void addValueSet(acs_upd_output_t data);
-
-    /**
-     * @brief Reads a value set from the rolling buffer.
-     * 
-     * @param data Memory to copy the data into.
-     */
-    // void getValueSet(acs_upd_output_t* data);
-
-    // double minmax_ct_mode[2];
-    // double minmax_b[2];
-    // double minmax_w[2];
-    // double minmax_s[2];
-    // double minmax_v[2];
-    // double minmax_cur[2];
 
     // Separated by the graphs they'll appear in.
     ScrollBuf ct, mode;
@@ -483,27 +626,7 @@ public:
 
     float x_index;
 
-    // bool thread_finished;
-
     pthread_mutex_t acs_upd_inhibitor;
-
-    ~ACSRollingBuffer();
-
-private:
-    // This is not any one data point, but rather each member should be set independently to the maximum seen.
-    // acs_upd_output_t max_values;
-    // This is not any one data point, but rather each member should be set independently to the minimum seen.
-    // acs_upd_output_t min_values;
-
-    // 'Head' index.
-    // int read_index;
-    // 'Tail' index.
-    // int write_index;
-
-    // Current number of items.
-    // int length;
-    // Maximum number of items.
-    // int max_length;
 };
 
 /**
@@ -544,17 +667,17 @@ float getMax(float a, float b);
  */
 float getMax(float a, float b, float c);
 
-// TODO: Overwrite old data regardless of ready status, but do not display data which is stale, ie isnt ready.
-class ACSDisplayData
-{
-public:
-    ACSDisplayData();
+// // TODO: Overwrite old data regardless of ready status, but do not display data which is stale, ie isnt ready.
+// class ACSDisplayData
+// {
+// public:
+//     ACSDisplayData();
 
-    acs_upd_output_t data[1];
+//     acs_upd_output_t data[1];
 
-    // This is so that we don't display the same data multiple times.
-    bool ready;
-};
+//     // This is so that we don't display the same data multiple times.
+//     bool ready;
+// };
 
 /**
  * @brief Default ImGui callback function.
@@ -563,6 +686,18 @@ public:
  * @param description 
  */
 void glfw_error_callback(int error, const char *description);
+
+/**
+ * @brief 
+ * 
+ */
+void gs_gui_init();
+
+/**
+ * @brief 
+ * 
+ */
+void gs_gui_destroy();
 
 /**
  * @brief Checks the validity of the user-input password candidate.

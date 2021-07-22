@@ -31,6 +31,7 @@ int main(int, char **)
     ////////// INIT ///////////
     // Setup the window.
     glfwSetErrorCallback(glfw_error_callback);
+
     if (!glfwInit())
     {
         return -1;
@@ -62,12 +63,15 @@ int main(int, char **)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL2_Init();
 
-    // return 1;
     /// ///////////////////////
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    ACSRollingBuffer *acs_rolbuf = new ACSRollingBuffer();
+    // ClientDataPackage *client_data_package = new ClientDataPackage();
+
+    global_data_t global_data[1] = {0};
+    global_data->acs_rolbuf = new ACSRollingBuffer();
+
     auth_t auth = {0};
     bool allow_transmission = false;
     bool AUTH_control_panel = true;
@@ -82,12 +86,15 @@ int main(int, char **)
     bool DISP_control_panel = true;
     bool User_Manual = false;
 
+    // Start the receiver thread, passing it our acs_rolbuf (where we will read ACS Update data from) and (perhaps a cmd_output_t for all other data?).
+
+
     // Main loop.
     while (!glfwWindowShouldClose(window))
     {
         // Poll and handle events (inputs, window resizing, etc.).
         glfwPollEvents();
-        
+
         // Start the Dear ImGui frame.
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -109,7 +116,7 @@ int main(int, char **)
 
         if (ACS_window)
         {
-            gs_gui_acs_window(&ACS_window, &auth, acs_rolbuf, &allow_transmission);
+            gs_gui_acs_window(&ACS_window, &auth, global_data->acs_rolbuf, &allow_transmission);
         }
 
         if (EPS_window)
@@ -145,7 +152,7 @@ int main(int, char **)
 
         if (ACS_UPD_display)
         {
-            gs_gui_acs_upd_display_window(&ACS_UPD_display, acs_rolbuf);
+            gs_gui_acs_upd_display_window(&ACS_UPD_display, global_data->acs_rolbuf);
         }
 
         if (DISP_control_panel)
@@ -197,6 +204,8 @@ int main(int, char **)
     }
 
     // Cleanup.
+    gs_gui_destroy();
+
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
