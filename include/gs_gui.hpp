@@ -627,6 +627,14 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
 /**
  * @brief 
  * 
+ * @param SETTINGS_window 
+ * @param auth 
+ */
+void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth);
+
+/**
+ * @brief 
+ * 
  * @param ACS_window 
  * @param auth 
  * @param acs_rolbuf 

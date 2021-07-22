@@ -9,7 +9,7 @@
  * 
  */
 
-// TODO: Add receive functionality where necessary.
+// TODO: Add receive functionality where necessary.21
 // TODO: See comic-mon for server send / receive functionality.
 // Implemented __fp16 in acs_upd_output_t as uint16_t.
 // TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
@@ -71,6 +71,7 @@ int main(int, char **)
     auth_t auth = {0};
     bool allow_transmission = false;
     bool AUTH_control_panel = true;
+    bool SETTINGS_window = false;
     bool ACS_window = false;
     bool EPS_window = false;
     bool XBAND_window = false;
@@ -99,6 +100,11 @@ int main(int, char **)
         if (AUTH_control_panel)
         {
             gs_gui_authentication_control_panel_window(&AUTH_control_panel, &auth);
+        }
+
+        if (SETTINGS_window)
+        {
+            gs_gui_settings_window(&SETTINGS_window, &auth);
         }
 
         if (ACS_window)
@@ -152,6 +158,7 @@ int main(int, char **)
             gs_gui_user_manual_window(&User_Manual);
         }
 
+        // The main menu bar located at the top of the screen.
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::Button("Authentication"))
@@ -162,12 +169,16 @@ int main(int, char **)
             {
                 DISP_control_panel = !DISP_control_panel;
             }
+            if (ImGui::Button("Settings"))
+            {
+                SETTINGS_window = !SETTINGS_window;
+            }
             if (ImGui::Button("User Manual"))
             {
                 User_Manual = !User_Manual;
             }
 
-            ImGui::Text("Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);
+            ImGui::Text("\t\t Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);
         }
         ImGui::EndMainMenuBar();
 

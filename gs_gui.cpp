@@ -576,6 +576,12 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
     ImGui::End();
 }
 
+// TODO: Add functionality.
+void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth)
+{
+
+}
+
 void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rolbuf, bool *allow_transmission)
 {
     static int ACS_command = ACS_INVALID_ID;
