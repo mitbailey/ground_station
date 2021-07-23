@@ -12,13 +12,11 @@
 #ifndef GS_GUI_HPP
 #define GS_GUI_HPP
 
-#include <pthread.h>
+// #include <pthread.h>
 
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
-// #define SIZE_FRAME_PAYLOAD 56
-// #define SIZE_FRAME 64
 #define CLIENTSERVER_FRAME_GUID 0x1A1C
 #define CLIENTSERVER_MAX_PAYLOAD_SIZE 0x64
 #define MAX_ROLLBUF_LEN 500
@@ -33,6 +31,19 @@
 #define FRAME_COLOR "\x1b[91m"
 #define PAYLOAD_COLOR "\x1b[94m"
 #define RESET_COLOR "\x1b[0m"
+
+// Function magic for system restart command, replaces .cmd value.
+#define SYS_RESTART_FUNC_MAGIC 0x3c
+// Data value for system restart command, replaces .data[] values.
+#define SYS_RESTART_FUNC_VAL 0x2fa45d2002d54af2
+
+// Function magic for system reboot command, replaces .cmd value.
+#define SYS_REBOOT_FUNC_MAGIC 0x9d
+// Data value for system restart command, replaces .data[] values.
+#define SYS_REBOOT_FUNC_VAL 0x36a45d2002d54af0
+
+// Data value for software update command, replaces .data[] values.
+#define SW_UPD_VALID_MAGIC 0x2489f750228d2e4fL
 
 /**
  * @brief Numeric identifiers for determining what module a command is for.
@@ -52,16 +63,6 @@ enum MODULE_ID
     SYS_CLEAN_SHBYTES = 0xfd
 };
 
-// Function magic for system restart command, replaces .cmd value.
-#define SYS_RESTART_FUNC_MAGIC 0x3c
-// Data value for system restart command, replaces .data[] values.
-#define SYS_RESTART_FUNC_VAL 0x2fa45d2002d54af2
-
-// Function magic for system reboot command, replaces .cmd value.
-#define SYS_REBOOT_FUNC_MAGIC 0x9d
-// Data value for system restart command, replaces .data[] values.
-#define SYS_REBOOT_FUNC_VAL 0x36a45d2002d54af0
-
 /**
  * @brief Function magic for software update command, replaces .cmd value.
  * 
@@ -70,9 +71,6 @@ enum SW_UPD_FUNC_ID
 {
     SW_UPD_FUNC_MAGIC = 0x87,
 };
-
-// Data value for software update command, replaces .data[] values.
-#define SW_UPD_VALID_MAGIC 0x2489f750228d2e4fL
 
 /**
  * @brief ID values for each ACS command.
@@ -140,15 +138,6 @@ enum XBAND_FUNC_ID
     XBAND_GET_LOOP_TIME,
     XBAND_SET_LOOP_TIME,
 };
-
-typedef struct __attribute__((packed))
-{
-    uint16_t guid;
-    uint16_t crc1;
-    unsigned char payload[56]; // cmd_input_t or cmd_output_t goes here.
-    uint16_t crc2;
-    uint16_t termination;
-} client_frame_t;
 
 enum CLIENTSERVER_FRAME_TYPE
 {
@@ -235,6 +224,8 @@ public:
     /**
      * @brief Get the type.
      * 
+     * Valid types are NULL (all zeroes), ACK, NACK, CONFIG, DATA, and STATUS.
+     * 
      * @return CLIENTSERVER_FRAME_TYPE Type.
      */
     CLIENTSERVER_FRAME_TYPE getType();
@@ -279,6 +270,15 @@ private:
     uint16_t termination;
 };
 
+// typedef struct __attribute__((packed))
+// {
+//     uint16_t guid;
+//     uint16_t crc1;
+//     unsigned char payload[56]; // cmd_input_t or cmd_output_t goes here.
+//     uint16_t crc2;
+//     uint16_t termination;
+// } client_frame_t;
+
 // CLIENTSERVER payload types.
 typedef struct
 {
@@ -294,16 +294,16 @@ typedef struct
     int code; // Error code or some other info.
 } cs_ack_t; // (N/ACK)
 
-// // Config types.
-// typedef struct
-// {
+// Config types.
+typedef struct
+{
 
-// } cs_config_xband_t
+} cs_config_xband_t;
 
-// typedef struct
-// {
+typedef struct
+{
 
-// } cs_config_uhf_t
+} cs_config_uhf_t;
 
 /**
  * @brief Command structure that SPACE-HAUC receives.
@@ -341,16 +341,6 @@ typedef struct __attribute__((packed))
     unsigned char data[46]; // 46
 } cmd_output_t;
 
-// /**
-//  * @brief Used for asynchronous transmission of acs_upd requests.
-//  *
-//  */
-// typedef struct __attribute__((packed))
-// {
-//     cmd_input_t cmd_input[1];
-//     bool ready;
-// } acs_upd_input_t;
-
 /**
  * @brief The ACS update data format sent from SPACE-HAUC to Ground.
  * 
@@ -367,9 +357,9 @@ typedef struct __attribute__((packed))
  * 
  * @return typedef struct 
  */
-#ifndef COMPILING_SYSTEM
+#ifndef __fp16
 #define __fp16 uint16_t
-#endif // COMPILING_SYSTEM
+#endif // __fp16
 typedef struct __attribute__((packed))
 {
     uint8_t ct;      // Set in acs.c.

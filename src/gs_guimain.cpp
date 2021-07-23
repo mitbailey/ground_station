@@ -14,16 +14,16 @@
 // Implemented __fp16 in acs_upd_output_t as uint16_t.
 // TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
 
-#include "imgui/imgui.h"
-#include "backend/imgui_impl_glfw.h"
-#include "backend/imgui_impl_opengl2.h"
-#include "implot/implot.h"
+#include <stdlib.h>
 #include <stdio.h>
-#include <GLFW/glfw3.h>
-#include "gs_gui.hpp"
 #include <unistd.h>
 #include <pthread.h>
-#include <stdlib.h>
+#include <GLFW/glfw3.h>
+#include "backend/imgui_impl_glfw.h"
+#include "backend/imgui_impl_opengl2.h"
+#include "imgui/imgui.h"
+#include "implot/implot.h"
+#include "gs_gui.hpp"
 
 int main(int, char **)
 {

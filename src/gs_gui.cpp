@@ -9,29 +9,32 @@
  * 
  */
 
-#include "imgui/imgui.h"
-#include "backend/imgui_impl_glfw.h"
-#include "backend/imgui_impl_opengl2.h"
-#include "implot/implot.h"
-#include <stdio.h>
-#include <GLFW/glfw3.h>
-#include "gs_gui.hpp"
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <GLFW/glfw3.h>
+#include "backend/imgui_impl_glfw.h"
+#include "backend/imgui_impl_opengl2.h"
+#include "imgui/imgui.h"
+#include "implot/implot.h"
+#include "gs_gui.hpp"
 
 void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
-void gs_gui_init()
-{
-}
+// void gs_gui_init()
+// {
+// }
 
-void gs_gui_destroy()
-{
-}
+// void gs_gui_destroy()
+// {
+// }
 
 /// ScrollBuf Class
 ScrollBuf::ScrollBuf()
