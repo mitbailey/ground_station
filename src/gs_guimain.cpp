@@ -18,6 +18,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <GLFW/glfw3.h>
 #include "backend/imgui_impl_glfw.h"
 #include "backend/imgui_impl_opengl2.h"
@@ -64,6 +68,16 @@ int main(int, char **)
     ImGui_ImplOpenGL2_Init();
 
     /// ///////////////////////
+
+    // Network connection setup.
+    // TODO: Use connection_ready in the gs_rx_thread
+    volatile bool connection_ready = false;
+    signal(SIGPIPE, SIG_IGN); // so that client does not die when server does
+    int socket = -1;
+    int valread;
+    struct sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);

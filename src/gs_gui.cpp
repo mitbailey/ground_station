@@ -614,6 +614,7 @@ int gs_gui_gs2sh_tx_handler(auth_t *auth, cmd_input_t *command_input)
     return 1;
 }
 
+// TODO: Update, looking at "void *rcv_thr(void *sock)" from line 338 of: https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
 void *gs_rx_thread(void *args)
 {
     // Convert the passed void pointer into something useful; in this case, a struct of whatever arguments gs_rx_thread(...) will need.
