@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -88,11 +90,9 @@ float ScrollBuf::Min()
             min = data[i].y;
     return min;
 }
-
 /// ///
 
 /// ACSRollingBuffer Class
-
 ACSRollingBuffer::ACSRollingBuffer()
 {
     x_index = 0;
@@ -272,6 +272,112 @@ int ClientServerFrame::send()
     return 1;
 }
 /// ///
+
+/**
+ * @brief 
+ * 
+ * From:
+ * https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
+ * with minor modifications.
+ * 
+ * @param socket 
+ * @param address 
+ * @param socket_size 
+ * @param tout_s 
+ * @return int 
+ */
+int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s)
+{
+    int res;
+    long arg;
+    fd_set myset;
+    struct timeval tv;
+    int valopt;
+    socklen_t lon;
+
+    // Set non-blocking.
+    if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
+    {
+        fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+        return -1;
+    }
+    arg |= O_NONBLOCK;
+    if (fcntl(socket, F_SETFL, arg) < 0)
+    {
+        fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+        return -1;
+    }
+    // Trying to connect with timeout.
+    res = connect(socket, address, socket_size);
+    if (res < 0)
+    {
+        if (errno == EINPROGRESS)
+        {
+            fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
+            do
+            {
+                if (tout_s > 0)
+                {
+                    tv.tv_sec = tout_s;
+                }
+                else
+                {
+                    tv.tv_sec = 1; // Minimum 1 second.
+                }
+                tv.tv_usec = 0;
+                FD_ZERO(&myset);
+                FD_SET(socket, &myset);
+                res = select(socket + 1, NULL, &myset, NULL, &tv);
+                if (res < 0 && errno != EINTR)
+                {
+                    fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+                    return -1;
+                }
+                else if (res > 0)
+                {
+                    // Socket selected for write.
+                    lon = sizeof(int);
+                    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void *)(&valopt), &lon) < 0)
+                    {
+                        fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+                        return -1;
+                    }
+
+                    // Check the value returned...
+                    if (valopt)
+                    {
+                        fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt));
+                        return -1;
+                    }
+                    break;
+                }
+                else
+                {
+                    fprintf(stderr, "Timeout in select() - Cancelling!\n");
+                    return -1;
+                }
+            } while (1);
+        } 
+        else
+        {
+            fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+            return -1;
+        }
+    }
+    // Set to blocking mode again...
+    if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
+    {
+        fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+        return -1;
+    }
+    arg &= (~O_NONBLOCK);
+    if (fcntl(socket, F_SETFL, arg) < 0)
+    {
+        fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+        return -1;
+    }
+    return socket;
+}
 
 float getMin(float a, float b)
 {

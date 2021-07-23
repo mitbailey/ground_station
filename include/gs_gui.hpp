@@ -625,13 +625,20 @@ public:
  */
 typedef struct
 {
+    // Data
     ACSRollingBuffer *acs_rolbuf;
     cs_status_t cs_status[1];
     cs_ack_t cs_ack[1];
     cmd_output_t cmd_output[1]; // DATA type.
 
+    // Network
+    int socket[1];
+
+    // Booleans
     bool rx_active; // Only able to receive when this is true.
 } global_data_t;
+
+int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
 
 /**
  * @brief Get the Min object
