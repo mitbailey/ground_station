@@ -81,7 +81,6 @@ int main(int, char **)
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
 
-
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     // ClientDataPackage *client_data_package = new ClientDataPackage();
@@ -102,6 +101,7 @@ int main(int, char **)
     bool RX_display = false;
     bool ACS_UPD_display = false;
     bool DISP_control_panel = true;
+    bool CONNS_manager = true;
     bool User_Manual = false;
 
     // Set-up and start the RX thread.
@@ -109,7 +109,6 @@ int main(int, char **)
     pthread_create(&rx_thread_id, NULL, gs_rx_thread, global_data);
 
     // Start the receiver thread, passing it our acs_rolbuf (where we will read ACS Update data from) and (perhaps a cmd_output_t for all other data?).
-
 
     // Main loop.
     while (!glfwWindowShouldClose(window))
@@ -121,77 +120,6 @@ int main(int, char **)
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-        // Network Connection
-        {
-            static int port = 1924;
-            static char ipaddr[16] = "127.0.0.1";
-            auto flag = ImGuiInputTextFlags_ReadOnly;
-            if (!connection_ready)
-            {
-                flag = (ImGuiInputTextFlags_)0;
-            }
-
-            if (ImGui::Begin("Connection Manager"))
-            {
-                ImGui::InputText("IP Address", ipaddr, sizeof(ipaddr), flag);
-                ImGui::InputInt("Port", &port, 0, 0, flag);
-
-                if (!connection_ready || sock < 0)
-                {
-                    if (ImGui::Button("Connect"))
-                    {
-                        serv_addr.sin_port = htons(port);
-                        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-                        {
-                            printf("\nSocket creation error.\n");
-                            fflush(stdout);
-                            // return -1;
-                        }
-                        if (inet_pton(AF_INET, ipaddr, &serv_addr.sin_addr) <= 0)
-                        {
-                            printf("\nInvalid address; Address not supported.\n");
-                        }
-                        if (connect_w_tout(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr), 1) < 0)
-                        {
-                            printf("\nConnection failed!\n");
-                        }
-                        else
-                        {
-                            connection_ready = true;
-                        }
-                    }
-                }
-                else 
-                {
-                    if (ImGui::Button("Disconnect"))
-                    {
-                        close(sock);
-                        sock = -1;
-                        connection_ready = false;
-                    }
-                }
-                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-
-                // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection.
-                if (connection_ready && sock > 0)
-                {
-                    static int jpg_qty;
-                    if (ImGui::InputInt("JPEG Quality", &jpg_qty, 1, 10))
-                    {
-                        static char msg[1024];
-                        int sz = snprintf(msg, 1024, "CMD_JPEG_SET_QUALITY%d", jpg_qty);
-                        send(sock, msg, sz, 0);
-                    }
-                }
-
-                ImGui::End();
-            }
-        }
-
-
-
 
         // Level 0: Basic access, can retrieve data from acs_upd.
         // Level 1: Team Member access, can execute Data-down commands.
@@ -248,6 +176,12 @@ int main(int, char **)
             gs_gui_acs_upd_display_window(&ACS_UPD_display, global_data->acs_rolbuf);
         }
 
+        // Network Connections Manager
+        if (CONNS_manager)
+        {
+            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, &connection_ready, &sock, &serv_addr);
+        }
+
         if (DISP_control_panel)
         {
             gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, &auth);
@@ -268,6 +202,10 @@ int main(int, char **)
             if (ImGui::Button("Displays Control"))
             {
                 DISP_control_panel = !DISP_control_panel;
+            }
+            if (ImGui::Button("Connections"))
+            {
+                CONNS_manager = !CONNS_manager;
             }
             if (ImGui::Button("Settings"))
             {

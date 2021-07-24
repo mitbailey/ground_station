@@ -607,7 +607,8 @@ int gs_gui_gs2sh_tx_handler(auth_t *auth, cmd_input_t *command_input)
     return 1;
 }
 
-// TODO: Update, looking at "void *rcv_thr(void *sock)" from line 338 of: https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
+// Updated, referenced "void *rcv_thr(void *sock)" from line 338 of: https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
+// Also see: https://github.com/mitbailey/socket_server
 void *gs_rx_thread(void *args)
 {
     // Convert the passed void pointer into something useful; in this case, a struct of whatever arguments gs_rx_thread(...) will need.
@@ -625,9 +626,10 @@ void *gs_rx_thread(void *args)
     listening_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (listening_socket == -1)
     {
-        printf("Could not create socket.\n");
+        dbprintlf(FATAL "Could not create socket.");
+        return NULL;
     }
-    printf("Socket created.\n");
+    dbprintlf(GREEN_FG "Socket created.");
 
     server_address.sin_family = AF_INET;
     // TODO: Should probably not accept just any address.
@@ -637,7 +639,7 @@ void *gs_rx_thread(void *args)
     // Set the IP address.
     if (inet_pton(AF_INET, SERVER_IP_ADDRESS, &server_address.sin_addr) <= 0)
     {
-        printf("Invalid address; address not supported.\n");
+        dbprintlf(FATAL "Invalid address; address not supported.");
         return NULL;
     }
 
@@ -650,13 +652,11 @@ void *gs_rx_thread(void *args)
     // Bind.
     if (bind(listening_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
     {
-        printf("Error: Port binding failed.\n");
+        dbprintlf(FATAL "Error: Port binding failed.");
         perror("bind");
         return NULL;
     }
-    printf("Bound to port.\n");
-
-    printf("Beginning receive...\n");
+    dbprintlf(GREEN_FG "Bound to port.");
 
     // Listen.
     listen(listening_socket, 3);
@@ -664,7 +664,7 @@ void *gs_rx_thread(void *args)
     while (global_data->rx_active)
     {
         // Accept an incoming connection.
-        printf("Waiting for incoming connections...\n");
+        dbprintlf("Waiting for incoming connections...");
         socket_size = sizeof(struct sockaddr_in);
 
         // Accept connection from an incoming client.
@@ -682,7 +682,7 @@ void *gs_rx_thread(void *args)
                 continue;
             }
         }
-        printf("Connection accepted.\n");
+        dbprintlf(CYAN_BG "Connection accepted.");
 
         // We are now connected.
 
@@ -690,27 +690,27 @@ void *gs_rx_thread(void *args)
 
         while (read_size >= 0 && global_data->rx_active)
         {
-            printf("Beginning recv... (last read: %d bytes)\n", read_size);
+            dbprintlf("Beginning recv... (last read: %d bytes)", read_size);
             read_size = recv(accepted_socket, buffer, buffer_size, 0);
             if (read_size > 0)
             {
-                printf("RECEIVED: ");
-                printf("%s\n", buffer);
+                dbprintf("RECEIVED: ");
+                dbprintlf("%s", buffer);
 
                 // TODO: Parse the data.
                 ClientServerFrame *clientserver_frame = (ClientServerFrame *)buffer;
                 if (clientserver_frame->checkIntegrity() < 0)
                 {
-                    printf("Integrity check failed.\n");
+                    dbprintlf("Integrity check failed.");
                     continue;
                 }
-                printf("Integrity check successful.\n");
+                dbprintlf("Integrity check successful.");
 
                 int payload_size = clientserver_frame->getPayloadSize();
                 unsigned char *payload = (unsigned char *)malloc(payload_size);
                 if (clientserver_frame->retrievePayload(payload, payload_size) < 0)
                 {
-                    printf("Error retrieving data.");
+                    dbprintlf("Error retrieving data.");
                     continue;
                 }
 
@@ -720,7 +720,7 @@ void *gs_rx_thread(void *args)
                 {
                 case CS_TYPE_NULL:
                 {
-                    printf("Received NULL frame.\n");
+                    dbprintlf("Received NULL frame.");
                     break;
                 }
                 case CS_TYPE_ACK:
@@ -763,11 +763,12 @@ void *gs_rx_thread(void *args)
         }
         if (read_size == 0)
         {
-            printf("Client closed connection.\n");
+            dbprintlf(CYAN_BG "Client closed connection.");
             continue;
-        } else if (errno == EAGAIN)
+        }
+        else if (errno == EAGAIN)
         {
-            printf("Active connection timed-out.\n", read_size);
+            dbprintlf(YELLOW_BG "Active connection timed-out.", read_size);
             continue;
         }
     }
@@ -1940,9 +1941,79 @@ void gs_gui_rx_display_window(bool *RX_display)
     ImGui::End();
 }
 
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, bool *connection_ready, int *sock, sockaddr_in *serv_addr)
+{
+    if (ImGui::Begin("Connections Manager", CONNS_manager))
+    {
+        if (auth->access_level >= 0)
+        {
+            static int port = SERVER_PORT;
+            static char ipaddr[16] = SERVER_IP_ADDRESS;
+
+            auto flag = ImGuiInputTextFlags_ReadOnly;
+            if (!(*connection_ready))
+            {
+                flag = (ImGuiInputTextFlags_)0;
+            }
+
+            ImGui::InputText("IP Address", ipaddr, sizeof(ipaddr), flag);
+            ImGui::InputInt("Port", &port, 0, 0, flag);
+
+            if (!(*connection_ready) || *sock < 0)
+            {
+                if (ImGui::Button("Connect"))
+                {
+                    serv_addr->sin_port = htons(port);
+                    if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                    {
+                        printf("\nSocket creation error.\n");
+                        fflush(stdout);
+                        // return -1;
+                    }
+                    if (inet_pton(AF_INET, ipaddr, &serv_addr->sin_addr) <= 0)
+                    {
+                        printf("\nInvalid address; Address not supported.\n");
+                    }
+                    if (connect_w_tout(*sock, (struct sockaddr *)serv_addr, sizeof(*serv_addr), 1) < 0)
+                    {
+                        printf("\nConnection failed!\n");
+                    }
+                    else
+                    {
+                        *connection_ready = true;
+                    }
+                }
+            }
+            else
+            {
+                if (ImGui::Button("Disconnect"))
+                {
+                    close(*sock);
+                    *sock = -1;
+                    *connection_ready = false;
+                }
+            }
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection.
+            if (*connection_ready && *sock > 0)
+            {
+                static int jpg_qty;
+                if (ImGui::InputInt("JPEG Quality", &jpg_qty, 1, 10))
+                {
+                    static char msg[1024];
+                    int sz = snprintf(msg, 1024, "CMD_JPEG_SET_QUALITY%d", jpg_qty);
+                    send(*sock, msg, sz, 0);
+                }
+            }
+        }
+        ImGui::End();
+    }
+}
+
 void gs_gui_acs_upd_display_window(bool *ACS_UPD_display, ACSRollingBuffer *acs_rolbuf)
 {
-    if (ImGui::Begin("ACS Update Display"), ACS_UPD_display)
+    if (ImGui::Begin("ACS Update Display", ACS_UPD_display))
     {
         // The implemented method of displaying the ACS update data includes a locally-global class (ACSDisplayData) with data that this window will display. The data is set by gs_receive.
         // NOTE: This window must be opened independent of ACS's automated data retrieval option.

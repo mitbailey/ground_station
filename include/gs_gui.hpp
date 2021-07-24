@@ -14,6 +14,40 @@
 
 // #include <pthread.h>
 
+#ifndef dbprintlf
+#define dbprintlf(format, ...)                                                                        \
+    fprintf(stderr, "[%s | %s:%d] " format "\x1b[0m\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+    fflush(stderr);
+#endif // dbprintlf
+
+#ifndef dbprintf
+#define dbprintf(format, ...)                                                                       \
+    fprintf(stderr, "[%s | %s:%d] " format "\x1b[0m", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+    fflush(stderr);
+#endif // dbprintf
+
+#ifndef MEB_COLORS
+#define MEB_COLORS
+#define RESET_ALL "\x1b[0m"
+#define RED_FG "\x1b[91m"
+#define GREEN_FG "\x1b[92m"
+#define YELLOW_FG "\x1b[33m"
+#define BLUE_FG "\x1b[94m"
+#define MAGENTA_FG "\x1b[95m"
+#define CYAN_FG "\x1b[96m"
+#define RED_BG "\x1b[101m"
+#define GREEN_BG "\x1b[102m"
+#define YELLOW_BG "\x1b[43m"
+#define BLUE_BG "\x1b[104m"
+#define MAGENTA_BG "\x1b[105m"
+#define CYAN_BG "\x1b[106m"
+#endif // MEB_COLORS
+
+#ifndef MEB_CODES
+#define MEB_CODES
+#define FATAL "\033[1m\x1b[107m\x1b[31m(FATAL) "
+#endif // MEB_CODES
+
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
@@ -23,16 +57,6 @@
 #define SIZE_RX_BUF 8192
 #define SERVER_IP_ADDRESS "127.0.0.1"
 #define SERVER_PORT 1924
-
-#ifndef dbprintlf
-#define dbprintlf(format, ...)                                                                        \
-    fprintf(stderr, "[%s | %s:%d] " format "\x1b[0m\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
-    fflush(stderr);
-#endif // dbprintlf
-
-#define FRAME_COLOR "\x1b[91m"
-#define PAYLOAD_COLOR "\x1b[94m"
-#define RESET_COLOR "\x1b[0m"
 
 // Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
@@ -175,7 +199,7 @@ enum CLIENTSERVER_FRAME_MODE
 // Header
 // Some data in an unsigned char array.
 // Footer
-// TODO: Will need ACK, NACK, CONFIG, DATA, STATUS sub-structs to be mapped onto the payload when necessary. NULL should just be all zeroes. 
+// TODO: Will need ACK, NACK, CONFIG, DATA, STATUS sub-structs to be mapped onto the payload when necessary. NULL should just be all zeroes.
 class ClientServerFrame
 {
 public:
@@ -205,7 +229,7 @@ public:
      * @param size Size of the data to be copied.
      * @return int Positive on success, negative on failure.
      */
-    int storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void* data, int size);
+    int storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int size);
 
     /**
      * @brief Copies payload to the passed space in memory.
@@ -214,7 +238,7 @@ public:
      * @param size The size of the memory space being passed.
      * @return int Positive on success, negative on failure.
      */
-    int retrievePayload(unsigned char* data_space, int size);
+    int retrievePayload(unsigned char *data_space, int size);
 
     /**
      * @brief Get the payload size.
@@ -252,6 +276,7 @@ public:
      * @return int 
      */
     int send();
+
 private:
     // 0x????
     uint16_t guid;
@@ -293,8 +318,8 @@ typedef struct
 typedef struct
 {
     uint8_t ack; // 0 = NAck, 1 = Ack
-    int code; // Error code or some other info.
-} cs_ack_t; // (N/ACK)
+    int code;    // Error code or some other info.
+} cs_ack_t;      // (N/ACK)
 
 // Config types.
 typedef struct
@@ -816,6 +841,15 @@ void gs_gui_sys_ctrl_window(bool *SYS_CTRL_window, auth_t *auth, bool *allow_tra
  * @param RX_display 
  */
 void gs_gui_rx_display_window(bool *RX_display);
+
+/**
+ * @brief 
+ * 
+ * @param CONNS_manager 
+ * @param auth 
+ * @param allow_transmission 
+ */
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, bool *connection_ready, int *sock, sockaddr_in *serv_addr);
 
 /**
  * @brief 
