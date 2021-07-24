@@ -849,7 +849,7 @@ void gs_gui_rx_display_window(bool *RX_display);
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, bool *connection_ready, int *sock, sockaddr_in *serv_addr);
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, volatile bool *connection_ready, int *sock, sockaddr_in *serv_addr);
 
 /**
  * @brief 
