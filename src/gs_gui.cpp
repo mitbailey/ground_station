@@ -30,14 +30,6 @@ void glfw_error_callback(int error, const char *description)
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
-// void gs_gui_init()
-// {
-// }
-
-// void gs_gui_destroy()
-// {
-// }
-
 /// ScrollBuf Class
 ScrollBuf::ScrollBuf()
 {

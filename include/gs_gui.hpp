@@ -687,18 +687,6 @@ float getMax(float a, float b, float c);
 void glfw_error_callback(int error, const char *description);
 
 /**
- * @brief 
- * 
- */
-void gs_gui_init();
-
-/**
- * @brief 
- * 
- */
-void gs_gui_destroy();
-
-/**
  * @brief Checks the validity of the user-input password candidate.
  * 
  * @param arg The entered password candidate.

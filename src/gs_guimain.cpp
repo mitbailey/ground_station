@@ -61,7 +61,8 @@ int main(int, char **)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enables keyboard navigation.
 
     // Setup Dear ImGui style.
-    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsDark();
+    ImGui::StyleColorsClassic();
 
     // Setup platform / renderer backends.
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -221,8 +222,6 @@ int main(int, char **)
     }
 
     // Cleanup.
-    gs_gui_destroy();
-
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
