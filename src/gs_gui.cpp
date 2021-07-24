@@ -143,7 +143,7 @@ ClientServerFrame::ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_s
     this->payload_size = payload_size;
     this->type = type;
     // TODO: Set the mode properly.
-    mode = CS_MODE_ERROR; 
+    mode = CS_MODE_ERROR;
     crc1 = -1;
     crc2 = -1;
     guid = CLIENTSERVER_FRAME_GUID;
@@ -244,7 +244,7 @@ void ClientServerFrame::print()
     printf("Type ------------ %d\n", type);
     printf("CRC1 ------------ 0x%04x\n", crc1);
     printf("Payload ---- (HEX)");
-    for(int i = 0; i < payload_size; i++)
+    for (int i = 0; i < payload_size; i++)
     {
         printf(" 0x%04x", payload[i]);
     }
@@ -299,6 +299,7 @@ int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_
         fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
         return -1;
     }
+
     // Trying to connect with timeout.
     res = connect(socket, address, socket_size);
     if (res < 0)
@@ -349,7 +350,7 @@ int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_
                     return -1;
                 }
             } while (1);
-        } 
+        }
         else
         {
             fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
@@ -610,84 +611,164 @@ int gs_gui_gs2sh_tx_handler(auth_t *auth, cmd_input_t *command_input)
 void *gs_rx_thread(void *args)
 {
     // Convert the passed void pointer into something useful; in this case, a struct of whatever arguments gs_rx_thread(...) will need.
-    // TODO: Create a rx_thread_args_t struct.
-    global_data_t *global_data = (global_data_t *) args;
+    global_data_t *global_data = (global_data_t *)args;
 
+    // Socket prep.
+    int listening_socket, accepted_socket, socket_size;
+    int read_size = 0;
+    struct sockaddr_in server_address, client_address;
     int buffer_size = CLIENTSERVER_MAX_PAYLOAD_SIZE + 0x80;
-    unsigned char buffer[buffer_size];
+    unsigned char buffer[buffer_size + 1];
+    memset(buffer, '\0', buffer_size);
+
+    // Create socket.
+    listening_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (listening_socket == -1)
+    {
+        printf("Could not create socket.\n");
+    }
+    printf("Socket created.\n");
+
+    server_address.sin_family = AF_INET;
+    // TODO: Should probably not accept just any address.
+    server_address.sin_addr.s_addr = INADDR_ANY;
+    server_address.sin_port = htons(SERVER_PORT);
+
+    // Set the IP address.
+    if (inet_pton(AF_INET, SERVER_IP_ADDRESS, &server_address.sin_addr) <= 0)
+    {
+        printf("Invalid address; address not supported.\n");
+        return NULL;
+    }
+
+    // Set the timeout for recv, which will allow us to reconnect to poorly disconnected clients.
+    struct timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+    setsockopt(listening_socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
+    // Bind.
+    if (bind(listening_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+    {
+        printf("Error: Port binding failed.\n");
+        perror("bind");
+        return NULL;
+    }
+    printf("Bound to port.\n");
+
+    printf("Beginning receive...\n");
+
+    // Listen.
+    listen(listening_socket, 3);
 
     while (global_data->rx_active)
     {
-        printf("Beginning receive...\n");
+        // Accept an incoming connection.
+        printf("Waiting for incoming connections...\n");
+        socket_size = sizeof(struct sockaddr_in);
 
-        // TODO: Implement port reading.
-        // int retval = read(buffer, buffer_size);
-        // if (retval < 0)
-        // {
-        //     printf("Error while receiving.\n");
-        // }
-        // else if (retval == 0)
-        // {
-        //     printf("Received nothing.\n");
-        // }
-
-        // TODO: Parse the data.
-        ClientServerFrame *clientserver_frame = (ClientServerFrame *) buffer;
-        if (clientserver_frame->checkIntegrity() < 0)
+        // Accept connection from an incoming client.
+        accepted_socket = accept(listening_socket, (struct sockaddr *)&client_address, (socklen_t *)&socket_size);
+        if (accepted_socket < 0)
         {
-            printf("Integrity check failed.\n");
+            if (errno == EAGAIN)
+            {
+                // printf("Waiting for connection timed-out.\n");
+                continue;
+            }
+            else
+            {
+                perror("accept failed");
+                continue;
+            }
+        }
+        printf("Connection accepted.\n");
+
+        // We are now connected.
+
+        // Read from the socket.
+
+        while (read_size >= 0 && global_data->rx_active)
+        {
+            printf("Beginning recv... (last read: %d bytes)\n", read_size);
+            read_size = recv(accepted_socket, buffer, buffer_size, 0);
+            if (read_size > 0)
+            {
+                printf("RECEIVED: ");
+                printf("%s\n", buffer);
+
+                // TODO: Parse the data.
+                ClientServerFrame *clientserver_frame = (ClientServerFrame *)buffer;
+                if (clientserver_frame->checkIntegrity() < 0)
+                {
+                    printf("Integrity check failed.\n");
+                    continue;
+                }
+                printf("Integrity check successful.\n");
+
+                int payload_size = clientserver_frame->getPayloadSize();
+                unsigned char *payload = (unsigned char *)malloc(payload_size);
+                if (clientserver_frame->retrievePayload(payload, payload_size) < 0)
+                {
+                    printf("Error retrieving data.");
+                    continue;
+                }
+
+                CLIENTSERVER_FRAME_TYPE type = clientserver_frame->getType();
+                // TODO: Based on what we got, set things to display the data.
+                switch (type)
+                {
+                case CS_TYPE_NULL:
+                {
+                    printf("Received NULL frame.\n");
+                    break;
+                }
+                case CS_TYPE_ACK:
+                case CS_TYPE_NACK:
+                {
+                    // cs_ack_t *cs_ack = (cs_ack_t *) payload;
+                    memcpy(global_data->cs_ack, payload, payload_size);
+                    break;
+                }
+                case CS_TYPE_CONFIG:
+                {
+                    break;
+                }
+                case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
+                {
+                    // // TODO: Remove this block once debugging is complete.
+                    // cmd_output_t *cmd_output = (cmd_output_t *) payload;
+                    // cmd_output->
+
+                    memcpy(global_data->cmd_output, payload, payload_size);
+                    break;
+                }
+                case CS_TYPE_STATUS:
+                {
+                    cs_status_t *status = (cs_status_t *)payload;
+
+                    break;
+                }
+                case CS_TYPE_ERROR:
+                default:
+                {
+                    break;
+                }
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (read_size == 0)
+        {
+            printf("Client closed connection.\n");
             continue;
-        }
-        printf("Integrity check successful.\n");
-
-        int payload_size = clientserver_frame->getPayloadSize();
-        unsigned char *payload = (unsigned char *)malloc(payload_size);
-        if (clientserver_frame->retrievePayload(payload, payload_size) < 0)
+        } else if (errno == EAGAIN)
         {
-            printf("Error retrieving data.");
+            printf("Active connection timed-out.\n", read_size);
             continue;
-        }
-
-        CLIENTSERVER_FRAME_TYPE type = clientserver_frame->getType();
-        // TODO: Based on what we got, set things to display the data.
-        switch (type)
-        {
-        case CS_TYPE_NULL:
-        {
-            printf("Received NULL frame.\n");
-            break;
-        }
-        case CS_TYPE_ACK:
-        case CS_TYPE_NACK:
-        {
-            // cs_ack_t *cs_ack = (cs_ack_t *) payload;
-            memcpy(global_data->cs_ack, payload, payload_size);
-            break;
-        }
-        case CS_TYPE_CONFIG:
-        {
-            break;
-        }
-        case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
-        {
-            // // TODO: Remove this block once debugging is complete.
-            // cmd_output_t *cmd_output = (cmd_output_t *) payload;
-            // cmd_output->
-
-            memcpy(global_data->cmd_output, payload, payload_size);
-            break;
-        }
-        case CS_TYPE_STATUS:
-        {
-            cs_status_t *status = (cs_status_t *)payload;
-
-            break;
-        }
-        case CS_TYPE_ERROR:
-        default:
-        {
-            break;
-        }
         }
     }
 
@@ -698,73 +779,73 @@ void *gs_rx_thread(void *args)
 // // TODO: If the data is from ACS update, be sure to set the values in the ACS Update data class!
 int gs_receive(ACSRollingBuffer *acs_rolbuf)
 {
-//     client_frame_t output[1];
-//     memset(output, 0x0, sizeof(client_frame_t));
+    //     client_frame_t output[1];
+    //     memset(output, 0x0, sizeof(client_frame_t));
 
-//     // TODO: Read in data to output.
-//     // receive into 'output'
+    //     // TODO: Read in data to output.
+    //     // receive into 'output'
 
-//     // This function receives some data, which we assume fits as a client_frame_t, called output.
+    //     // This function receives some data, which we assume fits as a client_frame_t, called output.
 
-//     // TODO: REMOVE this code block once debug testing is complete.
-//     output->guid = CLIENT_FRAME_GUID;
-//     output->crc1 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
-//     output->crc2 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
+    //     // TODO: REMOVE this code block once debug testing is complete.
+    //     output->guid = CLIENT_FRAME_GUID;
+    //     output->crc1 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
+    //     output->crc2 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
 
-//     if (output->guid != CLIENT_FRAME_GUID)
-//     {
-//         printf("GUID Error: 0x%04x\n", output->guid);
-//         return -1;
-//     }
-//     else if (output->crc1 != output->crc2)
-//     {
-//         printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, output->crc2);
-//         return -2;
-//     }
-//     else if (output->crc1 != crc16(output->payload, SIZE_FRAME_PAYLOAD))
-//     {
-//         printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, crc16(output->payload, SIZE_FRAME_PAYLOAD));
-//         return -3;
-//     }
+    //     if (output->guid != CLIENT_FRAME_GUID)
+    //     {
+    //         printf("GUID Error: 0x%04x\n", output->guid);
+    //         return -1;
+    //     }
+    //     else if (output->crc1 != output->crc2)
+    //     {
+    //         printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, output->crc2);
+    //         return -2;
+    //     }
+    //     else if (output->crc1 != crc16(output->payload, SIZE_FRAME_PAYLOAD))
+    //     {
+    //         printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, crc16(output->payload, SIZE_FRAME_PAYLOAD));
+    //         return -3;
+    //     }
 
-//     cmd_output_t *payload = (cmd_output_t *)output->payload;
+    //     cmd_output_t *payload = (cmd_output_t *)output->payload;
 
-//     // TODO: REMOVE this code block once debug testing is complete.
-//     payload->mod = ACS_UPD_ID;
+    //     // TODO: REMOVE this code block once debug testing is complete.
+    //     payload->mod = ACS_UPD_ID;
 
-//     // All data received goes one of two places: the ACS Update Data Display window, or the plaintext trash heap window.
-//     if (payload->mod == ACS_UPD_ID)
-//     {
-//         // Set the data in acs_display_data to the data in output->payload.
-//         acs_upd_output_t *acs_upd_output = (acs_upd_output_t *)payload->data;
+    //     // All data received goes one of two places: the ACS Update Data Display window, or the plaintext trash heap window.
+    //     if (payload->mod == ACS_UPD_ID)
+    //     {
+    //         // Set the data in acs_display_data to the data in output->payload.
+    //         acs_upd_output_t *acs_upd_output = (acs_upd_output_t *)payload->data;
 
-//         // TODO: REMOVE this block of code once debug testing is complete.
-//         acs_upd_output->ct = rand() % 0xf;
-//         acs_upd_output->mode = rand() % 0xf;
-//         acs_upd_output->bx = rand() % 0xffff;
-//         acs_upd_output->by = rand() % 0xffff;
-//         acs_upd_output->bz = rand() % 0xffff;
-//         acs_upd_output->wx = rand() % 0xffff;
-//         acs_upd_output->wy = rand() % 0xffff;
-//         acs_upd_output->wz = rand() % 0xffff;
-//         acs_upd_output->sx = rand() % 0xffff;
-//         acs_upd_output->sy = rand() % 0xffff;
-//         acs_upd_output->sz = rand() % 0xffff;
-//         acs_upd_output->vbatt = rand() % 0xff;
-//         acs_upd_output->vboost = rand() % 0xff;
-//         acs_upd_output->cursun = rand() % 0xff;
-//         acs_upd_output->cursys = rand() % 0xff;
+    //         // TODO: REMOVE this block of code once debug testing is complete.
+    //         acs_upd_output->ct = rand() % 0xf;
+    //         acs_upd_output->mode = rand() % 0xf;
+    //         acs_upd_output->bx = rand() % 0xffff;
+    //         acs_upd_output->by = rand() % 0xffff;
+    //         acs_upd_output->bz = rand() % 0xffff;
+    //         acs_upd_output->wx = rand() % 0xffff;
+    //         acs_upd_output->wy = rand() % 0xffff;
+    //         acs_upd_output->wz = rand() % 0xffff;
+    //         acs_upd_output->sx = rand() % 0xffff;
+    //         acs_upd_output->sy = rand() % 0xffff;
+    //         acs_upd_output->sz = rand() % 0xffff;
+    //         acs_upd_output->vbatt = rand() % 0xff;
+    //         acs_upd_output->vboost = rand() % 0xff;
+    //         acs_upd_output->cursun = rand() % 0xff;
+    //         acs_upd_output->cursys = rand() % 0xff;
 
-//         // Add the ACS update data
-//         acs_rolbuf->addValueSet(*acs_upd_output);
+    //         // Add the ACS update data
+    //         acs_rolbuf->addValueSet(*acs_upd_output);
 
-//         // Set the ready flag.
-//         // acs_display_data->ready = true;
-//     }
-//     else
-//     {
-//         // TODO: Handle all other data by printing it out into a single window. This should probably be handled with another local-global like acs_display_data.
-//     }
+    //         // Set the ready flag.
+    //         // acs_display_data->ready = true;
+    //     }
+    //     else
+    //     {
+    //         // TODO: Handle all other data by printing it out into a single window. This should probably be handled with another local-global like acs_display_data.
+    //     }
 
     return 1;
 }

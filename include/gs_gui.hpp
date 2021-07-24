@@ -21,6 +21,8 @@
 #define CLIENTSERVER_MAX_PAYLOAD_SIZE 0x64
 #define MAX_ROLLBUF_LEN 500
 #define SIZE_RX_BUF 8192
+#define SERVER_IP_ADDRESS "127.0.0.1"
+#define SERVER_PORT 1924
 
 #ifndef dbprintlf
 #define dbprintlf(format, ...)                                                                        \

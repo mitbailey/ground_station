@@ -61,8 +61,11 @@ int main(int, char **)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enables keyboard navigation.
 
     // Setup Dear ImGui style.
-    // ImGui::StyleColorsDark();
-    ImGui::StyleColorsClassic();
+    ImGui::StyleColorsDark();
+
+    // This is how you set the style yourself.
+    // ImGuiStyle *style = &ImGui::GetStyle();
+    // style->Colors[ImGuiCol_Text] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 
     // Setup platform / renderer backends.
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -74,8 +77,7 @@ int main(int, char **)
     // TODO: Use connection_ready in the gs_rx_thread
     volatile bool connection_ready = false;
     signal(SIGPIPE, SIG_IGN); // so that client does not die when server does
-    int socket = -1;
-    int valread;
+    int sock = -1;
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
 
@@ -86,6 +88,7 @@ int main(int, char **)
 
     global_data_t global_data[1] = {0};
     global_data->acs_rolbuf = new ACSRollingBuffer();
+    global_data->rx_active = true;
 
     auth_t auth = {0};
     bool allow_transmission = false;
@@ -101,6 +104,7 @@ int main(int, char **)
     bool DISP_control_panel = true;
     bool User_Manual = false;
 
+    // Set-up and start the RX thread.
     pthread_t rx_thread_id;
     pthread_create(&rx_thread_id, NULL, gs_rx_thread, global_data);
 
@@ -117,6 +121,77 @@ int main(int, char **)
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // Network Connection
+        {
+            static int port = 1924;
+            static char ipaddr[16] = "127.0.0.1";
+            auto flag = ImGuiInputTextFlags_ReadOnly;
+            if (!connection_ready)
+            {
+                flag = (ImGuiInputTextFlags_)0;
+            }
+
+            if (ImGui::Begin("Connection Manager"))
+            {
+                ImGui::InputText("IP Address", ipaddr, sizeof(ipaddr), flag);
+                ImGui::InputInt("Port", &port, 0, 0, flag);
+
+                if (!connection_ready || sock < 0)
+                {
+                    if (ImGui::Button("Connect"))
+                    {
+                        serv_addr.sin_port = htons(port);
+                        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                        {
+                            printf("\nSocket creation error.\n");
+                            fflush(stdout);
+                            // return -1;
+                        }
+                        if (inet_pton(AF_INET, ipaddr, &serv_addr.sin_addr) <= 0)
+                        {
+                            printf("\nInvalid address; Address not supported.\n");
+                        }
+                        if (connect_w_tout(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr), 1) < 0)
+                        {
+                            printf("\nConnection failed!\n");
+                        }
+                        else
+                        {
+                            connection_ready = true;
+                        }
+                    }
+                }
+                else 
+                {
+                    if (ImGui::Button("Disconnect"))
+                    {
+                        close(sock);
+                        sock = -1;
+                        connection_ready = false;
+                    }
+                }
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+
+                // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection.
+                if (connection_ready && sock > 0)
+                {
+                    static int jpg_qty;
+                    if (ImGui::InputInt("JPEG Quality", &jpg_qty, 1, 10))
+                    {
+                        static char msg[1024];
+                        int sz = snprintf(msg, 1024, "CMD_JPEG_SET_QUALITY%d", jpg_qty);
+                        send(sock, msg, sz, 0);
+                    }
+                }
+
+                ImGui::End();
+            }
+        }
+
+
+
 
         // Level 0: Basic access, can retrieve data from acs_upd.
         // Level 1: Team Member access, can execute Data-down commands.
@@ -220,6 +295,9 @@ int main(int, char **)
         glfwMakeContextCurrent(window);
         glfwSwapBuffers(window);
     }
+
+    // Finished.
+    close(sock);
 
     // Cleanup.
     ImGui_ImplOpenGL2_Shutdown();
