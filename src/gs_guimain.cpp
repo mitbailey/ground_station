@@ -13,6 +13,7 @@
 // TODO: See comic-mon for server send / receive functionality.
 // Implemented __fp16 in acs_upd_output_t as uint16_t.
 // TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
+// TODO: Implement proper memory management, including free()'s and destroy()'s.
 
 #include <stdlib.h>
 #include <stdio.h>
