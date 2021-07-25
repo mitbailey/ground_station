@@ -125,6 +125,15 @@ ACSRollingBuffer::~ACSRollingBuffer()
 }
 /// ///
 
+/// NetworkData Class
+NetworkData::NetworkData()
+{
+    connection_ready = false;
+    socket = -1;
+    serv_addr->sin_family = AF_INET;
+}
+/// ///
+
 /// ClientServerFrame Class
 ClientServerFrame::ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_size)
 {
@@ -172,6 +181,9 @@ int ClientServerFrame::storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void *
     crc2 = crc16(payload, payload_size);
 
     this->endpoint = endpoint;
+
+    // TODO: Placeholder until I figure out when / why to set mode to TX or RX.
+    mode = CS_MODE_RX;
 
     return 1;
 }
@@ -233,6 +245,8 @@ int ClientServerFrame::checkIntegrity()
     {
         return -8;
     }
+
+    return 1;
 }
 
 void ClientServerFrame::print()
@@ -253,15 +267,18 @@ void ClientServerFrame::print()
     printf("Termination ----- 0x%04x\n", termination);
 }
 
-int ClientServerFrame::send()
+ssize_t ClientServerFrame::sendFrame(NetworkData *network_data)
 {
-    printf("Pretending to send the following:\n");
+    if (!(network_data->connection_ready))
+    {
+        dbprintlf(YELLOW_FG "Connection is not ready.");
+        return -1;
+    }
+
+    printf("Sending the following:\n");
     print();
 
-    // TODO: Make write_to_server(...) real.
-    // write_to_server(this, sizeof(ClientServerFrame));
-
-    return 1;
+    return send(network_data->socket, this, sizeof(ClientServerFrame), 0);
 }
 /// ///
 
@@ -290,13 +307,15 @@ int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_
     // Set non-blocking.
     if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
     {
-        fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+        dbprintlf(RED_FG "Error fcntl(..., F_GETFL)");
+        erprintlf(errno);
         return -1;
     }
     arg |= O_NONBLOCK;
     if (fcntl(socket, F_SETFL, arg) < 0)
     {
-        fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+        dbprintlf(RED_FG "Error fcntl(..., F_SETFL)");
+        erprintlf(errno);
         return -1;
     }
 
@@ -306,7 +325,7 @@ int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_
     {
         if (errno == EINPROGRESS)
         {
-            fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
+            dbprintlf(YELLOW_FG "EINPROGRESS in connect() - selecting");
             do
             {
                 if (tout_s > 0)
@@ -323,7 +342,8 @@ int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_
                 res = select(socket + 1, NULL, &myset, NULL, &tv);
                 if (res < 0 && errno != EINTR)
                 {
-                    fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+                    dbprintlf(RED_FG "Error connecting.");
+                    erprintlf(errno);
                     return -1;
                 }
                 else if (res > 0)
@@ -332,21 +352,23 @@ int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_
                     lon = sizeof(int);
                     if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void *)(&valopt), &lon) < 0)
                     {
-                        fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+                        dbprintlf(RED_FG "Error in getsockopt()");
+                        erprintlf(errno);
                         return -1;
                     }
 
                     // Check the value returned...
                     if (valopt)
                     {
-                        fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt));
+                        dbprintlf(RED_FG "Error in delayed connection()");
+                        erprintlf(valopt);
                         return -1;
                     }
                     break;
                 }
                 else
                 {
-                    fprintf(stderr, "Timeout in select() - Cancelling!\n");
+                    dbprintlf(RED_FG "Timeout in select(), cancelling!");
                     return -1;
                 }
             } while (1);
@@ -354,19 +376,23 @@ int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_
         else
         {
             fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+            dbprintlf(RED_FG "Error connecting.");
+            erprintlf(errno);
             return -1;
         }
     }
     // Set to blocking mode again...
     if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
     {
-        fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+        dbprintlf("Error fcntl(..., F_GETFL)");
+        erprintlf(errno);
         return -1;
     }
     arg &= (~O_NONBLOCK);
     if (fcntl(socket, F_SETFL, arg) < 0)
     {
-        fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+        dbprintlf("Error fcntl(..., F_GETFL)");
+        erprintlf(errno);
         return -1;
     }
     return socket;
@@ -533,9 +559,9 @@ int gs_helper(void *aa)
     return ~e;
 }
 
-void *gs_acs_update_thread(void *vp)
+void *gs_acs_update_thread(void *global_data_vp)
 {
-    ACSRollingBuffer *acs_rolbuf = (ACSRollingBuffer *)vp;
+    global_data_t *global_data = (global_data_t *)global_data_vp;
 
     cmd_input_t acs_cmd[1];
     memset(acs_cmd, 0x0, sizeof(cmd_input_t));
@@ -549,17 +575,17 @@ void *gs_acs_update_thread(void *vp)
     usleep(100000);
 
     // Transmit an ACS update request to the server.
-    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, acs_cmd, sizeof(cmd_input_t));
+    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, acs_cmd, sizeof(cmd_input_t));
 
     // Receive an ACS update from the server.
-    gs_receive(acs_rolbuf);
+    gs_receive(global_data->acs_rolbuf);
 
-    pthread_mutex_unlock(&acs_rolbuf->acs_upd_inhibitor);
+    pthread_mutex_unlock(&global_data->acs_rolbuf->acs_upd_inhibitor);
 
-    return vp;
+    return NULL;
 }
 
-int gs_transmit(CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int data_size)
+int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int data_size)
 {
     if (data_size < 0)
     {
@@ -572,12 +598,12 @@ int gs_transmit(CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoi
     ClientServerFrame *clientserver_frame = new ClientServerFrame(type, data_size);
     clientserver_frame->storePayload(endpoint, data, data_size);
 
-    clientserver_frame->send();
+    clientserver_frame->sendFrame(network_data);
 
     return 1;
 }
 
-int gs_gui_gs2sh_tx_handler(auth_t *auth, cmd_input_t *command_input)
+int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input)
 {
     ImGui::Text("Send Command");
     ImGui::Indent();
@@ -600,7 +626,7 @@ int gs_gui_gs2sh_tx_handler(auth_t *auth, cmd_input_t *command_input)
         if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
         {
             // Send the transmission.
-            gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, command_input, sizeof(cmd_input_t));
+            gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, command_input, sizeof(cmd_input_t));
         }
     }
 
@@ -616,11 +642,10 @@ void *gs_rx_thread(void *args)
 
     // Socket prep.
     int listening_socket, accepted_socket, socket_size;
-    int read_size = 0;
-    struct sockaddr_in server_address, client_address;
+    struct sockaddr_in listening_address, accepted_address;
     int buffer_size = CLIENTSERVER_MAX_PAYLOAD_SIZE + 0x80;
     unsigned char buffer[buffer_size + 1];
-    memset(buffer, '\0', buffer_size);
+    memset(buffer, 0x0, buffer_size);
 
     // Create socket.
     listening_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -631,13 +656,13 @@ void *gs_rx_thread(void *args)
     }
     dbprintlf(GREEN_FG "Socket created.");
 
-    server_address.sin_family = AF_INET;
+    listening_address.sin_family = AF_INET;
     // TODO: Should probably not accept just any address.
-    server_address.sin_addr.s_addr = INADDR_ANY;
-    server_address.sin_port = htons(SERVER_PORT);
+    listening_address.sin_addr.s_addr = INADDR_ANY;
+    listening_address.sin_port = htons(LISTENING_PORT);
 
     // Set the IP address.
-    if (inet_pton(AF_INET, SERVER_IP_ADDRESS, &server_address.sin_addr) <= 0)
+    if (inet_pton(AF_INET, LISTENING_IP_ADDRESS, &listening_address.sin_addr) <= 0)
     {
         dbprintlf(FATAL "Invalid address; address not supported.");
         return NULL;
@@ -645,30 +670,33 @@ void *gs_rx_thread(void *args)
 
     // Set the timeout for recv, which will allow us to reconnect to poorly disconnected clients.
     struct timeval timeout;
-    timeout.tv_sec = 10;
+    timeout.tv_sec = LISTENING_SOCKET_TIMEOUT;
     timeout.tv_usec = 0;
     setsockopt(listening_socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
 
     // Bind.
-    if (bind(listening_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+    while (bind(listening_socket, (struct sockaddr *)&listening_address, sizeof(listening_address)) < 0)
     {
-        dbprintlf(FATAL "Error: Port binding failed.");
+        dbprintlf(RED_FG "Error: Port binding failed.");
+        dbprintf(YELLOW_FG ">>> ");
         perror("bind");
-        return NULL;
+        sleep(5);
     }
     dbprintlf(GREEN_FG "Bound to port.");
 
     // Listen.
     listen(listening_socket, 3);
 
-    while (global_data->rx_active)
+    while (global_data->network_data->rx_active)
     {
+        int read_size = 0;
+
         // Accept an incoming connection.
         dbprintlf("Waiting for incoming connections...");
         socket_size = sizeof(struct sockaddr_in);
 
         // Accept connection from an incoming client.
-        accepted_socket = accept(listening_socket, (struct sockaddr *)&client_address, (socklen_t *)&socket_size);
+        accepted_socket = accept(listening_socket, (struct sockaddr *)&accepted_address, (socklen_t *)&socket_size);
         if (accepted_socket < 0)
         {
             if (errno == EAGAIN)
@@ -678,6 +706,7 @@ void *gs_rx_thread(void *args)
             }
             else
             {
+                dbprintf(YELLOW_FG ">>> ");
                 perror("accept failed");
                 continue;
             }
@@ -688,20 +717,24 @@ void *gs_rx_thread(void *args)
 
         // Read from the socket.
 
-        while (read_size >= 0 && global_data->rx_active)
+        while (read_size >= 0 && global_data->network_data->rx_active)
         {
             dbprintlf("Beginning recv... (last read: %d bytes)", read_size);
             read_size = recv(accepted_socket, buffer, buffer_size, 0);
             if (read_size > 0)
             {
                 dbprintf("RECEIVED: ");
-                dbprintlf("%s", buffer);
+                for (int i = 0; i < read_size; i++)
+                {
+                    printf("%c", buffer[i]);
+                }
+                printf("(END)\n");
 
                 // TODO: Parse the data.
                 ClientServerFrame *clientserver_frame = (ClientServerFrame *)buffer;
                 if (clientserver_frame->checkIntegrity() < 0)
                 {
-                    dbprintlf("Integrity check failed.");
+                    dbprintlf("Integrity check failed (%d).", clientserver_frame->checkIntegrity());
                     continue;
                 }
                 dbprintlf("Integrity check successful.");
@@ -773,7 +806,7 @@ void *gs_rx_thread(void *args)
         }
     }
 
-    return;
+    return NULL;
 }
 
 // // This needs to act similarly to the cmd_parser.
@@ -913,7 +946,7 @@ void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth)
     ImGui::End();
 }
 
-void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rolbuf, bool *allow_transmission)
+void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *auth, bool *allow_transmission)
 {
     static int ACS_command = ACS_INVALID_ID;
     static cmd_input_t ACS_command_input = {.mod = INVALID_ID, .cmd = ACS_INVALID_ID, .unused = 0, .data_size = 0};
@@ -938,7 +971,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get MOI");
@@ -950,7 +983,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get IMOI");
@@ -962,7 +995,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Dipole");
@@ -974,7 +1007,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Timestep");
@@ -986,7 +1019,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Measure Time");
@@ -998,7 +1031,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Leeway");
@@ -1010,7 +1043,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get W-Target");
@@ -1022,7 +1055,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Detumble Angle");
@@ -1034,7 +1067,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Sun Angle");
@@ -1159,9 +1192,9 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                 if (acs_rxtx_automated)
                 {
                     // Spawn a new thread to run
-                    if (pthread_mutex_trylock(&acs_rolbuf->acs_upd_inhibitor) == 0)
+                    if (pthread_mutex_trylock(&global_data->acs_rolbuf->acs_upd_inhibitor) == 0)
                     {
-                        pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, acs_rolbuf);
+                        pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global_data);
                     }
                 }
 
@@ -1235,7 +1268,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
                     }
                     ImGui::Unindent();
 
-                    gs_gui_gs2sh_tx_handler(auth, &ACS_command_input);
+                    gs_gui_gs2sh_tx_handler(global_data->network_data, auth, &ACS_command_input);
                 }
                 else
                 {
@@ -1251,7 +1284,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
     ImGui::End();
 }
 
-void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
+void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth, bool *allow_transmission)
 {
     static int EPS_command = EPS_INVALID_ID;
     static cmd_input_t EPS_command_input = {.mod = INVALID_ID, .cmd = EPS_INVALID_ID, .unused = 0, .data_size = 0};
@@ -1271,7 +1304,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Minimal Housekeeping");
@@ -1283,7 +1316,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Battery Voltage");
@@ -1295,7 +1328,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get System Current");
@@ -1307,7 +1340,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Power Out");
@@ -1319,7 +1352,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Solar Voltage");
@@ -1331,7 +1364,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Solar Voltage (All)");
@@ -1343,7 +1376,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get ISUN");
@@ -1355,7 +1388,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Loop Timer");
@@ -1411,7 +1444,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
                     }
                     ImGui::Unindent();
 
-                    gs_gui_gs2sh_tx_handler(auth, &EPS_command_input);
+                    gs_gui_gs2sh_tx_handler(network_data, auth, &EPS_command_input);
                 }
                 else
                 {
@@ -1427,7 +1460,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
     ImGui::End();
 }
 
-void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmission)
+void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *auth, bool *allow_transmission)
 {
     static int XBAND_command = XBAND_INVALID_ID;
     static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
@@ -1769,7 +1802,7 @@ void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmiss
                     }
                     }
 
-                    gs_gui_gs2sh_tx_handler(auth, &XBAND_command_input);
+                    gs_gui_gs2sh_tx_handler(network_data, auth, &XBAND_command_input);
                 }
                 else
                 {
@@ -1785,7 +1818,7 @@ void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmiss
     ImGui::End();
 }
 
-void gs_gui_sw_upd_window(bool *SW_UPD_window, auth_t *auth, bool *allow_transmission)
+void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, auth_t *auth, bool *allow_transmission)
 {
     static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
     static char upd_filename_buffer[256] = {0};
@@ -1814,7 +1847,7 @@ void gs_gui_sw_upd_window(bool *SW_UPD_window, auth_t *auth, bool *allow_transmi
                 memcpy(UPD_command_input.data, &sw_upd_valid_magic_temp, sizeof(long));
 
                 // Transmits the software update command.
-                gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &UPD_command_input, sizeof(cmd_input_t));
+                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &UPD_command_input, sizeof(cmd_input_t));
             }
         }
         else
@@ -1827,7 +1860,7 @@ void gs_gui_sw_upd_window(bool *SW_UPD_window, auth_t *auth, bool *allow_transmi
     ImGui::End();
 }
 
-void gs_gui_sys_ctrl_window(bool *SYS_CTRL_window, auth_t *auth, bool *allow_transmission)
+void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, auth_t *auth, bool *allow_transmission)
 {
     // static int SYS_command = INVALID_ID;
     static cmd_input_t SYS_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
@@ -1846,7 +1879,7 @@ void gs_gui_sys_ctrl_window(bool *SYS_CTRL_window, auth_t *auth, bool *allow_tra
                     SYS_command_input.unused = 0x0;
                     SYS_command_input.data_size = 0x0;
                     memset(SYS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &SYS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &SYS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Version Magic");
@@ -1917,7 +1950,7 @@ void gs_gui_sys_ctrl_window(bool *SYS_CTRL_window, auth_t *auth, bool *allow_tra
                     }
                     ImGui::Unindent();
 
-                    gs_gui_gs2sh_tx_handler(auth, &SYS_command_input);
+                    gs_gui_gs2sh_tx_handler(network_data, auth, &SYS_command_input);
                 }
                 else
                 {
@@ -1941,7 +1974,7 @@ void gs_gui_rx_display_window(bool *RX_display)
     ImGui::End();
 }
 
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, bool *connection_ready, int *sock, sockaddr_in *serv_addr)
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, NetworkData *network_data)
 {
     if (ImGui::Begin("Connections Manager", CONNS_manager))
     {
@@ -1951,7 +1984,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             static char ipaddr[16] = SERVER_IP_ADDRESS;
 
             auto flag = ImGuiInputTextFlags_ReadOnly;
-            if (!(*connection_ready))
+            if (!(network_data->connection_ready))
             {
                 flag = (ImGuiInputTextFlags_)0;
             }
@@ -1959,28 +1992,28 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             ImGui::InputText("IP Address", ipaddr, sizeof(ipaddr), flag);
             ImGui::InputInt("Port", &port, 0, 0, flag);
 
-            if (!(*connection_ready) || *sock < 0)
+            if (!(network_data->connection_ready) || network_data->socket < 0)
             {
                 if (ImGui::Button("Connect"))
                 {
-                    serv_addr->sin_port = htons(port);
-                    if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                    network_data->serv_addr->sin_port = htons(port);
+                    if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                     {
                         printf("\nSocket creation error.\n");
                         fflush(stdout);
                         // return -1;
                     }
-                    if (inet_pton(AF_INET, ipaddr, &serv_addr->sin_addr) <= 0)
+                    if (inet_pton(AF_INET, ipaddr, &network_data->serv_addr->sin_addr) <= 0)
                     {
                         printf("\nInvalid address; Address not supported.\n");
                     }
-                    if (connect_w_tout(*sock, (struct sockaddr *)serv_addr, sizeof(*serv_addr), 1) < 0)
+                    if (connect_w_tout(network_data->socket, (struct sockaddr *)network_data->serv_addr, sizeof(network_data->serv_addr), 1) < 0)
                     {
                         printf("\nConnection failed!\n");
                     }
                     else
                     {
-                        *connection_ready = true;
+                        network_data->connection_ready = true;
                     }
                 }
             }
@@ -1988,22 +2021,22 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             {
                 if (ImGui::Button("Disconnect"))
                 {
-                    close(*sock);
-                    *sock = -1;
-                    *connection_ready = false;
+                    close(network_data->socket);
+                    network_data->socket = -1;
+                    network_data->connection_ready = false;
                 }
             }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-            // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection.
-            if (*connection_ready && *sock > 0)
+            // // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection.
+            if (network_data->connection_ready && network_data->socket > 0)
             {
                 static int jpg_qty;
                 if (ImGui::InputInt("JPEG Quality", &jpg_qty, 1, 10))
                 {
                     static char msg[1024];
                     int sz = snprintf(msg, 1024, "CMD_JPEG_SET_QUALITY%d", jpg_qty);
-                    send(*sock, msg, sz, 0);
+                    send(network_data->socket, msg, sz, 0);
                 }
             }
         }
@@ -2011,7 +2044,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
     }
 }
 
-void gs_gui_acs_upd_display_window(bool *ACS_UPD_display, ACSRollingBuffer *acs_rolbuf)
+void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display)
 {
     if (ImGui::Begin("ACS Update Display", ACS_UPD_display))
     {

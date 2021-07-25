@@ -16,15 +16,21 @@
 
 #ifndef dbprintlf
 #define dbprintlf(format, ...)                                                                        \
-    fprintf(stderr, "[%s | %s:%d] " format "\x1b[0m\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+    fprintf(stderr, "[%s:%d | %s] " format "\x1b[0m\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
     fflush(stderr);
 #endif // dbprintlf
 
 #ifndef dbprintf
 #define dbprintf(format, ...)                                                                       \
-    fprintf(stderr, "[%s | %s:%d] " format "\x1b[0m", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+    fprintf(stderr, "[%s:%d | %s] " format "\x1b[0m", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
     fflush(stderr);
 #endif // dbprintf
+
+#ifndef erprintlf
+#define erprintlf(error)                                                                                               \
+    fprintf(stderr, "[%s:%d | %s] \x1b[94m>>> %d: %s\x1b[0m\n", __FILE__, __LINE__, __func__, error, strerror(error)); \
+    fflush(stderr);
+#endif // erprintlf
 
 #ifndef MEB_COLORS
 #define MEB_COLORS
@@ -55,8 +61,9 @@
 #define CLIENTSERVER_MAX_PAYLOAD_SIZE 0x64
 #define MAX_ROLLBUF_LEN 500
 #define SIZE_RX_BUF 8192
-#define SERVER_IP_ADDRESS "127.0.0.1"
-#define SERVER_PORT 1924
+#define LISTENING_IP_ADDRESS "172.30.16.224" // hostname -I
+#define LISTENING_PORT 51934
+#define LISTENING_SOCKET_TIMEOUT 20
 
 // Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
@@ -194,7 +201,103 @@ enum CLIENTSERVER_FRAME_MODE
     CS_MODE_TX = 1
 };
 
-// Client<->Server Frame can be of unlimited and variable size.
+// From https://github.com/SPACE-HAUC/mtq_tester/blob/master/guimain.cpp
+class ScrollBuf
+{
+public:
+    ScrollBuf();
+    ScrollBuf(int max_size);
+
+    void AddPoint(float x, float y);
+    void Erase();
+    float Max();
+    float Min();
+
+    int max_sz;
+    int ofst;
+    ImVector<ImVec2> data;
+};
+
+/**
+ * @brief The ACS update data format sent from SPACE-HAUC to Ground.
+ * 
+ *  else if (module_id == ACS_UPD_ID)
+ *  {
+ *      acs_upd.vbatt = eps_vbatt;
+ *      acs_upd.vboost = eps_mvboost;
+ *      acs_upd.cursun = eps_cursun;
+ *      acs_upd.cursys = eps_cursys;
+ *      output->retval = 1;
+ *      output->data_size = sizeof(acs_uhf_packet);
+ *      memcpy(output->data, &acs_upd, output->data_size);
+ *  }
+ * 
+ * @return typedef struct 
+ */
+#ifndef __fp16
+#define __fp16 uint16_t
+#endif // __fp16
+typedef struct __attribute__((packed))
+{
+    uint8_t ct;      // Set in acs.c.
+    uint8_t mode;    // Set in acs.c.
+    __fp16 bx;       // Set in acs.c.
+    __fp16 by;       // Set in acs.c.
+    __fp16 bz;       // Set in acs.c.
+    __fp16 wx;       // Set in acs.c.
+    __fp16 wy;       // Set in acs.c.
+    __fp16 wz;       // Set in acs.c.
+    __fp16 sx;       // Set in acs.c.
+    __fp16 sy;       // Set in acs.c.
+    __fp16 sz;       // Set in acs.c.
+    uint16_t vbatt;  // Set in cmd_parser.
+    uint16_t vboost; // Set in cmd_parser.
+    uint16_t cursun; // Set in cmd_parser.
+    uint16_t cursys; // Set in cmd_parser.
+} acs_upd_output_t;
+
+class ACSRollingBuffer
+{
+public:
+    ACSRollingBuffer();
+
+    ~ACSRollingBuffer();
+
+    /**
+     * @brief Adds a value set to the rolling buffer.
+     * 
+     * @param data The data to be copied into the buffer.
+     */
+    void addValueSet(acs_upd_output_t data);
+
+    // Separated by the graphs they'll appear in.
+    ScrollBuf ct, mode;
+    ScrollBuf bx, by, bz;
+    ScrollBuf wx, wy, wz;
+    ScrollBuf sx, sy, sz;
+    ScrollBuf vbatt, vboost;
+    ScrollBuf cursun, cursys;
+
+    float x_index;
+
+    pthread_mutex_t acs_upd_inhibitor;
+};
+
+class NetworkData
+{
+public:
+    NetworkData();
+
+    // Network
+    int socket;
+    struct sockaddr_in serv_addr[1];
+    bool connection_ready;
+
+    // Booleans
+    bool rx_active; // Only able to receive when this is true.
+};
+
+// Client<->Server Frame can be of unlimited size.
 // It is made up of three sections:
 // Header
 // Some data in an unsigned char array.
@@ -271,11 +374,11 @@ public:
     void print();
 
     /**
-     * @brief Sends the object's data.
+     * @brief Sends itself using the network data passed to it.
      * 
-     * @return int 
+     * @return ssize_t Number of bytes sent if successful, negative on failure. 
      */
-    int send();
+    ssize_t sendFrame(NetworkData *network_data);
 
 private:
     // 0x????
@@ -367,44 +470,6 @@ typedef struct __attribute__((packed))
     int data_size;          // 4
     unsigned char data[46]; // 46
 } cmd_output_t;
-
-/**
- * @brief The ACS update data format sent from SPACE-HAUC to Ground.
- * 
- *  else if (module_id == ACS_UPD_ID)
- *  {
- *      acs_upd.vbatt = eps_vbatt;
- *      acs_upd.vboost = eps_mvboost;
- *      acs_upd.cursun = eps_cursun;
- *      acs_upd.cursys = eps_cursys;
- *      output->retval = 1;
- *      output->data_size = sizeof(acs_uhf_packet);
- *      memcpy(output->data, &acs_upd, output->data_size);
- *  }
- * 
- * @return typedef struct 
- */
-#ifndef __fp16
-#define __fp16 uint16_t
-#endif // __fp16
-typedef struct __attribute__((packed))
-{
-    uint8_t ct;      // Set in acs.c.
-    uint8_t mode;    // Set in acs.c.
-    __fp16 bx;       // Set in acs.c.
-    __fp16 by;       // Set in acs.c.
-    __fp16 bz;       // Set in acs.c.
-    __fp16 wx;       // Set in acs.c.
-    __fp16 wy;       // Set in acs.c.
-    __fp16 wz;       // Set in acs.c.
-    __fp16 sx;       // Set in acs.c.
-    __fp16 sy;       // Set in acs.c.
-    __fp16 sz;       // Set in acs.c.
-    uint16_t vbatt;  // Set in cmd_parser.
-    uint16_t vboost; // Set in cmd_parser.
-    uint16_t cursun; // Set in cmd_parser.
-    uint16_t cursys; // Set in cmd_parser.
-} acs_upd_output_t;
 
 /**
  * @brief Set of possible data ACS can set.
@@ -601,51 +666,6 @@ typedef struct
     char password[64];
 } auth_t;
 
-// From https://github.com/SPACE-HAUC/mtq_tester/blob/master/guimain.cpp
-class ScrollBuf
-{
-public:
-    ScrollBuf();
-    ScrollBuf(int max_size);
-
-    void AddPoint(float x, float y);
-    void Erase();
-    float Max();
-    float Min();
-
-    int max_sz;
-    int ofst;
-    ImVector<ImVec2> data;
-};
-
-// TODO: Implement this rolling buffer.
-class ACSRollingBuffer
-{
-public:
-    ACSRollingBuffer();
-
-    ~ACSRollingBuffer();
-
-    /**
-     * @brief Adds a value set to the rolling buffer.
-     * 
-     * @param data The data to be copied into the buffer.
-     */
-    void addValueSet(acs_upd_output_t data);
-
-    // Separated by the graphs they'll appear in.
-    ScrollBuf ct, mode;
-    ScrollBuf bx, by, bz;
-    ScrollBuf wx, wy, wz;
-    ScrollBuf sx, sy, sz;
-    ScrollBuf vbatt, vboost;
-    ScrollBuf cursun, cursys;
-
-    float x_index;
-
-    pthread_mutex_t acs_upd_inhibitor;
-};
-
 /**
  * @brief Contains structures and classes that will be populated with data by the receive thread; these structures and classes also provide the data which the client will display.
  * 
@@ -653,16 +673,11 @@ public:
 typedef struct
 {
     // Data
+    NetworkData *network_data;
     ACSRollingBuffer *acs_rolbuf;
     cs_status_t cs_status[1];
     cs_ack_t cs_ack[1];
-    cmd_output_t cmd_output[1]; // DATA type.
-
-    // Network
-    int socket[1];
-
-    // Booleans
-    bool rx_active; // Only able to receive when this is true.
+    cmd_output_t cmd_output[1];
 } global_data_t;
 
 int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
@@ -743,7 +758,7 @@ void *gs_acs_update_thread(void *vp);
  * @param input The data to transmit.
  * @return int Positive on success, negative on failure.
  */
-int gs_transmit(CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int data_size);
+int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int data_size);
 
 /**
  * @brief Handles the 'Transmit' section of panels, including display of queued data and the send button.
@@ -752,7 +767,7 @@ int gs_transmit(CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoi
  * @param command_input The command to be augmented.
  * @return int Positive on success, negative on failure.
  */
-int gs_gui_gs2sh_tx_handler(auth_t *auth, cmd_input_t *command_input);
+int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input);
 
 /**
  * @brief 
@@ -797,7 +812,7 @@ void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth);
  * @param acs_rolbuf 
  * @param allow_transmission 
  */
-void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rolbuf, bool *allow_transmission);
+void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *auth, bool *allow_transmission);
 
 /**
  * @brief 
@@ -806,7 +821,7 @@ void gs_gui_acs_window(bool *ACS_window, auth_t *auth, ACSRollingBuffer *acs_rol
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth, bool *allow_transmission);
 
 /**
  * @brief 
@@ -815,7 +830,7 @@ void gs_gui_eps_window(bool *EPS_window, auth_t *auth, bool *allow_transmission)
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *auth, bool *allow_transmission);
 
 /**
  * @brief 
@@ -824,7 +839,7 @@ void gs_gui_xband_window(bool *XBAND_window, auth_t *auth, bool *allow_transmiss
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_sw_upd_window(bool *SW_UPD_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, auth_t *auth, bool *allow_transmission);
 
 /**
  * @brief 
@@ -833,7 +848,7 @@ void gs_gui_sw_upd_window(bool *SW_UPD_window, auth_t *auth, bool *allow_transmi
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_sys_ctrl_window(bool *SYS_CTRL_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, auth_t *auth, bool *allow_transmission);
 
 /**
  * @brief 
@@ -849,7 +864,7 @@ void gs_gui_rx_display_window(bool *RX_display);
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, volatile bool *connection_ready, int *sock, sockaddr_in *serv_addr);
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, NetworkData *network_data);
 
 /**
  * @brief 
@@ -857,7 +872,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
  * @param ACS_UPD_display 
  * @param acs_rolbuf 
  */
-void gs_gui_acs_upd_display_window(bool *ACS_UPD_display, ACSRollingBuffer *acs_rolbuf);
+void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display);
 
 /**
  * @brief 

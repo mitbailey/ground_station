@@ -74,20 +74,15 @@ int main(int, char **)
     /// ///////////////////////
 
     // Network connection setup.
-    // TODO: Use connection_ready in the gs_rx_thread
-    volatile bool connection_ready = false;
     signal(SIGPIPE, SIG_IGN); // so that client does not die when server does
-    int sock = -1;
-    struct sockaddr_in serv_addr;
-    serv_addr.sin_family = AF_INET;
 
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    // ClientDataPackage *client_data_package = new ClientDataPackage();
 
     global_data_t global_data[1] = {0};
     global_data->acs_rolbuf = new ACSRollingBuffer();
-    global_data->rx_active = true;
+    global_data->network_data = new NetworkData();
+    global_data->network_data->rx_active = true;
 
     auth_t auth = {0};
     bool allow_transmission = false;
@@ -137,23 +132,23 @@ int main(int, char **)
 
         if (ACS_window)
         {
-            gs_gui_acs_window(&ACS_window, &auth, global_data->acs_rolbuf, &allow_transmission);
+            gs_gui_acs_window(global_data, &ACS_window, &auth, &allow_transmission);
         }
 
         if (EPS_window)
         {
-            gs_gui_eps_window(&ACS_window, &auth, &allow_transmission);
+            gs_gui_eps_window(global_data->network_data, &ACS_window, &auth, &allow_transmission);
         }
 
         if (XBAND_window)
         {
-            gs_gui_xband_window(&XBAND_window, &auth, &allow_transmission);
+            gs_gui_xband_window(global_data->network_data, &XBAND_window, &auth, &allow_transmission);
         }
 
         // Handles software updates.
         if (SW_UPD_window)
         {
-            gs_gui_sw_upd_window(&XBAND_window, &auth, &allow_transmission);
+            gs_gui_sw_upd_window(global_data->network_data, &XBAND_window, &auth, &allow_transmission);
         }
 
         // Handles
@@ -163,7 +158,7 @@ int main(int, char **)
         // SYS_CLEAN_SHBYTES = 0xfd
         if (SYS_CTRL_window)
         {
-            gs_gui_sys_ctrl_window(&SYS_CTRL_window, &auth, &allow_transmission);
+            gs_gui_sys_ctrl_window(global_data->network_data, &SYS_CTRL_window, &auth, &allow_transmission);
         }
 
         if (RX_display)
@@ -173,13 +168,13 @@ int main(int, char **)
 
         if (ACS_UPD_display)
         {
-            gs_gui_acs_upd_display_window(&ACS_UPD_display, global_data->acs_rolbuf);
+            gs_gui_acs_upd_display_window(global_data->acs_rolbuf, &ACS_UPD_display);
         }
 
         // Network Connections Manager
         if (CONNS_manager)
         {
-            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, &connection_ready, &sock, &serv_addr);
+            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, global_data->network_data);
         }
 
         if (DISP_control_panel)
@@ -235,7 +230,7 @@ int main(int, char **)
     }
 
     // Finished.
-    close(sock);
+    close(global_data->network_data->socket);
 
     // Cleanup.
     ImGui_ImplOpenGL2_Shutdown();
