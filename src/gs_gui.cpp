@@ -1980,8 +1980,8 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
     {
         if (auth->access_level >= 0)
         {
-            static int port = SERVER_PORT;
-            static char ipaddr[16] = SERVER_IP_ADDRESS;
+            static int port = LISTENING_PORT;
+            static char ipaddr[16] = LISTENING_IP_ADDRESS;
 
             auto flag = ImGuiInputTextFlags_ReadOnly;
             if (!(network_data->connection_ready))
