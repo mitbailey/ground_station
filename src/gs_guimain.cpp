@@ -1,33 +1,34 @@
 /**
  * @file gs_guimain.cpp
  * @author Mit Bailey (mitbailey99@gmail.com)
- * @brief Ground Station GUI
+ * @brief Ground Station GUI Client
  * @version 0.1
- * @date 2021-06-30
+ * @date 2021.06.30
  * 
  * @copyright Copyright (c) 2021
  * 
  */
 
-// TODO: Add receive functionality where necessary.21
-// TODO: See comic-mon for server send / receive functionality.
+// TODO: Add receive ( recv(...) ) functionality where necessary.
+// Implemented comic-mon-like socket send / receive functionality.
 // Implemented __fp16 in acs_upd_output_t as uint16_t.
 // TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
-// TODO: Implement proper memory management, including free()'s and destroy()'s.
+// Implemented proper memory management, including free()'s and destroy()'s.
 
-#include <stdlib.h>
-#include <stdio.h>
+// #include <stdlib.h>
+// #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+// #include <sys/types.h>
+// #include <sys/socket.h>
+// #include <arpa/inet.h>
 #include <GLFW/glfw3.h>
 #include "backend/imgui_impl_glfw.h"
 #include "backend/imgui_impl_opengl2.h"
-#include "imgui/imgui.h"
-#include "implot/implot.h"
+// #include "imgui/imgui.h"
+// #include "implot/implot.h"
+#include "gs.hpp"
 #include "gs_gui.hpp"
 
 int main(int, char **)
@@ -232,7 +233,9 @@ int main(int, char **)
 
     // Finished.
     close(global_data->network_data->socket);
-
+    delete global_data->acs_rolbuf;
+    delete global_data->network_data;
+    
     // Cleanup.
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplGlfw_Shutdown();
