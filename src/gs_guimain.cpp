@@ -9,13 +9,15 @@
  * 
  */
 
-// TODO: Add receive ( recv(...) ) functionality where necessary.
+// Implemented receive ( recv(...) ) functionality where as a constant thread.
 // Implemented comic-mon-like socket send / receive functionality.
 // Implemented __fp16 in acs_upd_output_t as uint16_t.
-// TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
+// Implemented https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp RX thread.
 // Implemented proper memory management, including free()'s and destroy()'s.
-// TODO: Parse received ClientServerFrames properly.
-// TODO: Display received data.
+// Implemented parsing of received ClientServerFrames properly.
+// Received data displayed either as plaintext or graphs.
+// TODO: Implement XBAND and UHF CLIENTSERVER structures, and receive / display / parse them properly.
+// TODO: Send periodic null CLIENTSERVER frames to get the network status in 'netstat.'
 
 #include <unistd.h>
 #include <pthread.h>

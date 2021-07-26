@@ -154,6 +154,7 @@ ClientServerFrame::ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_s
     crc1 = -1;
     crc2 = -1;
     guid = CLIENTSERVER_FRAME_GUID;
+    netstat = 0; // Will be set by the server.
     termination = 0xAAAA;
 
     // payload = (unsigned char *)malloc(this->payload_size);
@@ -734,8 +735,9 @@ void *gs_rx_thread(void *args)
                 switch (type)
                 {
                 case CS_TYPE_NULL:
-                {
+                { // Will have status data.
                     dbprintlf("Received NULL frame.");
+                    global_data->netstat = clientserver_frame->getNetstat();
                     break;
                 }
                 case CS_TYPE_ACK:
@@ -772,12 +774,12 @@ void *gs_rx_thread(void *args)
                     }
                     break;
                 }
-                case CS_TYPE_STATUS:
-                {
-                    dbprintlf("Received Status.");
-                    memcpy(global_data->cs_status, payload, payload_size);
-                    break;
-                }
+                // case CS_TYPE_STATUS:
+                // {
+                //     dbprintlf("Received Status.");
+                //     memcpy(global_data->cs_status, payload, payload_size);
+                //     break;
+                // }
                 case CS_TYPE_ERROR:
                 default:
                 {

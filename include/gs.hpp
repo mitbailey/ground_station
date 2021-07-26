@@ -141,7 +141,7 @@ enum CLIENTSERVER_FRAME_TYPE
 {
     // Something is wrong.
     CS_TYPE_ERROR = -1,
-    // Blank.
+    // Blank, used for holding open the socket and retrieving status data.
     CS_TYPE_NULL = 0,
     // Good or back acknowledgements.
     CS_TYPE_ACK = 1,
@@ -151,8 +151,8 @@ enum CLIENTSERVER_FRAME_TYPE
     CS_TYPE_CONFIG_XBAND = 4,
     // Most communications will be _DATA.
     CS_TYPE_DATA = 5,
-    // Poll the ground radios of their status.
-    CS_TYPE_STATUS = 6
+    // Poll the ground radios of their status. ~Now happens every frame.
+    // CS_TYPE_STATUS = 6
 };
 
 enum CLIENTSERVER_FRAME_ENDPOINT
@@ -319,6 +319,8 @@ public:
 
     CLIENTSERVER_FRAME_ENDPOINT getEndpoint() { return endpoint; };
 
+    uint8_t getNetstat() { return netstat; };
+
     /**
      * @brief Checks the validity of itself.
      * 
@@ -356,18 +358,22 @@ private:
     // Constant sized payload.
     unsigned char payload[CLIENTSERVER_MAX_PAYLOAD_SIZE];
     uint16_t crc2;
+    // Network Status Information - Only read by the client, only set by the server.
+    uint8_t netstat; // Bitmask - 0:Client, 1:RoofUHF, 2: RoofXB, 3: Haystack
     // 0xAAAA
     uint16_t termination;
 };
 
 // CLIENTSERVER payload types.
-typedef struct
-{
-    // -1 = Error, 0 = Offline, 1 = Online
-    uint8_t haystack;
-    uint8_t roof_uhf;
-    uint8_t roof_xband;
-} cs_status_t;
+
+// Status is now a part of every frame, as a bitmask called netstat.
+// typedef struct
+// {
+//     // -1 = Error, 0 = Offline, 1 = Online
+//     uint8_t haystack;
+//     uint8_t roof_uhf;
+//     uint8_t roof_xband;
+// } cs_status_t;
 
 typedef struct
 {
@@ -630,7 +636,7 @@ typedef struct
     cs_config_uhf_t cs_config_uhf[1];
     cs_config_xband_t cs_config_xband[1];
     cmd_output_t cmd_output[1];
-    cs_status_t cs_status[1];
+    uint8_t netstat;
 } global_data_t;
 
 int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
