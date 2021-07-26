@@ -797,8 +797,13 @@ int find_ipv4(char *buffer, ssize_t buffer_size)
         // If the IP address is the IPv4...
         if (buffer[0] == '1' && buffer[1] == '7' && buffer[2] == '2' && buffer[3] == '.')
         {
-            dbprintlf(BLUE_FG "Detected IPv4: %s", buffer);
+            // dbprintlf(BLUE_FG "Detected IPv4: %s", buffer);
+            dbprintlf(CYAN_FG "%s", buffer);
             return 1;
+        }
+        else
+        {
+            dbprintlf(MAGENTA_FG "%s", buffer);
         }
     }
 
