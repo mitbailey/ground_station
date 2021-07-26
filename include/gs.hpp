@@ -26,7 +26,7 @@
 #define CLIENTSERVER_MAX_PAYLOAD_SIZE 0x64
 #define MAX_ROLLBUF_LEN 500
 #define SIZE_RX_BUF 8192
-#define LISTENING_IP_ADDRESS "172.30.16.224" // hostname -I
+#define LISTENING_IP_ADDRESS "127.0.0.1" // hostname -I
 #define LISTENING_PORT 51934
 #define LISTENING_SOCKET_TIMEOUT 20
 
@@ -258,6 +258,7 @@ public:
     struct sockaddr_in serv_addr[1];
     bool connection_ready;
     char ipv4[32];
+    int port;
 
     // Booleans
     bool rx_active; // Only able to receive when this is true.

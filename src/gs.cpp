@@ -128,6 +128,7 @@ NetworkData::NetworkData()
     connection_ready = false;
     socket = -1;
     serv_addr->sin_family = AF_INET;
+    port = LISTENING_PORT;
 }
 /// ///
 

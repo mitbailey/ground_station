@@ -1144,8 +1144,8 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
     {
         if (auth->access_level >= 0)
         {
-            static int port = LISTENING_PORT;
-            static char ipaddr[16] = LISTENING_IP_ADDRESS;
+            // static int port = LISTENING_PORT;
+            // static char ipaddr[16] = LISTENING_IP_ADDRESS;
 
             auto flag = ImGuiInputTextFlags_ReadOnly;
             if (!(network_data->connection_ready))
@@ -1153,21 +1153,21 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                 flag = (ImGuiInputTextFlags_)0;
             }
 
-            ImGui::InputText("IP Address", ipaddr, sizeof(ipaddr), flag);
-            ImGui::InputInt("Port", &port, 0, 0, flag);
+            ImGui::InputText("IP Address", network_data->ipv4, sizeof(network_data->ipv4), flag);
+            ImGui::InputInt("Port", &network_data->port, 0, 0, flag);
 
             if (!(network_data->connection_ready) || network_data->socket < 0)
             {
                 if (ImGui::Button("Connect"))
                 {
-                    network_data->serv_addr->sin_port = htons(port);
+                    network_data->serv_addr->sin_port = htons(network_data->port);
                     if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                     {
                         printf("\nSocket creation error.\n");
                         fflush(stdout);
                         // return -1;
                     }
-                    if (inet_pton(AF_INET, ipaddr, &network_data->serv_addr->sin_addr) <= 0)
+                    if (inet_pton(AF_INET, network_data->ipv4, &network_data->serv_addr->sin_addr) <= 0)
                     {
                         printf("\nInvalid address; Address not supported.\n");
                     }
@@ -1192,7 +1192,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-            // // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection.
+            // // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection. Remove it eventually.
             if (network_data->connection_ready && network_data->socket > 0)
             {
                 static int jpg_qty;
