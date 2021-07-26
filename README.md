@@ -2,7 +2,7 @@
 Graphical user interface for SPACE-HAUC Ground Station operations.  
   
 ### Current State
-The Client packages and sends ClientServerFrames over a socket connection. The outbound connection is enduced by the operator via the Connections Manager window. Currently sent and received data must be viewed through the Linux Terminal, except for ACS Update data, which will display as graphed data in the relevant window. Received ClientServerFrames are currently not parsed fully and no functionality is implemented to this end yet.  
+The Client packages and sends ClientServerFrames over a socket connection. The outbound connection is enduced by the operator via the Connections Manager window. Currently sent and received data must be viewed through the Linux Terminal, except for ACS Update data, which will display as graphed data in the relevant window. Received ClientServerFrames are currently not parsed fully and no functionality is implemented to this end yet. Outbound ClientServerFrames undergo and integrity check before they are allowed to be sent.  
 
 ### Connections Testing  
 The receive thread automatically finds and binds to the local IPv4 address, with a port of 51934. If the auto-detect fails, a default address of 127.0.0.1 is used. The receive thread will attempt to bind infinitely until it does successfully.  

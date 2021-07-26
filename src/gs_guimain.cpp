@@ -14,6 +14,8 @@
 // Implemented __fp16 in acs_upd_output_t as uint16_t.
 // TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
 // Implemented proper memory management, including free()'s and destroy()'s.
+// TODO: Parse received ClientServerFrames properly.
+// TODO: Display received data.
 
 #include <unistd.h>
 #include <pthread.h>
