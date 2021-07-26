@@ -18,31 +18,38 @@
 #include "gs.hpp"
 #include "gs_gui.hpp"
 
-int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input)
+int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input, bool *allow_transmission)
 {
-    ImGui::Text("Send Command");
-    ImGui::Indent();
-    if (auth->access_level > 1)
+    if (*allow_transmission)
     {
-        ImGui::Text("Queued Transmission");
-        ImGui::Text("Module ID ----- 0x%02x", command_input->mod);
-        ImGui::Text("Command ID ---- 0x%02x", command_input->cmd);
-        ImGui::Text("Unused -------- 0x%02x", command_input->unused);
-        ImGui::Text("Data size ----- 0x%02x", command_input->data_size);
-        ImGui::Text("Data ---------- ");
-
-        for (int i = 0; i < command_input->data_size; i++)
+        ImGui::Text("Send Command");
+        ImGui::Indent();
+        if (auth->access_level > 1)
         {
-            ImGui::SameLine(0.0F, 0.0F);
-            ImGui::Text("%02x", command_input->data[i]);
-        }
+            ImGui::Text("Queued Transmission");
+            ImGui::Text("Module ID ----- 0x%02x", command_input->mod);
+            ImGui::Text("Command ID ---- 0x%02x", command_input->cmd);
+            ImGui::Text("Unused -------- 0x%02x", command_input->unused);
+            ImGui::Text("Data size ----- 0x%02x", command_input->data_size);
+            ImGui::Text("Data ---------- ");
 
-        ImGui::Unindent();
-        if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
-        {
-            // Send the transmission.
-            gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, command_input, sizeof(cmd_input_t));
+            for (int i = 0; i < command_input->data_size; i++)
+            {
+                ImGui::SameLine(0.0F, 0.0F);
+                ImGui::Text("%02x", command_input->data[i]);
+            }
+
+            ImGui::Unindent();
+            if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
+            {
+                // Send the transmission.
+                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, command_input, sizeof(cmd_input_t));
+            }
         }
+    }
+    else
+    {
+        ImGui::Text("TRANSMISSIONS LOCKED");
     }
 
     return 1;
@@ -432,7 +439,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     }
                     ImGui::Unindent();
 
-                    gs_gui_gs2sh_tx_handler(global_data->network_data, auth, &ACS_command_input);
+                    gs_gui_gs2sh_tx_handler(global_data->network_data, auth, &ACS_command_input, allow_transmission);
                 }
                 else
                 {
@@ -608,7 +615,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     }
                     ImGui::Unindent();
 
-                    gs_gui_gs2sh_tx_handler(network_data, auth, &EPS_command_input);
+                    gs_gui_gs2sh_tx_handler(network_data, auth, &EPS_command_input, allow_transmission);
                 }
                 else
                 {
@@ -966,7 +973,7 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
                     }
                     }
 
-                    gs_gui_gs2sh_tx_handler(network_data, auth, &XBAND_command_input);
+                    gs_gui_gs2sh_tx_handler(network_data, auth, &XBAND_command_input, allow_transmission);
                 }
                 else
                 {
@@ -1114,7 +1121,7 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, au
                     }
                     ImGui::Unindent();
 
-                    gs_gui_gs2sh_tx_handler(network_data, auth, &SYS_command_input);
+                    gs_gui_gs2sh_tx_handler(network_data, auth, &SYS_command_input, allow_transmission);
                 }
                 else
                 {
@@ -1130,10 +1137,52 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, au
     ImGui::End();
 }
 
-void gs_gui_rx_display_window(bool *RX_display)
+void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
 {
     if (ImGui::Begin("Plaintext RX Display"), RX_display)
     {
+        ImGui::Text("ACKNOWLEDGEMENT");
+        ImGui::Separator();
+        ImGui::Text("N/ACK ---------- %d", global_data->cs_ack->ack);
+        ImGui::Text("Code ----------- %d", global_data->cs_ack->code);
+        ImGui::Separator();
+        ImGui::Separator();
+
+        ImGui::Text("UHF CONFIGURATION");
+        ImGui::Separator();
+        ImGui::Text("WIP");
+        ImGui::Separator();
+        ImGui::Separator();
+
+        ImGui::Text("X-BAND CONFIGURATION");
+        ImGui::Separator();
+        ImGui::Text("WIP");
+        ImGui::Separator();
+        ImGui::Separator();
+
+        ImGui::Text("SPACE-HAUC COMMAND OUTPUT");
+        ImGui::Separator();
+        ImGui::Text("Module ---------- %d", global_data->cmd_output->mod);
+        ImGui::Text("Command --------- %d", global_data->cmd_output->cmd);
+        ImGui::Text("Return Value ---- %d", global_data->cmd_output->retval);
+        ImGui::Text("Data Size ------- %d", global_data->cmd_output->data_size);
+        ImGui::Text("Data (hex) ------ ");
+        for (int i = 0; i < global_data->cmd_output->data_size; i++)
+        {
+            ImGui::SameLine(0.0F, 0.0F);
+            ImGui::Text("%2x", global_data->cmd_output->data[i]);
+        }
+        ImGui::Separator();
+        ImGui::Separator();
+
+        ImGui::Text("RADIOS STATUS");
+        ImGui::Text("Haystack --------- %d", global_data->cs_status->haystack);
+        ImGui::Text("Roof UHF --------- %d", global_data->cs_status->roof_uhf);
+        ImGui::Text("Roof X-BAND ------ %d", global_data->cs_status->roof_xband);
+        ImGui::Separator();
+
+        ImGui::Separator();
+        ImGui::Separator();
     }
     ImGui::End();
 }

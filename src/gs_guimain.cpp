@@ -160,7 +160,7 @@ int main(int, char **)
 
         if (RX_display)
         {
-            gs_gui_rx_display_window(&RX_display);
+            gs_gui_rx_display_window(&RX_display, global_data);
         }
 
         if (ACS_UPD_display)

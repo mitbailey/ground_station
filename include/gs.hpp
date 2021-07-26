@@ -139,13 +139,20 @@ enum XBAND_FUNC_ID
 
 enum CLIENTSERVER_FRAME_TYPE
 {
+    // Something is wrong.
     CS_TYPE_ERROR = -1,
+    // Blank.
     CS_TYPE_NULL = 0,
+    // Good or back acknowledgements.
     CS_TYPE_ACK = 1,
     CS_TYPE_NACK = 2,
-    CS_TYPE_CONFIG = 3,
-    CS_TYPE_DATA = 4,
-    CS_TYPE_STATUS = 5
+    // Configure ground radios.
+    CS_TYPE_CONFIG_UHF = 3,
+    CS_TYPE_CONFIG_XBAND = 4,
+    // Most communications will be _DATA.
+    CS_TYPE_DATA = 5,
+    // Poll the ground radios of their status.
+    CS_TYPE_STATUS = 6
 };
 
 enum CLIENTSERVER_FRAME_ENDPOINT
@@ -310,6 +317,8 @@ public:
 
     CLIENTSERVER_FRAME_TYPE getType() { return type; };
 
+    CLIENTSERVER_FRAME_ENDPOINT getEndpoint() { return endpoint; };
+
     /**
      * @brief Checks the validity of itself.
      * 
@@ -350,15 +359,6 @@ private:
     // 0xAAAA
     uint16_t termination;
 };
-
-// typedef struct __attribute__((packed))
-// {
-//     uint16_t guid;
-//     uint16_t crc1;
-//     unsigned char payload[56]; // cmd_input_t or cmd_output_t goes here.
-//     uint16_t crc2;
-//     uint16_t termination;
-// } client_frame_t;
 
 // CLIENTSERVER payload types.
 typedef struct
@@ -626,9 +626,11 @@ typedef struct
     // Data
     NetworkData *network_data;
     ACSRollingBuffer *acs_rolbuf;
-    cs_status_t cs_status[1];
     cs_ack_t cs_ack[1];
+    cs_config_uhf_t cs_config_uhf[1];
+    cs_config_xband_t cs_config_xband[1];
     cmd_output_t cmd_output[1];
+    cs_status_t cs_status[1];
 } global_data_t;
 
 int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);

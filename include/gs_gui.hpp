@@ -22,7 +22,7 @@
  * @param command_input The command to be augmented.
  * @return int Positive on success, negative on failure.
  */
-int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input);
+int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input, bool *allow_transmission);
 
 /**
  * @brief 
@@ -94,8 +94,9 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, au
  * @brief 
  * 
  * @param RX_display 
+ * @param global_data 
  */
-void gs_gui_rx_display_window(bool *RX_display);
+void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data);
 
 /**
  * @brief 

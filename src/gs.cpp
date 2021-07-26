@@ -560,8 +560,7 @@ void *gs_acs_update_thread(void *global_data_vp)
     cmd_input_t acs_cmd[1];
     memset(acs_cmd, 0x0, sizeof(cmd_input_t));
 
-    acs_cmd->mod = ACS_ID;
-    acs_cmd->cmd = ACS_UPD_ID;
+    acs_cmd->mod = ACS_UPD_ID;
     acs_cmd->unused = 0x0;
     acs_cmd->data_size = 0x0;
     memset(acs_cmd->data, 0x0, MAX_DATA_SIZE);
@@ -572,7 +571,7 @@ void *gs_acs_update_thread(void *global_data_vp)
     gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, acs_cmd, sizeof(cmd_input_t));
 
     // Receive an ACS update from the server.
-    gs_receive(global_data->acs_rolbuf);
+    // gs_receive(global_data->acs_rolbuf);
 
     pthread_mutex_unlock(&global_data->acs_rolbuf->acs_upd_inhibitor);
 
@@ -599,9 +598,10 @@ int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTS
 
 // Updated, referenced "void *rcv_thr(void *sock)" from line 338 of: https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
 // Also see: https://github.com/mitbailey/socket_server
+// TODO: Any premature returns from the RX Thread should be changed to somehow managing the failure. However, in the event that the thread does stop, this needs to be made obvious to the user and there should exist a "Manual RX Thread Restart" function.
 void *gs_rx_thread(void *args)
 {
-    // Convert the passed void pointer into something useful; in this case, a struct of whatever arguments gs_rx_thread(...) will need.
+    // Convert the passed void pointer into something useful; in this case, global_data_t.
     global_data_t *global_data = (global_data_t *)args;
 
     // Socket prep.
@@ -620,6 +620,8 @@ void *gs_rx_thread(void *args)
     }
     dbprintlf(GREEN_FG "Socket created.");
 
+    // Memset with '\0' to ensure string creation.
+    // NOTE: This may not be safe due to if a string of the buffer's length is input, there remains no \0 to terminate the string. Consider using a MACRO_CONSTANT + 1 to ensure a \0 is always present.
     memset(global_data->network_data->ipv4, '\0', sizeof(global_data->network_data->ipv4));
     if (!find_ipv4(global_data->network_data->ipv4, sizeof(global_data->network_data->ipv4)))
     {
@@ -699,15 +701,18 @@ void *gs_rx_thread(void *args)
             read_size = recv(accepted_socket, buffer, buffer_size, 0);
             if (read_size > 0)
             {
-                dbprintf("RECEIVED: ");
+                dbprintf("RECEIVED (hex): ");
                 for (int i = 0; i < read_size; i++)
                 {
-                    printf("%c", buffer[i]);
+                    printf("%02x", buffer[i]);
                 }
                 printf("(END)\n");
 
                 // TODO: Parse the data.
+                // Map a ClientServerFrame onto the data; this allows us to use the class' functions on the data.
                 ClientServerFrame *clientserver_frame = (ClientServerFrame *)buffer;
+
+                // Check if we've received data in the form of a ClientServerFrame.
                 if (clientserver_frame->checkIntegrity() < 0)
                 {
                     dbprintlf("Integrity check failed (%d).", clientserver_frame->checkIntegrity());
@@ -715,6 +720,7 @@ void *gs_rx_thread(void *args)
                 }
                 dbprintlf("Integrity check successful.");
 
+                // Extract the payload into a buffer.
                 int payload_size = clientserver_frame->getPayloadSize();
                 unsigned char *payload = (unsigned char *)malloc(payload_size);
                 if (clientserver_frame->retrievePayload(payload, payload_size) < 0)
@@ -735,27 +741,41 @@ void *gs_rx_thread(void *args)
                 case CS_TYPE_ACK:
                 case CS_TYPE_NACK:
                 {
-                    // cs_ack_t *cs_ack = (cs_ack_t *) payload;
+                    dbprintlf("Received N/ACK.");
                     memcpy(global_data->cs_ack, payload, payload_size);
                     break;
                 }
-                case CS_TYPE_CONFIG:
+                case CS_TYPE_CONFIG_UHF:
                 {
+                    dbprintlf("Received UHF Config.");
+                    memcpy(global_data->cs_config_uhf, payload, payload_size);
+                    break;
+                }
+                case CS_TYPE_CONFIG_XBAND:
+                {
+                    dbprintlf("Received X-Band Config.");
+                    memcpy(global_data->cs_config_xband, payload, payload_size);
                     break;
                 }
                 case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
                 {
-                    // // TODO: Remove this block once debugging is complete.
-                    // cmd_output_t *cmd_output = (cmd_output_t *) payload;
-                    // cmd_output->
-
-                    memcpy(global_data->cmd_output, payload, payload_size);
+                    dbprintlf("Received Data.");
+                    // TODO: Assuming all data incoming to the Client is in the form of a from-SPACE-HAUC cmd_output_t. May be a poor assumption.
+                    // If this is not an ACS Update...
+                    if (((cmd_output_t *) payload)->mod != ACS_UPD_ID)
+                    {
+                        memcpy(global_data->cmd_output, payload, payload_size);
+                    }
+                    else
+                    { // If it is an ACS update...
+                        global_data->acs_rolbuf->addValueSet(*((acs_upd_output_t *) payload));
+                    }
                     break;
                 }
                 case CS_TYPE_STATUS:
                 {
-                    cs_status_t *status = (cs_status_t *)payload;
-
+                    dbprintlf("Received Status.");
+                    memcpy(global_data->cs_status, payload, payload_size);
                     break;
                 }
                 case CS_TYPE_ERROR:
@@ -791,7 +811,7 @@ int find_ipv4(char *buffer, ssize_t buffer_size)
     getifaddrs(&addr);
     for (temp_addr = addr; temp_addr != NULL; temp_addr = temp_addr->ifa_next)
     {
-        struct sockaddr_in *addr_in = (struct sockaddr_in *) temp_addr->ifa_addr;
+        struct sockaddr_in *addr_in = (struct sockaddr_in *)temp_addr->ifa_addr;
         inet_ntop(AF_INET, &addr_in->sin_addr, buffer, buffer_size);
 
         // If the IP address is the IPv4...
