@@ -15,19 +15,12 @@
 // TODO: https://github.com/SPACE-HAUC/modem/blob/master/src/guimain.cpp
 // Implemented proper memory management, including free()'s and destroy()'s.
 
-// #include <stdlib.h>
-// #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-// #include <sys/types.h>
-// #include <sys/socket.h>
-// #include <arpa/inet.h>
 #include <GLFW/glfw3.h>
 #include "backend/imgui_impl_glfw.h"
 #include "backend/imgui_impl_opengl2.h"
-// #include "imgui/imgui.h"
-// #include "implot/implot.h"
 #include "gs.hpp"
 #include "gs_gui.hpp"
 

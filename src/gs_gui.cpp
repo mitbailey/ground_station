@@ -12,24 +12,11 @@
  * 
  */
 
-// #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
-// #include <fcntl.h>
-// #include <errno.h>
-// #include <ifaddrs.h>
-// #include <sys/types.h>
-// #include <sys/socket.h>
-// #include <arpa/inet.h>
-// #include <GLFW/glfw3.h>
-// #include "backend/imgui_impl_glfw.h"
-// #include "backend/imgui_impl_opengl2.h"
-// #include "imgui/imgui.h"
-// #include "implot/implot.h"
 #include "gs.hpp"
 #include "gs_gui.hpp"
-// #include "gs_debug.hpp"
 
 int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input)
 {

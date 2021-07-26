@@ -15,20 +15,8 @@
 #ifndef GS_HPP
 #define GS_HPP
 
-// #include <stdlib.h>
-// #include <stdio.h>
-// #include <unistd.h>
-// #include <pthread.h>
-// #include <fcntl.h>
-// #include <errno.h>
-// #include <ifaddrs.h>
-// #include <sys/types.h>
-// #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <GLFW/glfw3.h>
-// #include "backend/imgui_impl_glfw.h"
-// #include "backend/imgui_impl_opengl2.h"
-// #include "imgui/imgui.h"
 #include "implot/implot.h"
 
 #define SEC *1000000
