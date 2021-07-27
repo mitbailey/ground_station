@@ -43,7 +43,7 @@ int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t
             if (ImGui::Button("SEND DATA-UP TRANSMISSION"))
             {
                 // Send the transmission.
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, command_input, sizeof(cmd_input_t));
+                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, command_input, sizeof(cmd_input_t));
             }
         }
     }
@@ -142,7 +142,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get MOI");
@@ -154,7 +154,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get IMOI");
@@ -166,7 +166,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Dipole");
@@ -178,7 +178,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Timestep");
@@ -190,7 +190,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Measure Time");
@@ -202,7 +202,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Leeway");
@@ -214,7 +214,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get W-Target");
@@ -226,7 +226,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Detumble Angle");
@@ -238,7 +238,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
                     ACS_command_input.unused = 0x0;
                     ACS_command_input.data_size = 0x0;
                     memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &ACS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Sun Angle");
@@ -475,7 +475,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Minimal Housekeeping");
@@ -487,7 +487,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Battery Voltage");
@@ -499,7 +499,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get System Current");
@@ -511,7 +511,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Power Out");
@@ -523,7 +523,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Solar Voltage");
@@ -535,7 +535,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Solar Voltage (All)");
@@ -547,7 +547,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get ISUN");
@@ -559,7 +559,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
                     EPS_command_input.unused = 0x0;
                     EPS_command_input.data_size = 0x0;
                     memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &EPS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Loop Timer");
@@ -1018,7 +1018,7 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, auth_t
                 memcpy(UPD_command_input.data, &sw_upd_valid_magic_temp, sizeof(long));
 
                 // Transmits the software update command.
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &UPD_command_input, sizeof(cmd_input_t));
+                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &UPD_command_input, sizeof(cmd_input_t));
             }
         }
         else
@@ -1050,7 +1050,7 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, au
                     SYS_command_input.unused = 0x0;
                     SYS_command_input.data_size = 0x0;
                     memset(SYS_command_input.data, 0x0, MAX_DATA_SIZE);
-                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, &SYS_command_input, sizeof(cmd_input_t));
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &SYS_command_input, sizeof(cmd_input_t));
                 }
                 ImGui::SameLine();
                 ImGui::Text("Get Version Magic");

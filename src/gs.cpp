@@ -569,7 +569,7 @@ void *gs_acs_update_thread(void *global_data_vp)
     usleep(100000);
 
     // Transmit an ACS update request to the server.
-    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_SPACEHAUC, acs_cmd, sizeof(cmd_input_t));
+    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, acs_cmd, sizeof(cmd_input_t));
 
     // Receive an ACS update from the server.
     // gs_receive(global_data->acs_rolbuf);

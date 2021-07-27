@@ -163,7 +163,7 @@ enum CLIENTSERVER_FRAME_ENDPOINT
     CS_ENDPOINT_ROOFXBAND,
     CS_ENDPOINT_HAYSTACK,
     CS_ENDPOINT_SERVER,
-    CS_ENDPOINT_SPACEHAUC // probably dont need this one, SH can be inferred (all nonconfig cs_frames sent to TX radios...)
+    // CS_ENDPOINT_SPACEHAUC // probably dont need this one, SH can be inferred (all nonconfig cs_frames sent to TX radios...)
 };
 
 enum CLIENTSERVER_FRAME_MODE
