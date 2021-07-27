@@ -262,10 +262,10 @@ public:
 
     // Network
     int socket;
-    struct sockaddr_in serv_addr[1];
+    struct sockaddr_in destination_addr[1];
     bool connection_ready;
-    char ipv4[32];
-    int port;
+    char listening_ipv4[32];
+    int listening_port;
 
     // Booleans
     bool rx_active; // Only able to receive when this is true.

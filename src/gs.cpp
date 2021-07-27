@@ -127,8 +127,8 @@ NetworkData::NetworkData()
 {
     connection_ready = false;
     socket = -1;
-    serv_addr->sin_family = AF_INET;
-    port = LISTENING_PORT;
+    destination_addr->sin_family = AF_INET;
+    listening_port = LISTENING_PORT;
 }
 /// ///
 
@@ -623,16 +623,16 @@ void *gs_rx_thread(void *args)
 
     // Memset with '\0' to ensure string creation.
     // NOTE: This may not be safe due to if a string of the buffer's length is input, there remains no \0 to terminate the string. Consider using a MACRO_CONSTANT + 1 to ensure a \0 is always present.
-    memset(global_data->network_data->ipv4, '\0', sizeof(global_data->network_data->ipv4));
-    if (!find_ipv4(global_data->network_data->ipv4, sizeof(global_data->network_data->ipv4)))
+    memset(global_data->network_data->listening_ipv4, '\0', sizeof(global_data->network_data->listening_ipv4));
+    if (!find_ipv4(global_data->network_data->listening_ipv4, sizeof(global_data->network_data->listening_ipv4)))
     {
         dbprintlf(YELLOW_FG "Failed to auto-detect local IPv4! Using default (%s).", LISTENING_IP_ADDRESS);
         char temp[] = LISTENING_IP_ADDRESS;
-        memcpy(global_data->network_data->ipv4, temp, sizeof(temp));
+        memcpy(global_data->network_data->listening_ipv4, temp, sizeof(temp));
     }
     else
     {
-        dbprintlf(BLUE_FG "Auto-detected local IPv4: %s", global_data->network_data->ipv4);
+        dbprintlf(BLUE_FG "Auto-detected local IPv4: %s", global_data->network_data->listening_ipv4);
     }
 
     listening_address.sin_family = AF_INET;
@@ -641,7 +641,7 @@ void *gs_rx_thread(void *args)
     listening_address.sin_port = htons(LISTENING_PORT);
 
     // Set the IP address.
-    if (inet_pton(AF_INET, global_data->network_data->ipv4, &listening_address.sin_addr) <= 0)
+    if (inet_pton(AF_INET, global_data->network_data->listening_ipv4, &listening_address.sin_addr) <= 0)
     {
         dbprintlf(FATAL "Invalid address; address not supported.");
         return NULL;
