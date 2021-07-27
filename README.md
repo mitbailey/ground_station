@@ -12,22 +12,11 @@ The Connections Manager fills in its own receiver thread IPv4 address and port i
 ### Known Issues
 None.  
 
-### IPs & Ports
-GUI Client  
-Listening:  54200  
-  
-Roof UHF  
-Listening:  54210  
-  
-Roof X-Band  
-Listening:  54220  
-  
-Haystack  
-Listening:  54230  
-  
+### IP & Ports
 Server  
-Listening...  
-GUIClient:  54201  
-RoofUHF:    54211  
-RoofXBand:  54221  
-Haystack:   54231  
+  IP:               ?  
+  Ports:  
+    (GUI Client)    51904  
+    (Roof UHF)      51914  
+    (Roof X-Band)   51924  
+    (Haystack)      51934   

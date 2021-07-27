@@ -127,8 +127,8 @@ NetworkData::NetworkData()
 {
     connection_ready = false;
     socket = -1;
-    destination_addr->sin_family = AF_INET;
-    listening_port = LISTENING_PORT;
+    serv_ip->sin_family = AF_INET;
+    serv_ip->sin_port = htons(SERVER_PORT);
 }
 /// ///
 
@@ -604,102 +604,27 @@ void *gs_rx_thread(void *args)
 {
     // Convert the passed void pointer into something useful; in this case, global_data_t.
     global_data_t *global_data = (global_data_t *)args;
+    NetworkData *network_data = global_data->network_data;
 
-    // Socket prep.
-    int listening_socket, accepted_socket, socket_size;
-    struct sockaddr_in listening_address, accepted_address;
-    int buffer_size = CLIENTSERVER_MAX_PAYLOAD_SIZE + 0x80;
-    unsigned char buffer[buffer_size + 1];
-    memset(buffer, 0x0, buffer_size);
-
-    // Create socket.
-    listening_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (listening_socket == -1)
+    while (network_data->rx_active)
     {
-        dbprintlf(FATAL "Could not create socket.");
-        return NULL;
-    }
-    dbprintlf(GREEN_FG "Socket created.");
+        if (!network_data->connection_ready)
+        {
+            sleep(5);
+            continue;
+        }
 
-    // Memset with '\0' to ensure string creation.
-    // NOTE: This may not be safe due to if a string of the buffer's length is input, there remains no \0 to terminate the string. Consider using a MACRO_CONSTANT + 1 to ensure a \0 is always present.
-    memset(global_data->network_data->listening_ipv4, '\0', sizeof(global_data->network_data->listening_ipv4));
-    if (!find_ipv4(global_data->network_data->listening_ipv4, sizeof(global_data->network_data->listening_ipv4)))
-    {
-        dbprintlf(YELLOW_FG "Failed to auto-detect local IPv4! Using default (%s).", LISTENING_IP_ADDRESS);
-        char temp[] = LISTENING_IP_ADDRESS;
-        memcpy(global_data->network_data->listening_ipv4, temp, sizeof(temp));
-    }
-    else
-    {
-        dbprintlf(BLUE_FG "Auto-detected local IPv4: %s", global_data->network_data->listening_ipv4);
-    }
-
-    listening_address.sin_family = AF_INET;
-    // TODO: Should probably not accept just any address.
-    listening_address.sin_addr.s_addr = INADDR_ANY;
-    listening_address.sin_port = htons(LISTENING_PORT);
-
-    // Set the IP address.
-    if (inet_pton(AF_INET, global_data->network_data->listening_ipv4, &listening_address.sin_addr) <= 0)
-    {
-        dbprintlf(FATAL "Invalid address; address not supported.");
-        return NULL;
-    }
-
-    // Set the timeout for recv, which will allow us to reconnect to poorly disconnected clients.
-    struct timeval timeout;
-    timeout.tv_sec = LISTENING_SOCKET_TIMEOUT;
-    timeout.tv_usec = 0;
-    setsockopt(listening_socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
-
-    // Bind.
-    while (bind(listening_socket, (struct sockaddr *)&listening_address, sizeof(listening_address)) < 0)
-    {
-        dbprintlf(RED_FG "Error: Port binding failed.");
-        dbprintf(YELLOW_FG ">>> ");
-        perror("bind");
-        sleep(5);
-    }
-    dbprintlf(GREEN_FG "Bound to port.");
-
-    // Listen.
-    listen(listening_socket, 3);
-
-    while (global_data->network_data->rx_active)
-    {
         int read_size = 0;
 
-        // Accept an incoming connection.
-        dbprintlf("Waiting for incoming connections...");
-        socket_size = sizeof(struct sockaddr_in);
-
-        // Accept connection from an incoming client.
-        accepted_socket = accept(listening_socket, (struct sockaddr *)&accepted_address, (socklen_t *)&socket_size);
-        if (accepted_socket < 0)
+        while (read_size >= 0 && network_data->rx_active)
         {
-            if (errno == EAGAIN)
-            {
-                // printf("Waiting for connection timed-out.\n");
-                continue;
-            }
-            else
-            {
-                dbprintf(YELLOW_FG ">>> ");
-                perror("accept failed");
-                continue;
-            }
-        }
-        dbprintlf(CYAN_BG "Connection accepted.");
+            char buffer[sizeof(ClientServerFrame) * 2];
+            memset(buffer, 0x0, sizeof(buffer));
 
-        // We are now connected.
+            dbprintlf("Beginning recv...");
+            read_size = recv(network_data->socket, buffer, sizeof(buffer), 0);
+            dbprintlf("Read %d bytes.", read_size);
 
-        // Read from the socket.
-
-        while (read_size >= 0 && global_data->network_data->rx_active)
-        {
-            dbprintlf("Beginning recv... (last read: %d bytes)", read_size);
-            read_size = recv(accepted_socket, buffer, buffer_size, 0);
             if (read_size > 0)
             {
                 dbprintf("RECEIVED (hex): ");
@@ -709,7 +634,7 @@ void *gs_rx_thread(void *args)
                 }
                 printf("(END)\n");
 
-                // TODO: Parse the data.
+                // Parse the data.
                 // Map a ClientServerFrame onto the data; this allows us to use the class' functions on the data.
                 ClientServerFrame *clientserver_frame = (ClientServerFrame *)buffer;
 
@@ -731,7 +656,7 @@ void *gs_rx_thread(void *args)
                 }
 
                 CLIENTSERVER_FRAME_TYPE type = clientserver_frame->getType();
-                // TODO: Based on what we got, set things to display the data.
+                // Based on what we got, set things to display the data.
                 switch (type)
                 {
                 case CS_TYPE_NULL:
@@ -774,12 +699,6 @@ void *gs_rx_thread(void *args)
                     }
                     break;
                 }
-                // case CS_TYPE_STATUS:
-                // {
-                //     dbprintlf("Received Status.");
-                //     memcpy(global_data->cs_status, payload, payload_size);
-                //     break;
-                // }
                 case CS_TYPE_ERROR:
                 default:
                 {
@@ -803,107 +722,8 @@ void *gs_rx_thread(void *args)
             dbprintlf(YELLOW_BG "Active connection timed-out (%d).", read_size);
             continue;
         }
+        erprintlf(errno);
     }
 
     return NULL;
-}
-
-int find_ipv4(char *buffer, ssize_t buffer_size)
-{
-    struct ifaddrs *addr, *temp_addr;
-    getifaddrs(&addr);
-    for (temp_addr = addr; temp_addr != NULL; temp_addr = temp_addr->ifa_next)
-    {
-        struct sockaddr_in *addr_in = (struct sockaddr_in *)temp_addr->ifa_addr;
-        inet_ntop(AF_INET, &addr_in->sin_addr, buffer, buffer_size);
-
-        // If the IP address is the IPv4...
-        if (buffer[0] == '1' && buffer[1] == '7' && buffer[2] == '2' && buffer[3] == '.')
-        {
-            // dbprintlf(BLUE_FG "Detected IPv4: %s", buffer);
-            dbprintlf(CYAN_FG "%s", buffer);
-            return 1;
-        }
-        else
-        {
-            dbprintlf(MAGENTA_FG "%s", buffer);
-        }
-    }
-
-    return 0;
-}
-
-// // This needs to act similarly to the cmd_parser.
-// // TODO: If the data is from ACS update, be sure to set the values in the ACS Update data class!
-int gs_receive(ACSRollingBuffer *acs_rolbuf)
-{
-    //     client_frame_t output[1];
-    //     memset(output, 0x0, sizeof(client_frame_t));
-
-    //     // TODO: Read in data to output.
-    //     // receive into 'output'
-
-    //     // This function receives some data, which we assume fits as a client_frame_t, called output.
-
-    //     // TODO: REMOVE this code block once debug testing is complete.
-    //     output->guid = CLIENT_FRAME_GUID;
-    //     output->crc1 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
-    //     output->crc2 = crc16(output->payload, SIZE_FRAME_PAYLOAD);
-
-    //     if (output->guid != CLIENT_FRAME_GUID)
-    //     {
-    //         printf("GUID Error: 0x%04x\n", output->guid);
-    //         return -1;
-    //     }
-    //     else if (output->crc1 != output->crc2)
-    //     {
-    //         printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, output->crc2);
-    //         return -2;
-    //     }
-    //     else if (output->crc1 != crc16(output->payload, SIZE_FRAME_PAYLOAD))
-    //     {
-    //         printf("CRC Error: 0x%04x != 0x%04x\n", output->crc1, crc16(output->payload, SIZE_FRAME_PAYLOAD));
-    //         return -3;
-    //     }
-
-    //     cmd_output_t *payload = (cmd_output_t *)output->payload;
-
-    //     // TODO: REMOVE this code block once debug testing is complete.
-    //     payload->mod = ACS_UPD_ID;
-
-    //     // All data received goes one of two places: the ACS Update Data Display window, or the plaintext trash heap window.
-    //     if (payload->mod == ACS_UPD_ID)
-    //     {
-    //         // Set the data in acs_display_data to the data in output->payload.
-    //         acs_upd_output_t *acs_upd_output = (acs_upd_output_t *)payload->data;
-
-    //         // TODO: REMOVE this block of code once debug testing is complete.
-    //         acs_upd_output->ct = rand() % 0xf;
-    //         acs_upd_output->mode = rand() % 0xf;
-    //         acs_upd_output->bx = rand() % 0xffff;
-    //         acs_upd_output->by = rand() % 0xffff;
-    //         acs_upd_output->bz = rand() % 0xffff;
-    //         acs_upd_output->wx = rand() % 0xffff;
-    //         acs_upd_output->wy = rand() % 0xffff;
-    //         acs_upd_output->wz = rand() % 0xffff;
-    //         acs_upd_output->sx = rand() % 0xffff;
-    //         acs_upd_output->sy = rand() % 0xffff;
-    //         acs_upd_output->sz = rand() % 0xffff;
-    //         acs_upd_output->vbatt = rand() % 0xff;
-    //         acs_upd_output->vboost = rand() % 0xff;
-    //         acs_upd_output->cursun = rand() % 0xff;
-    //         acs_upd_output->cursys = rand() % 0xff;
-
-    //         // Add the ACS update data
-    //         acs_rolbuf->addValueSet(*acs_upd_output);
-
-    //         // Set the ready flag.
-    //         // acs_display_data->ready = true;
-    //     }
-    //     else
-    //     {
-    //         // TODO: Handle all other data by printing it out into a single window. This should probably be handled with another local-global like acs_display_data.
-    //     }
-
-    return 1;
 }

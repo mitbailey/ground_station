@@ -1206,28 +1206,28 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             static bool first_pass = true;
             if (first_pass)
             {
-                strcpy(destination_ipv4, LISTENING_IP_ADDRESS); // defaults to our own RX ip
+                strcpy(destination_ipv4, SERVER_IP); // defaults to our own RX ip
             }
-            static int destination_port = LISTENING_PORT; // defaults to our own RX port
-            ImGui::InputText("IP Address", destination_ipv4, sizeof(network_data->listening_ipv4), flag);
+            static int destination_port = SERVER_PORT; // defaults to our own RX port
+            ImGui::InputText("IP Address", destination_ipv4, sizeof(destination_ipv4), flag);
             ImGui::InputInt("Port", &destination_port, 0, 0, flag);
 
             if (!(network_data->connection_ready) || network_data->socket < 0)
             {
                 if (ImGui::Button("Connect"))
                 {
-                    network_data->destination_addr->sin_port = htons(destination_port);
+                    network_data->serv_ip->sin_port = htons(destination_port);
                     if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                     {
                         printf("\nSocket creation error.\n");
                         fflush(stdout);
                         // return -1;
                     }
-                    if (inet_pton(AF_INET, destination_ipv4, &network_data->destination_addr->sin_addr) <= 0)
+                    if (inet_pton(AF_INET, destination_ipv4, &network_data->serv_ip->sin_addr) <= 0)
                     {
                         printf("\nInvalid address; Address not supported.\n");
                     }
-                    if (connect_w_tout(network_data->socket, (struct sockaddr *)network_data->destination_addr, sizeof(network_data->destination_addr), 1) < 0)
+                    if (connect_w_tout(network_data->socket, (struct sockaddr *)network_data->serv_ip, sizeof(network_data->serv_ip), 1) < 0)
                     {
                         printf("\nConnection failed!\n");
                     }

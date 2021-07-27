@@ -25,10 +25,10 @@
 #define CLIENTSERVER_FRAME_GUID 0x1A1C
 #define CLIENTSERVER_MAX_PAYLOAD_SIZE 0x64
 #define MAX_ROLLBUF_LEN 500
-#define SIZE_RX_BUF 8192
-#define LISTENING_IP_ADDRESS "127.0.0.1" // hostname -I
-#define LISTENING_PORT 54200
-#define LISTENING_SOCKET_TIMEOUT 20
+// #define SIZE_RX_BUF 8192
+#define SERVER_IP "127.0.0.1" // hostname -I
+#define SERVER_PORT 54200
+// #define LISTENING_SOCKET_TIMEOUT 20
 
 // Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
@@ -262,10 +262,10 @@ public:
 
     // Network
     int socket;
-    struct sockaddr_in destination_addr[1];
+    struct sockaddr_in serv_ip[1];
     bool connection_ready;
-    char listening_ipv4[32];
-    int listening_port;
+    // char listening_ipv4[32];
+    // int listening_port;
 
     // Booleans
     bool rx_active; // Only able to receive when this is true.
@@ -726,26 +726,6 @@ int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTS
  * @return void* 
  */
 void *gs_rx_thread(void *args);
-
-/**
- * @brief 
- * 
- * @param buffer 
- * @param buffer_size 
- * @return int 
- */
-int find_ipv4(char *buffer, ssize_t buffer_size);
-
-/**
- * @brief Handles receiving data from SPACE-HAUC.
- * 
- * TODO: CURRENTLY UNIMPLEMENTED. Implement, and deploy where needed.
- * 
- * @param output SPACE-HAUC's down-sent data, wrapped in a server-to-client frame.
- * @param acs_display_data Pointer to the class object holding data for the ACS display.
- * @return int 
- */
-int gs_receive(ACSRollingBuffer *acs_rolbuf);
 
 /**
  * @brief Generates a 16-bit CRC for the given data.
