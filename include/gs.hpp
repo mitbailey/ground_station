@@ -27,7 +27,7 @@
 #define MAX_ROLLBUF_LEN 500
 #define SIZE_RX_BUF 8192
 #define LISTENING_IP_ADDRESS "127.0.0.1" // hostname -I
-#define LISTENING_PORT 51934
+#define LISTENING_PORT 54200
 #define LISTENING_SOCKET_TIMEOUT 20
 
 // Function magic for system restart command, replaces .cmd value.

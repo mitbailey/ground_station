@@ -10,4 +10,24 @@ The receive thread automatically finds and binds to the local IPv4 address, with
 The Connections Manager fills in its own receiver thread IPv4 address and port in the IP Address and Port fields. This enables the operator to press 'Connect,' and connect back into the client's own receiver thread. In the Connections Manager window, a JPEG Quality field should appear. The '+' and '-' buttons can be used to send sample data over this connection. The results of this are viewable in the Linux Terminal. The JPEG example should cause an integrity failure, however if data is sent using the Data-down Arrow Buttons the integrity check should return successfully.  
   
 ### Known Issues
-None.
+None.  
+
+### IPs & Ports
+GUI Client  
+Listening:  54200  
+  
+Roof UHF  
+Listening:  54210  
+  
+Roof X-Band  
+Listening:  54220  
+  
+Haystack  
+Listening:  54230  
+  
+Server  
+Listening...  
+GUIClient:  54201  
+RoofUHF:    54211  
+RoofXBand:  54221  
+Haystack:   54231  
