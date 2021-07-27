@@ -786,6 +786,7 @@ void *gs_rx_thread(void *args)
                     break;
                 }
                 }
+                free(payload);
             }
             else
             {
