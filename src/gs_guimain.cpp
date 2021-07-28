@@ -18,7 +18,8 @@
 // Received data displayed either as plaintext or graphs.
 // TODO: Implement XBAND and UHF CLIENTSERVER structures, and receive / display / parse them properly.
 // TODO: Send periodic null CLIENTSERVER frames to get the network status in 'netstat.'
-// TODO: Remove accept() code, since this is not a server. Should only connect().
+// Removed accept() code, since this is not a server. Should only connect().
+// TODO: Fix 'taking address of packed member' warnings.
 
 #include <unistd.h>
 #include <pthread.h>

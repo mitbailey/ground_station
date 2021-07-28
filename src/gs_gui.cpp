@@ -1207,8 +1207,9 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             if (first_pass)
             {
                 strcpy(destination_ipv4, SERVER_IP); // defaults to our own RX ip
+                first_pass = false;
             }
-            static int destination_port = SERVER_PORT; // defaults to our own RX port
+            static int destination_port = SERVER_PORT; // defaults to the correct server listening port
             ImGui::InputText("IP Address", destination_ipv4, sizeof(destination_ipv4), flag);
             ImGui::InputInt("Port", &destination_port, 0, 0, flag);
 
@@ -1249,6 +1250,14 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
             // // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection. Remove it eventually.
+            if (network_data->connection_ready && network_data->socket > 0)
+            {
+                if (ImGui::Button("SEND TEST FRAME"))
+                {
+                    gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_CLIENT, NULL, 0);
+                }
+            }
+
             if (network_data->connection_ready && network_data->socket > 0)
             {
                 static int jpg_qty;

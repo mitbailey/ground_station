@@ -157,14 +157,8 @@ ClientServerFrame::ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_s
     netstat = 0; // Will be set by the server.
     termination = 0xAAAA;
 
-    // payload = (unsigned char *)malloc(this->payload_size);
     memset(payload, 0x0, this->payload_size);
 }
-
-// ClientServerFrame::~ClientServerFrame()
-// {
-//     free(payload);
-// }
 
 int ClientServerFrame::storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int size)
 {
@@ -714,7 +708,8 @@ void *gs_rx_thread(void *args)
         }
         if (read_size == 0)
         {
-            dbprintlf(CYAN_BG "Client closed connection.");
+            dbprintlf(CYAN_BG "Connection forcibly closed by the server.");
+            network_data->connection_ready = false;
             continue;
         }
         else if (errno == EAGAIN)

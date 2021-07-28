@@ -16,7 +16,7 @@ None.
 Server  
   IP:               ?  
   Ports:  
-    (GUI Client)    51904  
-    (Roof UHF)      51914  
-    (Roof X-Band)   51924  
-    (Haystack)      51934   
+    (GUI Client)    54200  
+    (Roof UHF)      54210  
+    (Roof X-Band)   54220  
+    (Haystack)      54230   

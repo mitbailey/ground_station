@@ -639,6 +639,15 @@ typedef struct
     uint8_t netstat;
 } global_data_t;
 
+/**
+ * @brief 
+ * 
+ * @param socket 
+ * @param address 
+ * @param socket_size 
+ * @param tout_s 
+ * @return int 
+ */
 int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
 
 /**
