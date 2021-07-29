@@ -170,7 +170,7 @@ int ClientServerFrame::storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void *
 
     if (data == NULL)
     {
-        printf("Prepping null packet.");
+        dbprintlf("Prepping null packet.");
     }
     else
     {
