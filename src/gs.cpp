@@ -760,6 +760,7 @@ void *gs_rx_thread(void *args)
         else if (errno == EAGAIN)
         {
             dbprintlf(YELLOW_BG "Active connection timed-out (%d).", read_size);
+            network_data->connection_ready = false;
             continue;
         }
         erprintlf(errno);
