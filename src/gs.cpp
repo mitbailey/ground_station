@@ -168,10 +168,17 @@ int ClientServerFrame::storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void *
         return -1;
     }
 
-    memcpy(payload, data, size);
+    if (data == NULL)
+    {
+        printf("Prepping null packet.");
+    }
+    else
+    {
+        memcpy(payload, data, size);
+    }
 
-    crc1 = crc16(payload, payload_size);
-    crc2 = crc16(payload, payload_size);
+    crc1 = crc16(payload, CLIENTSERVER_MAX_PAYLOAD_SIZE);
+    crc2 = crc16(payload, CLIENTSERVER_MAX_PAYLOAD_SIZE);
 
     this->endpoint = endpoint;
 
@@ -189,7 +196,7 @@ int ClientServerFrame::retrievePayload(unsigned char *data_space, int size)
         return -1;
     }
 
-    memcpy(data_space, payload, payload_size);
+    memcpy(data_space, payload, CLIENTSERVER_MAX_PAYLOAD_SIZE);
 
     return 1;
 }
@@ -220,7 +227,7 @@ int ClientServerFrame::checkIntegrity()
     {
         return -6;
     }
-    else if (crc1 != crc16(payload, payload_size))
+    else if (crc1 != crc16(payload, CLIENTSERVER_MAX_PAYLOAD_SIZE))
     {
         return -7;
     }
@@ -591,6 +598,30 @@ int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTS
     return 1;
 }
 
+void *gs_polling_thread(void *args)
+{
+    global_data_t *global_data = (global_data_t *) args;
+    NetworkData *network_data = global_data->network_data;
+    
+    while (network_data->rx_active)
+    {
+        if (network_data->connection_ready)
+        {
+            ClientServerFrame *null_frame = new ClientServerFrame(CS_TYPE_NULL, 0x0);
+            null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
+
+            send(network_data->socket, null_frame, sizeof(ClientServerFrame), 0);
+            delete null_frame;
+        }
+
+        usleep(15 SEC);
+    }
+
+    
+    dbprintlf(FATAL "GS_POLLING_THREAD IS EXITING!");
+    return NULL;
+}
+
 // Updated, referenced "void *rcv_thr(void *sock)" from line 338 of: https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
 // Also see: https://github.com/mitbailey/socket_server
 // TODO: Any premature returns from the RX Thread should be changed to somehow managing the failure. However, in the event that the thread does stop, this needs to be made obvious to the user and there should exist a "Manual RX Thread Restart" function.
@@ -640,6 +671,20 @@ void *gs_rx_thread(void *args)
                 }
                 dbprintlf("Integrity check successful.");
 
+                // TODO: Write this data to the GUI in some meaningful manner.
+                global_data->netstat = clientserver_frame->getNetstat();
+                // For now, just print the Netstat.
+                uint8_t netstat = clientserver_frame->getNetstat();
+                dbprintlf(BLUE_FG "NETWORK STATUS");
+                dbprintf("GUI Client ----- ");
+                ((netstat & 0x80) == 0x80) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
+                dbprintf("Roof UHF ------- ");
+                ((netstat & 0x40) == 0x40) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
+                dbprintf("Roof X-Band ---- ");
+                ((netstat & 0x20) == 0x20) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
+                dbprintf("Haystack ------- ");
+                ((netstat & 0x10) == 0x10) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
+
                 // Extract the payload into a buffer.
                 int payload_size = clientserver_frame->getPayloadSize();
                 unsigned char *payload = (unsigned char *)malloc(payload_size);
@@ -656,7 +701,7 @@ void *gs_rx_thread(void *args)
                 case CS_TYPE_NULL:
                 { // Will have status data.
                     dbprintlf("Received NULL frame.");
-                    global_data->netstat = clientserver_frame->getNetstat();
+                    // global_data->netstat = clientserver_frame->getNetstat();
                     break;
                 }
                 case CS_TYPE_ACK:
@@ -681,15 +726,15 @@ void *gs_rx_thread(void *args)
                 case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
                 {
                     dbprintlf("Received Data.");
-                    // TODO: Assuming all data incoming to the Client is in the form of a from-SPACE-HAUC cmd_output_t. May be a poor assumption.
+                    // TODO: Assuming all 'data'-type frame payloads incoming to the Client is in the form of a from-SPACE-HAUC cmd_output_t. May be a poor assumption.
                     // If this is not an ACS Update...
-                    if (((cmd_output_t *) payload)->mod != ACS_UPD_ID)
+                    if (((cmd_output_t *)payload)->mod != ACS_UPD_ID)
                     {
                         memcpy(global_data->cmd_output, payload, payload_size);
                     }
                     else
                     { // If it is an ACS update...
-                        global_data->acs_rolbuf->addValueSet(*((acs_upd_output_t *) payload));
+                        global_data->acs_rolbuf->addValueSet(*((acs_upd_output_t *)payload));
                     }
                     break;
                 }
@@ -708,7 +753,7 @@ void *gs_rx_thread(void *args)
         }
         if (read_size == 0)
         {
-            dbprintlf(CYAN_BG "Connection forcibly closed by the server.");
+            dbprintlf(RED_BG "Connection forcibly closed by the server.");
             network_data->connection_ready = false;
             continue;
         }

@@ -734,6 +734,14 @@ int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTS
  * @param args 
  * @return void* 
  */
+void *gs_polling_thread(void *args);
+
+/**
+ * @brief 
+ * 
+ * @param args 
+ * @return void* 
+ */
 void *gs_rx_thread(void *args);
 
 /**

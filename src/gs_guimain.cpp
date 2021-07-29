@@ -21,6 +21,7 @@
 // Removed accept() code, since this is not a server. Should only connect().
 // TODO: Fix 'taking address of packed member' warnings.
 
+#include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
@@ -101,8 +102,9 @@ int main(int, char **)
     bool User_Manual = false;
 
     // Set-up and start the RX thread.
-    pthread_t rx_thread_id;
+    pthread_t rx_thread_id, polling_thread_id;
     pthread_create(&rx_thread_id, NULL, gs_rx_thread, global_data);
+    pthread_create(&polling_thread_id, NULL, gs_polling_thread, global_data);
 
     // Start the receiver thread, passing it our acs_rolbuf (where we will read ACS Update data from) and (perhaps a cmd_output_t for all other data?).
 
@@ -231,6 +233,13 @@ int main(int, char **)
     }
 
     // Finished.
+    void* retval;
+    pthread_cancel(rx_thread_id);
+    pthread_cancel(polling_thread_id);
+    pthread_join(rx_thread_id, &retval);
+    retval == PTHREAD_CANCELED ? printf("Good rx_thread_id join.\n") : printf("Bad rx_thread_id join.\n");
+    pthread_join(polling_thread_id, &retval);
+    retval == PTHREAD_CANCELED ? printf("Good polling_thread_id join.\n") : printf("Bad polling_thread_id join.\n");
     close(global_data->network_data->socket);
     delete global_data->acs_rolbuf;
     delete global_data->network_data;
