@@ -45,7 +45,7 @@ LIBS += -lm -lpthread
 
 BUILDGUI=imgui/libimgui_glfw.a
 
-BUILDCPP=src/network.o src/gs.o src/gs_gui.o src/gs_guimain.o
+BUILDCPP=src/buffer.o src/network.o src/gs.o src/gs_gui.o src/gs_guimain.o
 
 GUITARGET=gs.out
 

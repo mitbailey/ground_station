@@ -1201,7 +1201,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             {
                 flag = (ImGuiInputTextFlags_)0;
             }
-            
+
             static char destination_ipv4[32];
             static bool first_pass = true;
             if (first_pass)
@@ -1228,7 +1228,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                     {
                         printf("\nInvalid address; Address not supported.\n");
                     }
-                    if (connect_w_tout(network_data->socket, (struct sockaddr *)network_data->serv_ip, sizeof(network_data->serv_ip), 1) < 0)
+                    if (gs_connect(network_data->socket, (struct sockaddr *)network_data->serv_ip, sizeof(network_data->serv_ip), 1) < 0)
                     {
                         printf("\nConnection failed!\n");
                     }

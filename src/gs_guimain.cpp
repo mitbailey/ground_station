@@ -17,7 +17,7 @@
 // Implemented parsing of received ClientServerFrames properly.
 // Received data displayed either as plaintext or graphs.
 // TODO: Implement XBAND and UHF CLIENTSERVER structures, and receive / display / parse them properly.
-// TODO: Send periodic null CLIENTSERVER frames to get the network status in 'netstat.'
+// Now sends periodic null NetworkFrames to get the network status in 'netstat.'
 // Removed accept() code, since this is not a server. Should only connect().
 // TODO: Fix 'taking address of packed member' warnings.
 
@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-#include <GLFW/glfw3.h>
 #include "backend/imgui_impl_glfw.h"
 #include "backend/imgui_impl_opengl2.h"
 #include "gs.hpp"
@@ -33,7 +32,6 @@
 
 int main(int, char **)
 {
-    // TODO: Investigate how to use this to init new windows and allow pop-outs.
     ////////// INIT ///////////
     // Setup the window.
     glfwSetErrorCallback(glfw_error_callback);
@@ -233,7 +231,7 @@ int main(int, char **)
     }
 
     // Finished.
-    void* retval;
+    void *retval;
     pthread_cancel(rx_thread_id);
     pthread_cancel(polling_thread_id);
     pthread_join(rx_thread_id, &retval);
@@ -243,7 +241,7 @@ int main(int, char **)
     close(global_data->network_data->socket);
     delete global_data->acs_rolbuf;
     delete global_data->network_data;
-    
+
     // Cleanup.
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplGlfw_Shutdown();

@@ -19,11 +19,11 @@
 #include <GLFW/glfw3.h>
 #include "implot/implot.h"
 #include "network.hpp"
+#include "buffer.hpp"
 
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
-#define MAX_ROLLBUF_LEN 500
 
 // Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
@@ -130,88 +130,6 @@ enum XBAND_FUNC_ID
     XBAND_GET_TMP_OP,
     XBAND_GET_LOOP_TIME,
     XBAND_SET_LOOP_TIME,
-};
-
-// From https://github.com/SPACE-HAUC/mtq_tester/blob/master/guimain.cpp
-class ScrollBuf
-{
-public:
-    ScrollBuf();
-    ScrollBuf(int max_size);
-
-    void AddPoint(float x, float y);
-    void Erase();
-    float Max();
-    float Min();
-
-    int max_sz;
-    int ofst;
-    ImVector<ImVec2> data;
-};
-
-/**
- * @brief The ACS update data format sent from SPACE-HAUC to Ground.
- * 
- *  else if (module_id == ACS_UPD_ID)
- *  {
- *      acs_upd.vbatt = eps_vbatt;
- *      acs_upd.vboost = eps_mvboost;
- *      acs_upd.cursun = eps_cursun;
- *      acs_upd.cursys = eps_cursys;
- *      output->retval = 1;
- *      output->data_size = sizeof(acs_uhf_packet);
- *      memcpy(output->data, &acs_upd, output->data_size);
- *  }
- * 
- * @return typedef struct 
- */
-#ifndef __fp16
-#define __fp16 uint16_t
-#endif // __fp16
-typedef struct __attribute__((packed))
-{
-    uint8_t ct;      // Set in acs.c.
-    uint8_t mode;    // Set in acs.c.
-    __fp16 bx;       // Set in acs.c.
-    __fp16 by;       // Set in acs.c.
-    __fp16 bz;       // Set in acs.c.
-    __fp16 wx;       // Set in acs.c.
-    __fp16 wy;       // Set in acs.c.
-    __fp16 wz;       // Set in acs.c.
-    __fp16 sx;       // Set in acs.c.
-    __fp16 sy;       // Set in acs.c.
-    __fp16 sz;       // Set in acs.c.
-    uint16_t vbatt;  // Set in cmd_parser.
-    uint16_t vboost; // Set in cmd_parser.
-    uint16_t cursun; // Set in cmd_parser.
-    uint16_t cursys; // Set in cmd_parser.
-} acs_upd_output_t;
-
-class ACSRollingBuffer
-{
-public:
-    ACSRollingBuffer();
-
-    ~ACSRollingBuffer();
-
-    /**
-     * @brief Adds a value set to the rolling buffer.
-     * 
-     * @param data The data to be copied into the buffer.
-     */
-    void addValueSet(acs_upd_output_t data);
-
-    // Separated by the graphs they'll appear in.
-    ScrollBuf ct, mode;
-    ScrollBuf bx, by, bz;
-    ScrollBuf wx, wy, wz;
-    ScrollBuf sx, sy, sz;
-    ScrollBuf vbatt, vboost;
-    ScrollBuf cursun, cursys;
-
-    float x_index;
-
-    pthread_mutex_t acs_upd_inhibitor;
 };
 
 typedef struct
@@ -487,7 +405,7 @@ typedef struct
  * @param tout_s 
  * @return int 
  */
-int connect_w_tout(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
+int gs_connect(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
 
 /**
  * @brief Get the Min object

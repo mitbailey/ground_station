@@ -128,8 +128,8 @@ public:
 
 private:
     uint16_t guid;                                         // 0x1A1C
-    NETWORK_FRAME_ENDPOINT endpoint;                  // Where is this going?
-    NETWORK_FRAME_MODE mode;                          // RX or TX
+    NETWORK_FRAME_ENDPOINT endpoint;                       // Where is this going?
+    NETWORK_FRAME_MODE mode;                               // RX or TX
     int payload_size;                                      // Variably sized payload, this value tracks the size.
     NETWORK_FRAME_TYPE type;                               // NULL, ACK, NACK, CONFIG, DATA, STATUS
     uint16_t crc1;                                         // CRC16 of payload.
