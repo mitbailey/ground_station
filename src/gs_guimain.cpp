@@ -83,6 +83,7 @@ int main(int, char **)
     global_data->acs_rolbuf = new ACSRollingBuffer();
     global_data->network_data = new NetworkData();
     global_data->network_data->rx_active = true;
+    global_data->last_contact = -1.0;
 
     auth_t auth = {0};
     bool allow_transmission = false;
@@ -175,7 +176,7 @@ int main(int, char **)
         // Network Connections Manager
         if (CONNS_manager)
         {
-            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, global_data->network_data);
+            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, global_data);
         }
 
         if (DISP_control_panel)

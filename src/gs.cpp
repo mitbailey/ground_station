@@ -397,6 +397,7 @@ void *gs_rx_thread(void *args)
 
                 // TODO: Write this data to the GUI in some meaningful manner.
                 global_data->netstat = clientserver_frame->getNetstat();
+                global_data->last_contact = ImGui::GetTime();
                 // For now, just print the Netstat.
                 uint8_t netstat = clientserver_frame->getNetstat();
                 dbprintlf(BLUE_FG "NETWORK STATUS");

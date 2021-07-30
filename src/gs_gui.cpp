@@ -1187,8 +1187,10 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
     ImGui::End();
 }
 
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, NetworkData *network_data)
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, global_data_t *global_data)
 {
+    NetworkData *network_data = global_data->network_data;
+
     if (ImGui::Begin("Connections Manager", CONNS_manager))
     {
         if (auth->access_level >= 0)
@@ -1247,6 +1249,56 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                     network_data->connection_ready = false;
                 }
             }
+
+            ImGui::Separator();
+            ImGui::Separator();
+
+            ImVec4 offline = ImVec4(1.0, 0.0, 0.0, 1.0);
+            ImVec4 online = ImVec4(0.0, 1.0, 0.0, 1.0);
+            ImVec4 con = ImVec4(0.0, 0.5, 1.0, 1.0);
+            ImVec4 discon = ImVec4(0.5, 0.5, 0.5, 1.0);
+
+            if (global_data->last_contact > 0)
+            {
+                if (global_data->network_data->connection_ready)
+                {
+                    ImGui::Text("Current Status (%.0f seconds ago)", ImGui::GetTime() - global_data->last_contact);
+                }
+                else
+                {
+                    ImGui::Text("Last Known Status (%.0f seconds ago)", ImGui::GetTime() - global_data->last_contact);
+                }
+            }
+            else
+            {
+                ImGui::Text("Last Known Status (No Data)");
+            }
+
+            ImGui::Separator();
+
+            ImGui::Text("Server");
+            ImGui::SameLine(125.0);
+            global_data->network_data->connection_ready ? ImGui::TextColored(con, "CONNECTED") : ImGui::TextColored(discon, "DISCONNECTED");
+
+            ImGui::Text("GUI Client");
+            ImGui::SameLine(125.0);
+            ((global_data->netstat & 0x80) == 0x80) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+
+            ImGui::Text("Roof UHF");
+            ImGui::SameLine(125.0);
+            ((global_data->netstat & 0x40) == 0x40) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+
+            ImGui::Text("Roof X-Band");
+            ImGui::SameLine(125.0);
+            ((global_data->netstat & 0x20) == 0x20) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+
+            ImGui::Text("Haystack");
+            ImGui::SameLine(125.0);
+            ((global_data->netstat & 0x10) == 0x10) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+
+            ImGui::Separator();
+            ImGui::Separator();
+
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
             // // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection. Remove it eventually.

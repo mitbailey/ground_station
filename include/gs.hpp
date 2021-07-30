@@ -394,6 +394,7 @@ typedef struct
     cs_config_xband_t cs_config_xband[1];
     cmd_output_t cmd_output[1];
     uint8_t netstat;
+    double last_contact;
 } global_data_t;
 
 /**

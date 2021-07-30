@@ -104,9 +104,9 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data);
  * @param CONNS_manager 
  * @param auth 
  * @param allow_transmission 
- * @param network_data 
+ * @param global_data 
  */
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, NetworkData *network_data);
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, global_data_t *global_data);
 
 /**
  * @brief 
