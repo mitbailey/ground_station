@@ -1176,9 +1176,9 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
         ImGui::Separator();
 
         ImGui::Text("RADIOS STATUS");
-        ImGui::Text("Haystack --------- %d", ((global_data->netstat & 0b00010000) == 0b00010000) ? 1 : 0);
-        ImGui::Text("Roof UHF --------- %d", ((global_data->netstat & 0b01000000) == 0b01000000) ? 1 : 0);
-        ImGui::Text("Roof X-BAND ------ %d", ((global_data->netstat & 0b00100000) == 0b00100000) ? 1 : 0);
+        ImGui::Text("Haystack --------- %d", ((global_data->netstat & 0x10) == 0x10) ? 1 : 0);
+        ImGui::Text("Roof UHF --------- %d", ((global_data->netstat & 0x40) == 0x40) ? 1 : 0);
+        ImGui::Text("Roof X-BAND ------ %d", ((global_data->netstat & 0x20) == 0x20) ? 1 : 0);
         ImGui::Separator();
 
         ImGui::Separator();

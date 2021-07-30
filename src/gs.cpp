@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include "gs.hpp"
-#include "gs_debug.hpp"
+#include "meb_debug.hpp"
 
 void glfw_error_callback(int error, const char *description)
 {
@@ -123,159 +123,11 @@ ACSRollingBuffer::~ACSRollingBuffer()
 /// ///
 
 /// NetworkData Class
-NetworkData::NetworkData()
-{
-    connection_ready = false;
-    socket = -1;
-    serv_ip->sin_family = AF_INET;
-    serv_ip->sin_port = htons(SERVER_PORT);
-}
+
 /// ///
 
-/// ClientServerFrame Class
-ClientServerFrame::ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_size)
-{
-    if (type < 0)
-    {
-        printf("ClientServerFrame initialized with error type (%d).\n", (int)type);
-        return;
-    }
+/// NetworkFrame Class
 
-    if (payload_size > CLIENTSERVER_MAX_PAYLOAD_SIZE)
-    {
-        printf("Cannot allocate payload larger than %d bytes.\n", CLIENTSERVER_MAX_PAYLOAD_SIZE);
-        return;
-    }
-
-    this->payload_size = payload_size;
-    this->type = type;
-    // TODO: Set the mode properly.
-    mode = CS_MODE_ERROR;
-    crc1 = -1;
-    crc2 = -1;
-    guid = CLIENTSERVER_FRAME_GUID;
-    netstat = 0; // Will be set by the server.
-    termination = 0xAAAA;
-
-    memset(payload, 0x0, this->payload_size);
-}
-
-int ClientServerFrame::storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int size)
-{
-    if (size > payload_size)
-    {
-        printf("Cannot store data of size larger than allocated payload size (%d > %d).\n", size, payload_size);
-        return -1;
-    }
-
-    if (data == NULL)
-    {
-        dbprintlf("Prepping null packet.");
-    }
-    else
-    {
-        memcpy(payload, data, size);
-    }
-
-    crc1 = crc16(payload, CLIENTSERVER_MAX_PAYLOAD_SIZE);
-    crc2 = crc16(payload, CLIENTSERVER_MAX_PAYLOAD_SIZE);
-
-    this->endpoint = endpoint;
-
-    // TODO: Placeholder until I figure out when / why to set mode to TX or RX.
-    mode = CS_MODE_RX;
-
-    return 1;
-}
-
-int ClientServerFrame::retrievePayload(unsigned char *data_space, int size)
-{
-    if (size != payload_size)
-    {
-        printf("Data space size not equal to payload size (%d != %d).\n", size, payload_size);
-        return -1;
-    }
-
-    memcpy(data_space, payload, CLIENTSERVER_MAX_PAYLOAD_SIZE);
-
-    return 1;
-}
-
-int ClientServerFrame::checkIntegrity()
-{
-    if (guid != CLIENTSERVER_FRAME_GUID)
-    {
-        return -1;
-    }
-    else if (endpoint < 0)
-    {
-        return -2;
-    }
-    else if (mode < 0)
-    {
-        return -3;
-    }
-    else if (payload_size < 0 || payload_size > CLIENTSERVER_MAX_PAYLOAD_SIZE)
-    {
-        return -4;
-    }
-    else if (type < 0)
-    {
-        return -5;
-    }
-    else if (crc1 != crc2)
-    {
-        return -6;
-    }
-    else if (crc1 != crc16(payload, CLIENTSERVER_MAX_PAYLOAD_SIZE))
-    {
-        return -7;
-    }
-    else if (termination != 0xAAAA)
-    {
-        return -8;
-    }
-
-    return 1;
-}
-
-void ClientServerFrame::print()
-{
-    printf("GUID ------------ 0x%04x\n", guid);
-    printf("Endpoint -------- %d\n", endpoint);
-    printf("Mode ------------ %d\n", mode);
-    printf("Payload Size ---- %d\n", payload_size);
-    printf("Type ------------ %d\n", type);
-    printf("CRC1 ------------ 0x%04x\n", crc1);
-    printf("Payload ---- (HEX)");
-    for (int i = 0; i < payload_size; i++)
-    {
-        printf(" 0x%04x", payload[i]);
-    }
-    printf("\n");
-    printf("CRC2 ------------ 0x%04x\n", crc2);
-    printf("Termination ----- 0x%04x\n", termination);
-}
-
-ssize_t ClientServerFrame::sendFrame(NetworkData *network_data)
-{
-    if (!(network_data->connection_ready))
-    {
-        dbprintlf(YELLOW_FG "Connection is not ready.");
-        return -1;
-    }
-
-    if (!checkIntegrity())
-    {
-        dbprintlf(YELLOW_FG "Integrity check failed, send aborted.");
-        return -1;
-    }
-
-    printf("Sending the following:\n");
-    print();
-
-    return send(network_data->socket, this, sizeof(ClientServerFrame), 0);
-}
 /// ///
 
 /**
@@ -580,7 +432,7 @@ void *gs_acs_update_thread(void *global_data_vp)
     return NULL;
 }
 
-int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int data_size)
+int gs_transmit(NetworkData *network_data, NETWORK_FRAME_TYPE type, NETWORK_FRAME_ENDPOINT endpoint, void *data, int data_size)
 {
     if (data_size < 0)
     {
@@ -589,8 +441,8 @@ int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTS
         return -1;
     }
 
-    // Create a ClientServerFrame to send our data in.
-    ClientServerFrame *clientserver_frame = new ClientServerFrame(type, data_size);
+    // Create a NetworkFrame to send our data in.
+    NetworkFrame *clientserver_frame = new NetworkFrame(type, data_size);
     clientserver_frame->storePayload(endpoint, data, data_size);
 
     clientserver_frame->sendFrame(network_data);
@@ -607,10 +459,10 @@ void *gs_polling_thread(void *args)
     {
         if (network_data->connection_ready)
         {
-            ClientServerFrame *null_frame = new ClientServerFrame(CS_TYPE_NULL, 0x0);
+            NetworkFrame *null_frame = new NetworkFrame(CS_TYPE_NULL, 0x0);
             null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
 
-            send(network_data->socket, null_frame, sizeof(ClientServerFrame), 0);
+            send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
             delete null_frame;
         }
 
@@ -643,7 +495,7 @@ void *gs_rx_thread(void *args)
 
         while (read_size >= 0 && network_data->rx_active)
         {
-            char buffer[sizeof(ClientServerFrame) * 2];
+            char buffer[sizeof(NetworkFrame) * 2];
             memset(buffer, 0x0, sizeof(buffer));
 
             dbprintlf("Beginning recv...");
@@ -660,10 +512,10 @@ void *gs_rx_thread(void *args)
                 printf("(END)\n");
 
                 // Parse the data.
-                // Map a ClientServerFrame onto the data; this allows us to use the class' functions on the data.
-                ClientServerFrame *clientserver_frame = (ClientServerFrame *)buffer;
+                // Map a NetworkFrame onto the data; this allows us to use the class' functions on the data.
+                NetworkFrame *clientserver_frame = (NetworkFrame *)buffer;
 
-                // Check if we've received data in the form of a ClientServerFrame.
+                // Check if we've received data in the form of a NetworkFrame.
                 if (clientserver_frame->checkIntegrity() < 0)
                 {
                     dbprintlf("Integrity check failed (%d).", clientserver_frame->checkIntegrity());
@@ -694,7 +546,7 @@ void *gs_rx_thread(void *args)
                     continue;
                 }
 
-                CLIENTSERVER_FRAME_TYPE type = clientserver_frame->getType();
+                NETWORK_FRAME_TYPE type = clientserver_frame->getType();
                 // Based on what we got, set things to display the data.
                 switch (type)
                 {

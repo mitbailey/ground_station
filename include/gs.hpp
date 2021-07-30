@@ -18,17 +18,12 @@
 #include <arpa/inet.h>
 #include <GLFW/glfw3.h>
 #include "implot/implot.h"
+#include "network.hpp"
 
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
-#define CLIENTSERVER_FRAME_GUID 0x1A1C
-#define CLIENTSERVER_MAX_PAYLOAD_SIZE 0x64
 #define MAX_ROLLBUF_LEN 500
-// #define SIZE_RX_BUF 8192
-#define SERVER_IP "127.0.0.1" // hostname -I
-#define SERVER_PORT 54200
-// #define LISTENING_SOCKET_TIMEOUT 20
 
 // Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
@@ -137,42 +132,6 @@ enum XBAND_FUNC_ID
     XBAND_SET_LOOP_TIME,
 };
 
-enum CLIENTSERVER_FRAME_TYPE
-{
-    // Something is wrong.
-    CS_TYPE_ERROR = -1,
-    // Blank, used for holding open the socket and retrieving status data.
-    CS_TYPE_NULL = 0,
-    // Good or back acknowledgements.
-    CS_TYPE_ACK = 1,
-    CS_TYPE_NACK = 2,
-    // Configure ground radios.
-    CS_TYPE_CONFIG_UHF = 3,
-    CS_TYPE_CONFIG_XBAND = 4,
-    // Most communications will be _DATA.
-    CS_TYPE_DATA = 5,
-    // Poll the ground radios of their status. ~Now happens every frame.
-    // CS_TYPE_STATUS = 6
-};
-
-enum CLIENTSERVER_FRAME_ENDPOINT
-{
-    CS_ENDPOINT_ERROR = -1,
-    CS_ENDPOINT_CLIENT = 0,
-    CS_ENDPOINT_ROOFUHF,
-    CS_ENDPOINT_ROOFXBAND,
-    CS_ENDPOINT_HAYSTACK,
-    CS_ENDPOINT_SERVER,
-    // CS_ENDPOINT_SPACEHAUC // probably dont need this one, SH can be inferred (all nonconfig cs_frames sent to TX radios...)
-};
-
-enum CLIENTSERVER_FRAME_MODE
-{
-    CS_MODE_ERROR = -1,
-    CS_MODE_RX = 0,
-    CS_MODE_TX = 1
-};
-
 // From https://github.com/SPACE-HAUC/mtq_tester/blob/master/guimain.cpp
 class ScrollBuf
 {
@@ -254,126 +213,6 @@ public:
 
     pthread_mutex_t acs_upd_inhibitor;
 };
-
-class NetworkData
-{
-public:
-    NetworkData();
-
-    // Network
-    int socket;
-    struct sockaddr_in serv_ip[1];
-    bool connection_ready;
-    // char listening_ipv4[32];
-    // int listening_port;
-
-    // Booleans
-    bool rx_active; // Only able to receive when this is true.
-};
-
-// Client<->Server Frame can be of unlimited size.
-// It is made up of three sections:
-// Header
-// Some data in an unsigned char array.
-// Footer
-// TODO: Will need ACK, NACK, CONFIG, DATA, STATUS sub-structs to be mapped onto the payload when necessary. NULL should just be all zeroes.
-class ClientServerFrame
-{
-public:
-    /**
-     * @brief Sets the payload_size, type, GUID, and termination values.
-     * 
-     * @param payload_size The desired payload size.
-     * @param type The type of data this frame will carry (see: CLIENTSERVER_FRAME_TYPE).
-     */
-    ClientServerFrame(CLIENTSERVER_FRAME_TYPE type, int payload_size);
-
-    // ~ClientServerFrame();
-
-    /**
-     * @brief Copies data to the payload.
-     * 
-     * Returns and error if the passed data size does not equal the internal payload_size variable set during class construction.
-     * 
-     * Sets the CRC16s.
-     * 
-     * @param endpoint The final destination for the payload (see: CLIENTSERVER_FRAME_ENDPOINT).
-     * @param data Data to be copied into the payload.
-     * @param size Size of the data to be copied.
-     * @return int Positive on success, negative on failure.
-     */
-    int storePayload(CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int size);
-
-    /**
-     * @brief Copies payload to the passed space in memory.
-     * 
-     * @param data_space Pointer to memory into which the payload is copied.
-     * @param size The size of the memory space being passed.
-     * @return int Positive on success, negative on failure.
-     */
-    int retrievePayload(unsigned char *data_space, int size);
-
-    int getPayloadSize() { return payload_size; };
-
-    CLIENTSERVER_FRAME_TYPE getType() { return type; };
-
-    CLIENTSERVER_FRAME_ENDPOINT getEndpoint() { return endpoint; };
-
-    uint8_t getNetstat() { return netstat; };
-
-    /**
-     * @brief Checks the validity of itself.
-     * 
-     * @return int Positive if valid, negative if invalid.
-     */
-    int checkIntegrity();
-
-    /**
-     * @brief Prints the class.
-     * 
-     * @return int 
-     */
-    void print();
-
-    /**
-     * @brief Sends itself using the network data passed to it.
-     * 
-     * @return ssize_t Number of bytes sent if successful, negative on failure. 
-     */
-    ssize_t sendFrame(NetworkData *network_data);
-
-private:
-    // 0x????
-    uint16_t guid;
-    // Where is this going?
-    CLIENTSERVER_FRAME_ENDPOINT endpoint;
-    // RX or TX?
-    CLIENTSERVER_FRAME_MODE mode;
-    // Variably sized payload, this value tracks the size.
-    int payload_size;
-    // NULL, ACK, NACK, CONFIG, DATA, STATUS
-    CLIENTSERVER_FRAME_TYPE type;
-    // CRC16 of payload.
-    uint16_t crc1;
-    // Constant sized payload.
-    unsigned char payload[CLIENTSERVER_MAX_PAYLOAD_SIZE];
-    uint16_t crc2;
-    // Network Status Information - Only read by the client, only set by the server.
-    uint8_t netstat; // Bitmask - 0:Client, 1:RoofUHF, 2: RoofXB, 3: Haystack
-    // 0xAAAA
-    uint16_t termination;
-};
-
-// CLIENTSERVER payload types.
-
-// Status is now a part of every frame, as a bitmask called netstat.
-// typedef struct
-// {
-//     // -1 = Error, 0 = Offline, 1 = Online
-//     uint8_t haystack;
-//     uint8_t roof_uhf;
-//     uint8_t roof_xband;
-// } cs_status_t;
 
 typedef struct
 {
@@ -726,7 +565,7 @@ void *gs_acs_update_thread(void *vp);
  * @param input The data to transmit.
  * @return int Positive on success, negative on failure.
  */
-int gs_transmit(NetworkData *network_data, CLIENTSERVER_FRAME_TYPE type, CLIENTSERVER_FRAME_ENDPOINT endpoint, void *data, int data_size);
+int gs_transmit(NetworkData *network_data, NETWORK_FRAME_TYPE type, NETWORK_FRAME_ENDPOINT endpoint, void *data, int data_size);
 
 /**
  * @brief 

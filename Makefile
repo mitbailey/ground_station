@@ -43,11 +43,9 @@ EDLDFLAGS:= -lm -lpthread $(EDLDFLAGS)
 
 LIBS += -lm -lpthread
 
-# BUILDDRV=drivers/sw_upd_gs/src/sw_update_gs.o
-
 BUILDGUI=imgui/libimgui_glfw.a
 
-BUILDCPP=src/gs.o src/gs_gui.o src/gs_guimain.o
+BUILDCPP=src/network.o src/gs.o src/gs_gui.o src/gs_guimain.o
 
 GUITARGET=gs.out
 
