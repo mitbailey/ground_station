@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include "gs.hpp"
 #include "gs_gui.hpp"
+#include "meb_debug.hpp"
 
 int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input, bool *allow_transmission)
 {
@@ -59,6 +60,9 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
 {
     static pthread_t auth_thread_id;
 
+    // ImVec2 m_dim = ImGui::GetWindowSize();
+    // ImGui::SetNextWindowPos(ImVec2(m_dim.x / 2, m_dim.y / 2));
+
     if (ImGui::Begin("Authentication Control Panel", AUTH_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
         if (auth->busy)
@@ -96,6 +100,23 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
         if (ImGui::Button("DEAUTHENTICATE"))
         {
             auth->access_level = 0;
+        }
+
+        // ImGui::TextDisabled("(?)");
+        // if (ImGui::IsItemHovered())
+        // {
+        //     ImGui::BeginTooltip();
+        //     ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        //     ImGui::TextUnformatted("Text Unformatted");
+        //     ImGui::PopTextWrapPos();
+        //     ImGui::EndTooltip();
+        // }
+
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::SetTooltip("This is a tooltip!");
+            ImGui::EndTooltip();
         }
     }
     ImGui::End();
@@ -631,8 +652,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
     ImGui::End();
 }
 
-void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *auth, bool *allow_transmission)
+void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, auth_t *auth, bool *allow_transmission)
 {
+    NetworkData *network_data = global_data->network_data;
+
     static int XBAND_command = XBAND_INVALID_ID;
     static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
     static xband_set_data_array_t xband_set_data = {0};
@@ -649,10 +672,53 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
         {
             if (auth->access_level > 0)
             {
-                ImGui::Checkbox("Get MAX ON", &xband_get_bool.max_on);
-                ImGui::Checkbox("Get TMP SHDN", &xband_get_bool.tmp_shdn);
-                ImGui::Checkbox("Get TMP OP", &xband_get_bool.tmp_op);
-                ImGui::Checkbox("Get Loop Time", &xband_get_bool.loop_time);
+                if (ImGui::ArrowButton("get_max_on_button", ImGuiDir_Right))
+                {
+                    XBAND_command_input.mod = XBAND_ID;
+                    XBAND_command_input.cmd = XBAND_GET_MAX_ON;
+                    XBAND_command_input.unused = 0x0;
+                    XBAND_command_input.data_size = 0x0;
+                    memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                }
+                ImGui::SameLine();
+                ImGui::Text("Get Max On");
+
+                if (ImGui::ArrowButton("get_tmp_shdn_button", ImGuiDir_Right))
+                {
+                    XBAND_command_input.mod = XBAND_ID;
+                    XBAND_command_input.cmd = XBAND_GET_TMP_SHDN;
+                    XBAND_command_input.unused = 0x0;
+                    XBAND_command_input.data_size = 0x0;
+                    memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                }
+                ImGui::SameLine();
+                ImGui::Text("Get TMP SHDN");
+
+                if (ImGui::ArrowButton("get_tmp_op_button", ImGuiDir_Right))
+                {
+                    XBAND_command_input.mod = XBAND_ID;
+                    XBAND_command_input.cmd = XBAND_GET_TMP_OP;
+                    XBAND_command_input.unused = 0x0;
+                    XBAND_command_input.data_size = 0x0;
+                    memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                }
+                ImGui::SameLine();
+                ImGui::Text("Get TMP OP");
+
+                if (ImGui::ArrowButton("get_loop_time_button", ImGuiDir_Right))
+                {
+                    XBAND_command_input.mod = XBAND_ID;
+                    XBAND_command_input.cmd = XBAND_GET_LOOP_TIME;
+                    XBAND_command_input.unused = 0x0;
+                    XBAND_command_input.data_size = 0x0;
+                    memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
+                    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                }
+                ImGui::SameLine();
+                ImGui::Text("Get Loop Time");
             }
             else
             {
@@ -704,18 +770,9 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
                 }
                 xband_set_data.TX.adar_gain = (uint8_t)xband_set_data.TXH.adar_gain;
 
-                if (ImGui::BeginMenu("TX Filter Selection"))
-                {
-                    ImGui::RadioButton("m_6144.ftr", &xband_set_data.TXH.ftr, 0);
-                    ImGui::RadioButton("m_3072.ftr", &xband_set_data.TXH.ftr, 1);
-                    ImGui::RadioButton("m_1000.ftr", &xband_set_data.TXH.ftr, 2);
-                    ImGui::RadioButton("m_lte5.ftr", &xband_set_data.TXH.ftr, 3);
-                    ImGui::RadioButton("m_lte1.ftr", &xband_set_data.TXH.ftr, 4);
+                ImGui::Combo("TX Filter", &xband_set_data.TXH.ftr, "m_6144.ftr\0m_3072.ftr\0m_1000.ftr\0m_lte5.ftr\0m_lte1.ftr\0\0");
+                xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
 
-                    xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
-
-                    ImGui::EndMenu();
-                }
                 ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0]);
                 ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4]);
                 ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8]);
@@ -771,18 +828,9 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
                 }
                 xband_set_data.RX.adar_gain = (uint8_t)xband_set_data.RXH.adar_gain;
 
-                if (ImGui::BeginMenu("RX Filter Selection"))
-                {
-                    ImGui::RadioButton("m_6144.ftr", &xband_set_data.RXH.ftr, 0);
-                    ImGui::RadioButton("m_3072.ftr", &xband_set_data.RXH.ftr, 1);
-                    ImGui::RadioButton("m_1000.ftr", &xband_set_data.RXH.ftr, 2);
-                    ImGui::RadioButton("m_lte5.ftr", &xband_set_data.RXH.ftr, 3);
-                    ImGui::RadioButton("m_lte1.ftr", &xband_set_data.RXH.ftr, 4);
+                ImGui::Combo("RX Filter", &xband_set_data.RXH.ftr, "m_6144.ftr\0m_3072.ftr\0m_1000.ftr\0m_lte5.ftr\0m_lte1.ftr\0\0");
+                xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
 
-                    xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
-
-                    ImGui::EndMenu();
-                }
                 ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0]);
                 ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4]);
                 ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8]);
@@ -799,7 +847,7 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
                     }
                     xband_set_data.RX.phase[i] = (short)xband_set_data.RXH.phase[i];
                 }
-                // }
+
                 ImGui::Separator();
 
                 ImGui::RadioButton("Set MAX ON", &XBAND_command, XBAND_SET_MAX_ON);
@@ -814,6 +862,8 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
                 }
                 xband_rxtx_data.max_on = (uint8_t)xband_rxtx_data_holder.max_on;
 
+                ImGui::Separator();
+
                 ImGui::RadioButton("Set TMP SHDN", &XBAND_command, XBAND_SET_TMP_SHDN);
                 ImGui::InputInt("TMP SHDN", &xband_rxtx_data_holder.tmp_shdn);
                 if (xband_rxtx_data_holder.tmp_shdn > 0xFF)
@@ -826,6 +876,8 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
                 }
                 xband_rxtx_data.tmp_shdn = (uint8_t)xband_rxtx_data_holder.tmp_shdn;
 
+                ImGui::Separator();
+
                 ImGui::RadioButton("Set TMP OP", &XBAND_command, XBAND_SET_TMP_OP);
                 ImGui::InputInt("TMP OP", &xband_rxtx_data_holder.tmp_op);
                 if (xband_rxtx_data_holder.tmp_op > 0xFF)
@@ -837,6 +889,8 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
                     xband_rxtx_data_holder.tmp_op = 0;
                 }
                 xband_rxtx_data.tmp_op = (uint8_t)xband_rxtx_data_holder.tmp_op;
+
+                ImGui::Separator();
 
                 ImGui::RadioButton("Set Loop Time", &XBAND_command, XBAND_SET_LOOP_TIME);
                 ImGui::InputInt("Loop Time", &xband_rxtx_data_holder.loop_time);
@@ -860,7 +914,6 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
 
         ImGui::Separator();
 
-        // ImGui::Text("Actionable Commands");
         if (ImGui::CollapsingHeader("Executable Commands"))
         {
             if (auth->access_level > 1)
@@ -880,9 +933,15 @@ void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *
 
                 ImGui::InputInt("TX f_id", &xband_tx_data.f_id);
                 ImGui::InputInt("TX mtu", &xband_tx_data.mtu);
+
+                ImGui::Separator();
+
                 ImGui::RadioButton("Receive", &XBAND_command, XBAND_DO_RX);
                 ImGui::SameLine();
                 ImGui::Text("(NYI)");
+
+                ImGui::Separator();
+                
                 ImGui::RadioButton("Disable", &XBAND_command, XBAND_DISABLE);
                 ImGui::SameLine();
                 ImGui::Text("(NYI)");
@@ -1215,6 +1274,8 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             ImGui::InputText("IP Address", destination_ipv4, sizeof(destination_ipv4), flag);
             ImGui::InputInt("Port", &destination_port, 0, 0, flag);
 
+            static int gui_connect_status = -1;
+
             if (!(network_data->connection_ready) || network_data->socket < 0)
             {
                 if (ImGui::Button("Connect"))
@@ -1222,22 +1283,48 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                     network_data->serv_ip->sin_port = htons(destination_port);
                     if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                     {
-                        printf("\nSocket creation error.\n");
-                        fflush(stdout);
-                        // return -1;
+                        dbprintlf(RED_FG "Socket creation error.");
+                        gui_connect_status = 0;
                     }
-                    if (inet_pton(AF_INET, destination_ipv4, &network_data->serv_ip->sin_addr) <= 0)
+                    else if (inet_pton(AF_INET, destination_ipv4, &network_data->serv_ip->sin_addr) <= 0)
                     {
-                        printf("\nInvalid address; Address not supported.\n");
+                        dbprintlf(RED_FG "Invalid address; address not supported.");
+                        gui_connect_status = 1;
                     }
-                    if (gs_connect(network_data->socket, (struct sockaddr *)network_data->serv_ip, sizeof(network_data->serv_ip), 1) < 0)
+                    else if (gs_connect(network_data->socket, (struct sockaddr *)network_data->serv_ip, sizeof(network_data->serv_ip), 1) < 0)
                     {
-                        printf("\nConnection failed!\n");
+                        dbprintlf(RED_FG "Connection failure.");
+                        gui_connect_status = 2;
                     }
                     else
                     {
                         network_data->connection_ready = true;
+                        gui_connect_status = -1;
                     }
+                }
+
+                switch (gui_connect_status)
+                {
+                case 0:
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "SOCKET CREATION ERROR");
+                }
+                case 1:
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "INVALID ADDRESS");
+                }
+                case 2:
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "CONNECTION FAILURE");
+                }
+                case -1:
+                default:
+                {
+                    break;
+                }
                 }
             }
             else
@@ -1299,9 +1386,6 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             ImGui::Separator();
             ImGui::Separator();
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-            // // TODO: This isn't totally relevant for what we're doing here, but its an example of how to send something over the socket connection. Remove it eventually.
             if (network_data->connection_ready && network_data->socket > 0)
             {
                 if (ImGui::Button("SEND TEST FRAME"))
@@ -1455,7 +1539,20 @@ void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window
 
         if (auth->access_level >= 0)
         {
-            ImGui::Checkbox("Unlock Transmissions", allow_transmission);
+            if (*allow_transmission)
+            {
+                if (ImGui::Button("Lock Transmissions"))
+                {
+                    *allow_transmission = false;
+                }
+            }
+            else
+            {
+                if (ImGui::Button("Unlock Transmissions"))
+                {
+                    *allow_transmission = true;
+                }
+            }
         }
         else
         {

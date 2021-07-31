@@ -68,7 +68,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_xband_window(NetworkData *network_data, bool *XBAND_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, auth_t *auth, bool *allow_transmission);
 
 /**
  * @brief 

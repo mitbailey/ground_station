@@ -144,7 +144,7 @@ int main(int, char **)
 
         if (XBAND_window)
         {
-            gs_gui_xband_window(global_data->network_data, &XBAND_window, &auth, &allow_transmission);
+            gs_gui_xband_window(global_data, &XBAND_window, &auth, &allow_transmission);
         }
 
         // Handles software updates.
