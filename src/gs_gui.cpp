@@ -941,7 +941,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, auth_t 
                 ImGui::Text("(NYI)");
 
                 ImGui::Separator();
-                
+
                 ImGui::RadioButton("Disable", &XBAND_command, XBAND_DISABLE);
                 ImGui::SameLine();
                 ImGui::Text("(NYI)");
@@ -1202,8 +1202,8 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
     {
         ImGui::Text("ACKNOWLEDGEMENT");
         ImGui::Separator();
-        ImGui::Text("N/ACK ---------- %d", global_data->cs_ack->ack);
-        ImGui::Text("Code ----------- %d", global_data->cs_ack->code);
+        ImGui::Text("N/ACK ------------ %d", global_data->cs_ack->ack);
+        ImGui::Text("Code ------------- %d", global_data->cs_ack->code);
         ImGui::Separator();
         ImGui::Separator();
 
@@ -1221,11 +1221,11 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
 
         ImGui::Text("SPACE-HAUC COMMAND OUTPUT");
         ImGui::Separator();
-        ImGui::Text("Module ---------- %d", global_data->cmd_output->mod);
-        ImGui::Text("Command --------- %d", global_data->cmd_output->cmd);
-        ImGui::Text("Return Value ---- %d", global_data->cmd_output->retval);
-        ImGui::Text("Data Size ------- %d", global_data->cmd_output->data_size);
-        ImGui::Text("Data (hex) ------ ");
+        ImGui::Text("Module ----------- %d", global_data->cmd_output->mod);
+        ImGui::Text("Command ---------- %d", global_data->cmd_output->cmd);
+        ImGui::Text("Return Value ----- %d", global_data->cmd_output->retval);
+        ImGui::Text("Data Size -------- %d", global_data->cmd_output->data_size);
+        ImGui::Text("Data (hex) ------- ");
         for (int i = 0; i < global_data->cmd_output->data_size; i++)
         {
             ImGui::SameLine(0.0F, 0.0F);
@@ -1235,13 +1235,11 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
         ImGui::Separator();
 
         ImGui::Text("RADIOS STATUS");
-        ImGui::Text("Haystack --------- %d", ((global_data->netstat & 0x10) == 0x10) ? 1 : 0);
-        ImGui::Text("Roof UHF --------- %d", ((global_data->netstat & 0x40) == 0x40) ? 1 : 0);
-        ImGui::Text("Roof X-BAND ------ %d", ((global_data->netstat & 0x20) == 0x20) ? 1 : 0);
-        ImGui::Separator();
 
-        ImGui::Separator();
-        ImGui::Separator();
+        ImGui::Text("GUI Client ------- %d", ((global_data->netstat & 0x80) == 0x80) ? 1 : 0);
+        ImGui::Text("Roof UHF --------- %d", ((global_data->netstat & 0x40) == 0x40) ? 1 : 0);
+        ImGui::Text("Roof X-Band ------ %d", ((global_data->netstat & 0x20) == 0x20) ? 1 : 0);
+        ImGui::Text("Haystack --------- %d", ((global_data->netstat & 0x10) == 0x10) ? 1 : 0);
     }
     ImGui::End();
 }
@@ -1275,11 +1273,14 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
             ImGui::InputInt("Port", &destination_port, 0, 0, flag);
 
             static int gui_connect_status = -1;
+            static float last_connect_attempt_time = -1;
 
             if (!(network_data->connection_ready) || network_data->socket < 0)
             {
                 if (ImGui::Button("Connect"))
                 {
+                    last_connect_attempt_time = ImGui::GetTime();
+
                     network_data->serv_ip->sin_port = htons(destination_port);
                     if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                     {
@@ -1298,8 +1299,22 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                     }
                     else
                     {
+                        // If the socket is closed, but recv(...) was already called, it will be stuck trying to receive forever from a socket that is no longer active. One way to fix this is to close the RX thread and restart it. Alternatively, we could implement a recv(...) timeout, ensuring a fresh socket value is used.
+                        // Here, we implement a recv(...) timeout.
+                        struct timeval timeout;
+                        timeout.tv_sec = RECV_TIMEOUT;
+                        timeout.tv_usec = 0;
+                        setsockopt(network_data->socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof timeout);
+
                         network_data->connection_ready = true;
                         gui_connect_status = -1;
+
+                        // Send a null frame to populate our status data.
+                        // NetworkFrame *null_frame = new NetworkFrame(CS_TYPE_NULL, 0x0);
+                        // null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
+
+                        // send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
+                        // delete null_frame;
                     }
                 }
 
@@ -1318,7 +1333,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                 case 2:
                 {
                     ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "CONNECTION FAILURE");
+                    ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "CONNECTION FAILURE (%.2f).", last_connect_attempt_time);
                 }
                 case -1:
                 default:
@@ -1333,6 +1348,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                 {
                     close(network_data->socket);
                     network_data->socket = -1;
+                    strcpy(network_data->discon_reason, "USER");
                     network_data->connection_ready = false;
                 }
             }
@@ -1365,7 +1381,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
 
             ImGui::Text("Server");
             ImGui::SameLine(125.0);
-            global_data->network_data->connection_ready ? ImGui::TextColored(con, "CONNECTED") : ImGui::TextColored(discon, "DISCONNECTED");
+            network_data->connection_ready ? ImGui::TextColored(con, "CONNECTED") : ImGui::TextColored(discon, "DISCONNECTED (%s)", network_data->discon_reason);
 
             ImGui::Text("GUI Client");
             ImGui::SameLine(125.0);

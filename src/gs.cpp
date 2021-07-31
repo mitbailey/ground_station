@@ -334,11 +334,12 @@ void *gs_polling_thread(void *args)
             NetworkFrame *null_frame = new NetworkFrame(CS_TYPE_NULL, 0x0);
             null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
 
-            send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
+            // send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
+            null_frame->sendFrame(network_data);
             delete null_frame;
         }
 
-        usleep(15 SEC);
+        usleep(SERVER_POLL_RATE SEC);
     }
 
     
@@ -370,7 +371,7 @@ void *gs_rx_thread(void *args)
             char buffer[sizeof(NetworkFrame) * 2];
             memset(buffer, 0x0, sizeof(buffer));
 
-            dbprintlf("Beginning recv...");
+            dbprintlf(BLUE_BG "Waiting to receive...");
             read_size = recv(network_data->socket, buffer, sizeof(buffer), 0);
             dbprintlf("Read %d bytes.", read_size);
 
@@ -479,17 +480,20 @@ void *gs_rx_thread(void *args)
         if (read_size == 0)
         {
             dbprintlf(RED_BG "Connection forcibly closed by the server.");
+            strcpy(network_data->discon_reason, "SERVER-FORCED");
             network_data->connection_ready = false;
             continue;
         }
         else if (errno == EAGAIN)
         {
             dbprintlf(YELLOW_BG "Active connection timed-out (%d).", read_size);
+            strcpy(network_data->discon_reason, "TIMED-OUT");
             network_data->connection_ready = false;
             continue;
         }
         erprintlf(errno);
     }
 
+    dbprintlf(FATAL "DANGER! RECEIVE THREAD IS RETURNING!");
     return NULL;
 }

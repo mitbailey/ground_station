@@ -57,6 +57,7 @@ public:
     int socket;
     struct sockaddr_in serv_ip[1];
     bool connection_ready;
+    char discon_reason[64];
     // char listening_ipv4[32];
     // int listening_port;
 

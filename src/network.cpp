@@ -21,6 +21,7 @@ NetworkData::NetworkData()
     socket = -1;
     serv_ip->sin_family = AF_INET;
     serv_ip->sin_port = htons(SERVER_PORT);
+    strcpy(discon_reason, "N/A");
 }
 
 NetworkFrame::NetworkFrame(NETWORK_FRAME_TYPE type, int payload_size)

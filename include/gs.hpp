@@ -24,6 +24,8 @@
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
+#define RECV_TIMEOUT 15 // seconds
+#define SERVER_POLL_RATE 5 // once per this many seconds
 
 // Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
