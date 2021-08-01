@@ -1409,17 +1409,6 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
                     gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_CLIENT, NULL, 0);
                 }
             }
-
-            if (network_data->connection_ready && network_data->socket > 0)
-            {
-                static int jpg_qty;
-                if (ImGui::InputInt("JPEG Quality", &jpg_qty, 1, 10))
-                {
-                    static char msg[1024];
-                    int sz = snprintf(msg, 1024, "CMD_JPEG_SET_QUALITY%d", jpg_qty);
-                    send(network_data->socket, msg, sz, 0);
-                }
-            }
         }
         ImGui::End();
     }

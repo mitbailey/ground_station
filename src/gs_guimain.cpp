@@ -20,7 +20,7 @@
 // Now sends periodic null NetworkFrames to get the network status in 'netstat.'
 // Removed accept() code, since this is not a server. Should only connect().
 // TODO: Fix 'taking address of packed member' warnings.
-// TODO: Remove all raw send(...) or gs_transmit(...) calls and replace them with frame->sendFrame().
+// Removed all raw send(...) calls and replaced them with frame->sendFrame().
 
 #include <stdio.h>
 #include <unistd.h>
