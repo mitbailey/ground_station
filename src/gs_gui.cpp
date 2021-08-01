@@ -123,7 +123,7 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
 }
 
 // TODO: Add functionality.
-void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth)
+void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth, global_data_t *global_data)
 {
     if (ImGui::Begin("Settings", SETTINGS_window))
     {
@@ -134,6 +134,8 @@ void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth)
         // ImGui::InputInt("test2", &test2);
         // ImGui::NextColumn();
         // ImGui::InputInt("test3", &test3);
+        ImGui::Text("Split ACS update graphs into multiple windows?");
+        ImGui::Checkbox("ACS Multiple Windows", &global_data->settings->acs_multiple_windows);
     }
     ImGui::End();
 }
@@ -1414,25 +1416,17 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
     }
 }
 
-void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display)
+void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display, global_data_t *global_data)
 {
-    if (ImGui::Begin("ACS Update Display", ACS_UPD_display))
+    double start_time = acs_rolbuf->x_index - 60;
+    if (start_time < 0)
     {
-        // The implemented method of displaying the ACS update data includes a locally-global class (ACSDisplayData) with data that this window will display. The data is set by gs_receive.
-        // NOTE: This window must be opened independent of ACS's automated data retrieval option.
+        start_time = 0;
+    }
 
-        // TODO: Remove these random data-adders and implement the actual data adding in gs_receive. ~Removed, but moved to gs_receive.
-
-        // TODO: Remove this once testing is complete.
-        // acs_rolbuf->x_index += 0.1;
-
-        double start_time = acs_rolbuf->x_index - 60;
-        if (start_time < 0)
-        {
-            start_time = 0;
-        }
-
-        if (ImGui::CollapsingHeader("CT / Mode Graph"))
+    if (global_data->settings->acs_multiple_windows)
+    {
+        if (ImGui::Begin("ACS Update: CT / Mode Graph", ACS_UPD_display))
         {
             ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->mode.Min(), acs_rolbuf->ct.Min()), getMax(acs_rolbuf->mode.Max(), acs_rolbuf->ct.Max()), ImGuiCond_Always);
             if (ImPlot::BeginPlot("CT / Mode Graph"))
@@ -1445,8 +1439,9 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 ImPlot::EndPlot();
             }
         }
+        ImGui::End();
 
-        if (ImGui::CollapsingHeader("B (x, y, z) Graph"))
+        if (ImGui::Begin("ACS Update: B (x, y, z) Graph", ACS_UPD_display))
         {
             ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->bx.Min(), acs_rolbuf->by.Min(), acs_rolbuf->bz.Min()), getMax(acs_rolbuf->bx.Max(), acs_rolbuf->by.Max(), acs_rolbuf->bz.Max()), ImGuiCond_Always);
             if (ImPlot::BeginPlot("B (x, y, z) Graph"))
@@ -1461,8 +1456,9 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 ImPlot::EndPlot();
             }
         }
+        ImGui::End();
 
-        if (ImGui::CollapsingHeader("W (x, y, z) Graph"))
+        if (ImGui::Begin("ACS Update: W (x, y, z) Graph", ACS_UPD_display))
         {
             ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->wx.Min(), acs_rolbuf->wy.Min(), acs_rolbuf->wz.Min()), getMax(acs_rolbuf->wx.Max(), acs_rolbuf->wy.Max(), acs_rolbuf->wz.Max()), ImGuiCond_Always);
             if (ImPlot::BeginPlot("W (x, y, z) Graph"))
@@ -1477,8 +1473,9 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 ImPlot::EndPlot();
             }
         }
+        ImGui::End();
 
-        if (ImGui::CollapsingHeader("S (x, y, z) Graph"))
+        if (ImGui::Begin("ACS Update: S (x, y, z) Graph", ACS_UPD_display))
         {
             ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->sx.Min(), acs_rolbuf->sy.Min(), acs_rolbuf->sz.Min()), getMax(acs_rolbuf->sx.Max(), acs_rolbuf->sy.Max(), acs_rolbuf->sz.Max()), ImGuiCond_Always);
             if (ImPlot::BeginPlot("S (x, y, z) Graph"))
@@ -1493,8 +1490,9 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 ImPlot::EndPlot();
             }
         }
+        ImGui::End();
 
-        if (ImGui::CollapsingHeader("Battery Graph"))
+        if (ImGui::Begin("ACS Update: Battery Graph", ACS_UPD_display))
         {
             ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->vbatt.Min(), acs_rolbuf->vboost.Min()), getMax(acs_rolbuf->vbatt.Max(), acs_rolbuf->vbatt.Max()), ImGuiCond_Always);
             if (ImPlot::BeginPlot("Battery Graph"))
@@ -1507,8 +1505,9 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 ImPlot::EndPlot();
             }
         }
+        ImGui::End();
 
-        if (ImGui::CollapsingHeader("Solar Current Graph"))
+        if (ImGui::Begin("ACS Update: Solar Current Graph", ACS_UPD_display))
         {
             ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->cursun.Min(), acs_rolbuf->cursun.Min()), getMax(acs_rolbuf->cursys.Max(), acs_rolbuf->cursys.Max()), ImGuiCond_Always);
             if (ImPlot::BeginPlot("Solar Current Graph"))
@@ -1521,8 +1520,107 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 ImPlot::EndPlot();
             }
         }
+        ImGui::End();
     }
-    ImGui::End();
+    else
+    {
+        if (ImGui::Begin("ACS Update Display", ACS_UPD_display))
+        {
+            // The implemented method of displaying the ACS update data includes a locally-global class (ACSDisplayData) with data that this window will display. The data is set by gs_receive.
+            // NOTE: This window must be opened independent of ACS's automated data retrieval option.
+
+            if (ImGui::CollapsingHeader("CT / Mode Graph"))
+            {
+                ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->mode.Min(), acs_rolbuf->ct.Min()), getMax(acs_rolbuf->mode.Max(), acs_rolbuf->ct.Max()), ImGuiCond_Always);
+                if (ImPlot::BeginPlot("CT / Mode Graph"))
+                {
+
+                    ImPlot::PlotLine("CT", &acs_rolbuf->ct.data[0].x, &acs_rolbuf->ct.data[0].y, acs_rolbuf->ct.data.size(), acs_rolbuf->ct.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("Mode", &acs_rolbuf->mode.data[0].x, &acs_rolbuf->mode.data[0].y, acs_rolbuf->mode.data.size(), acs_rolbuf->mode.ofst, 2 * sizeof(float));
+
+                    ImPlot::EndPlot();
+                }
+            }
+
+            if (ImGui::CollapsingHeader("B (x, y, z) Graph"))
+            {
+                ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->bx.Min(), acs_rolbuf->by.Min(), acs_rolbuf->bz.Min()), getMax(acs_rolbuf->bx.Max(), acs_rolbuf->by.Max(), acs_rolbuf->bz.Max()), ImGuiCond_Always);
+                if (ImPlot::BeginPlot("B (x, y, z) Graph"))
+                {
+
+                    ImPlot::PlotLine("x", &acs_rolbuf->bx.data[0].x, &acs_rolbuf->bx.data[0].y, acs_rolbuf->bx.data.size(), acs_rolbuf->bx.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("y", &acs_rolbuf->by.data[0].x, &acs_rolbuf->by.data[0].y, acs_rolbuf->by.data.size(), acs_rolbuf->by.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("z", &acs_rolbuf->bz.data[0].x, &acs_rolbuf->bz.data[0].y, acs_rolbuf->bz.data.size(), acs_rolbuf->bz.ofst, 2 * sizeof(float));
+
+                    ImPlot::EndPlot();
+                }
+            }
+
+            if (ImGui::CollapsingHeader("W (x, y, z) Graph"))
+            {
+                ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->wx.Min(), acs_rolbuf->wy.Min(), acs_rolbuf->wz.Min()), getMax(acs_rolbuf->wx.Max(), acs_rolbuf->wy.Max(), acs_rolbuf->wz.Max()), ImGuiCond_Always);
+                if (ImPlot::BeginPlot("W (x, y, z) Graph"))
+                {
+
+                    ImPlot::PlotLine("x", &acs_rolbuf->wx.data[0].x, &acs_rolbuf->wx.data[0].y, acs_rolbuf->wx.data.size(), acs_rolbuf->wx.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("y", &acs_rolbuf->wy.data[0].x, &acs_rolbuf->wy.data[0].y, acs_rolbuf->wy.data.size(), acs_rolbuf->wy.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("z", &acs_rolbuf->wz.data[0].x, &acs_rolbuf->wz.data[0].y, acs_rolbuf->wz.data.size(), acs_rolbuf->wz.ofst, 2 * sizeof(float));
+
+                    ImPlot::EndPlot();
+                }
+            }
+
+            if (ImGui::CollapsingHeader("S (x, y, z) Graph"))
+            {
+                ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->sx.Min(), acs_rolbuf->sy.Min(), acs_rolbuf->sz.Min()), getMax(acs_rolbuf->sx.Max(), acs_rolbuf->sy.Max(), acs_rolbuf->sz.Max()), ImGuiCond_Always);
+                if (ImPlot::BeginPlot("S (x, y, z) Graph"))
+                {
+
+                    ImPlot::PlotLine("x", &acs_rolbuf->sx.data[0].x, &acs_rolbuf->sx.data[0].y, acs_rolbuf->sx.data.size(), acs_rolbuf->sx.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("y", &acs_rolbuf->sy.data[0].x, &acs_rolbuf->sy.data[0].y, acs_rolbuf->sy.data.size(), acs_rolbuf->sy.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("z", &acs_rolbuf->sz.data[0].x, &acs_rolbuf->sz.data[0].y, acs_rolbuf->sz.data.size(), acs_rolbuf->sz.ofst, 2 * sizeof(float));
+
+                    ImPlot::EndPlot();
+                }
+            }
+
+            if (ImGui::CollapsingHeader("Battery Graph"))
+            {
+                ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->vbatt.Min(), acs_rolbuf->vboost.Min()), getMax(acs_rolbuf->vbatt.Max(), acs_rolbuf->vbatt.Max()), ImGuiCond_Always);
+                if (ImPlot::BeginPlot("Battery Graph"))
+                {
+
+                    ImPlot::PlotLine("VBatt", &acs_rolbuf->vbatt.data[0].x, &acs_rolbuf->vbatt.data[0].y, acs_rolbuf->vbatt.data.size(), acs_rolbuf->vbatt.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("VBoost", &acs_rolbuf->vboost.data[0].x, &acs_rolbuf->vboost.data[0].y, acs_rolbuf->vboost.data.size(), acs_rolbuf->vboost.ofst, 2 * sizeof(float));
+
+                    ImPlot::EndPlot();
+                }
+            }
+
+            if (ImGui::CollapsingHeader("Solar Current Graph"))
+            {
+                ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->cursun.Min(), acs_rolbuf->cursun.Min()), getMax(acs_rolbuf->cursys.Max(), acs_rolbuf->cursys.Max()), ImGuiCond_Always);
+                if (ImPlot::BeginPlot("Solar Current Graph"))
+                {
+
+                    ImPlot::PlotLine("CurSun", &acs_rolbuf->cursun.data[0].x, &acs_rolbuf->cursun.data[0].y, acs_rolbuf->cursun.data.size(), acs_rolbuf->cursun.ofst, 2 * sizeof(float));
+
+                    ImPlot::PlotLine("CurSys", &acs_rolbuf->cursys.data[0].x, &acs_rolbuf->cursys.data[0].y, acs_rolbuf->cursys.data.size(), acs_rolbuf->cursys.ofst, 2 * sizeof(float));
+
+                    ImPlot::EndPlot();
+                }
+            }
+        }
+        ImGui::End();
+    }
 }
 
 void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, auth_t *auth)

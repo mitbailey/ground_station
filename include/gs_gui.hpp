@@ -38,7 +38,7 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
  * @param SETTINGS_window 
  * @param auth 
  */
-void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth);
+void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth, global_data_t *global_data);
 
 /**
  * @brief 
@@ -114,7 +114,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
  * @param acs_rolbuf 
  * @param ACS_UPD_display 
  */
-void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display);
+void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display, global_data_t *global_data);
 
 /**
  * @brief 

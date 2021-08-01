@@ -130,7 +130,7 @@ int main(int, char **)
 
         if (SETTINGS_window)
         {
-            gs_gui_settings_window(&SETTINGS_window, &auth);
+            gs_gui_settings_window(&SETTINGS_window, &auth, global_data);
         }
 
         if (ACS_window)
@@ -171,7 +171,7 @@ int main(int, char **)
 
         if (ACS_UPD_display)
         {
-            gs_gui_acs_upd_display_window(global_data->acs_rolbuf, &ACS_UPD_display);
+            gs_gui_acs_upd_display_window(global_data->acs_rolbuf, &ACS_UPD_display, global_data);
         }
 
         // Network Connections Manager

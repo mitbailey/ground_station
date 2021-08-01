@@ -382,6 +382,11 @@ typedef struct
     char password[64];
 } auth_t;
 
+typedef struct
+{
+    bool acs_multiple_windows;
+} settings_t;
+
 /**
  * @brief Contains structures and classes that will be populated with data by the receive thread; these structures and classes also provide the data which the client will display.
  * 
@@ -391,6 +396,7 @@ typedef struct
     // Data
     NetworkData *network_data;
     ACSRollingBuffer *acs_rolbuf;
+    settings_t settings[1];
     cs_ack_t cs_ack[1];
     cs_config_uhf_t cs_config_uhf[1];
     cs_config_xband_t cs_config_xband[1];
