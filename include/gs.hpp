@@ -360,18 +360,6 @@ typedef struct
 } xband_rxtx_data_holder_t;
 
 /**
- * @brief Set of possible booleans XBAND can use.
- * 
- */
-typedef struct
-{
-    bool max_on;
-    bool tmp_shdn;
-    bool tmp_op;
-    bool loop_time;
-} xband_get_bool_t;
-
-/**
  * @brief Authentication structure, used to store auth-related information.
  * 
  */

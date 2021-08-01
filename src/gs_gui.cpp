@@ -665,7 +665,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, auth_t 
     static xband_tx_data_holder_t xband_tx_data_holder = {0};
     static xband_rxtx_data_t xband_rxtx_data = {0};
     static xband_rxtx_data_holder_t xband_rxtx_data_holder = {0};
-    static xband_get_bool_t xband_get_bool = {0};
+    // static xband_get_bool_t xband_get_bool = {0};
 
     if (ImGui::Begin("X-Band Operations", XBAND_window))
     {
@@ -1175,7 +1175,6 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, au
                     }
                     default:
                     {
-                        // printf("SYS ERROR!\n");
                         SYS_command_input.data_size = -1;
                         break;
                     }
