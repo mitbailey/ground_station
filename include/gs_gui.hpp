@@ -30,7 +30,7 @@ int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_inp
  * @param AUTH_control_panel 
  * @param auth 
  */
-void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t *auth);
+void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t *auth, global_data_t *global_data);
 
 /**
  * @brief 
@@ -140,7 +140,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
  * @param allow_transmission 
  * @param auth 
  */
-void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, int access_level);
+void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, int access_level, global_data_t *global_data);
 
 /**
  * @brief 

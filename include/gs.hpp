@@ -372,6 +372,7 @@ typedef struct
 typedef struct
 {
     bool acs_multiple_windows;
+    bool tooltips;
 } settings_t;
 
 /**

@@ -88,6 +88,7 @@ int main(int, char **)
     global_data->network_data = new NetworkData();
     global_data->network_data->rx_active = true;
     global_data->last_contact = -1.0;
+    global_data->settings->tooltips = true;
 
     auth_t auth = {0};
     bool allow_transmission = false;
@@ -129,7 +130,7 @@ int main(int, char **)
         // Level 3: Project Manager access, can update flight software, edit critical systems.
         if (AUTH_control_panel)
         {
-            gs_gui_authentication_control_panel_window(&AUTH_control_panel, &auth);
+            gs_gui_authentication_control_panel_window(&AUTH_control_panel, &auth, global_data);
         }
 
         if (SETTINGS_window)
@@ -192,7 +193,7 @@ int main(int, char **)
 
         if (DISP_control_panel)
         {
-            gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, auth.access_level);
+            gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, auth.access_level, global_data);
         }
 
         if (User_Manual)
@@ -207,25 +208,61 @@ int main(int, char **)
             {
                 AUTH_control_panel = !AUTH_control_panel;
             }
-            if (ImGui::Button("Displays Control"))
+            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            {
+                ImGui::BeginTooltip();
+                ImGui::SetTooltip("Toggle Authentication Control Panel visibility.");
+                ImGui::EndTooltip();
+            }
+            if (ImGui::Button("SPACE-HAUC I/O"))
             {
                 DISP_control_panel = !DISP_control_panel;
+            }
+            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            {
+                ImGui::BeginTooltip();
+                ImGui::SetTooltip("Toggle SPACE-HAUC I/O Displays Control Panel visibility.");
+                ImGui::EndTooltip();
             }
             if (ImGui::Button("Connections"))
             {
                 CONNS_manager = !CONNS_manager;
             }
+            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            {
+                ImGui::BeginTooltip();
+                ImGui::SetTooltip("Toggle Connections Manager visibility.");
+                ImGui::EndTooltip();
+            }
             if (ImGui::Button("Radio Configs"))
             {
                 CONFIG_manager = !CONFIG_manager;
+            }
+            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            {
+                ImGui::BeginTooltip();
+                ImGui::SetTooltip("Toggle Radio Configuration Manager visibility.");
+                ImGui::EndTooltip();
             }
             if (ImGui::Button("Settings"))
             {
                 SETTINGS_window = !SETTINGS_window;
             }
+            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            {
+                ImGui::BeginTooltip();
+                ImGui::SetTooltip("Toggle Settings visibility.");
+                ImGui::EndTooltip();
+            }
             if (ImGui::Button("User Manual"))
             {
                 User_Manual = !User_Manual;
+            }
+            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            {
+                ImGui::BeginTooltip();
+                ImGui::SetTooltip("Toggle User Manual visibility.");
+                ImGui::EndTooltip();
             }
 
             ImGui::Text("\t\t Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);

@@ -69,7 +69,7 @@ int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_inp
     return 1;
 }
 
-void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t *auth)
+void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t *auth, global_data_t *global_data)
 {
     static pthread_t auth_thread_id;
 
@@ -80,7 +80,21 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
     {
         if (auth->busy)
         {
-            ImGui::Text("PROCESSING...");
+            char loading_icon[8][6 + 1] = {
+                ".     ",
+                "..    ",
+                "...   ",
+                " ...  ",
+                "  ... ",
+                "   ...",
+                "    ..",
+                "     ."
+            };
+
+            static int li = -1;
+            li = (li + 1) % 40;
+
+            ImGui::Text("PROCESSING%s", loading_icon[li / 5]);
             ImGui::InputTextWithHint("", "Enter Password", auth->password, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_ReadOnly);
         }
         else
@@ -115,10 +129,10 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
             auth->access_level = 0;
         }
 
-        if (ImGui::IsItemHovered())
+        if (ImGui::IsItemHovered() && global_data->settings->tooltips)
         {
             ImGui::BeginTooltip();
-            ImGui::SetTooltip("This is a tooltip!");
+            ImGui::SetTooltip("Resets access to lowest level.");
             ImGui::EndTooltip();
         }
     }
@@ -131,6 +145,7 @@ void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data
     {
         ImGui::Text("Split ACS update graphs into multiple windows?");
         ImGui::Checkbox("ACS Multiple Windows", &global_data->settings->acs_multiple_windows);
+        ImGui::Checkbox("Show Tooltips", &global_data->settings->tooltips);
     }
     ImGui::End();
 }
@@ -167,7 +182,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
             }
             ImGui::SameLine();
-            ImGui::Text("Get MOI");
+            ImGui::Text("Get Moment of Intertia (MOI)");
 
             if (ImGui::ArrowButton("get_imoi_button", ImGuiDir_Right) && access_level > 0)
             {
@@ -179,7 +194,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
             }
             ImGui::SameLine();
-            ImGui::Text("Get IMOI");
+            ImGui::Text("Get Inverse Moment of Inertia (IMOI)");
 
             if (ImGui::ArrowButton("get_dipole_button", ImGuiDir_Right) && access_level > 0)
             {
@@ -227,7 +242,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
             }
             ImGui::SameLine();
-            ImGui::Text("Get Leeway");
+            ImGui::Text("Get Leeway (Z-Angular Momentum Target Tolerable Error)");
 
             if (ImGui::ArrowButton("get_wtarget_button", ImGuiDir_Right) && access_level > 0)
             {
@@ -239,7 +254,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
             }
             ImGui::SameLine();
-            ImGui::Text("Get W-Target");
+            ImGui::Text("Get W-Target (Angular Momentum Target Vector");
 
             if (ImGui::ArrowButton("get_detumble_angle_button", ImGuiDir_Right) && access_level > 0)
             {
@@ -383,11 +398,26 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
             }
 
-            ImGui::Text("ACS Data-down Update");
-            ImGui::Indent();
-            ImGui::Checkbox("Automated", &acs_rxtx_automated);
+            ImGui::Text("ACS Data-down Update (every 100ms)");
+            if (ImGui::Button("Toggle ACS Update"))
+            {
+                acs_rxtx_automated = !acs_rxtx_automated;
+            }
 
-            ImGui::Text("(%s) Polling for Data-down every 100 ms.", acs_rxtx_automated ? "ON" : "OFF");
+            if (acs_rxtx_automated)
+            {
+                ImGui::PushStyleColor(0, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+                ImGui::SameLine();
+                ImGui::Text("ACTIVE");
+                ImGui::PopStyleColor();
+            }
+            else
+            {
+                ImGui::PushStyleColor(0, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                ImGui::SameLine();
+                ImGui::Text("INACTIVE");
+                ImGui::PopStyleColor();
+            }
 
             // Spawn a thread to execute gs_acs_update_data_handler(...) once.
             // If the operator wants to activate the automatic ACS update system...
@@ -405,9 +435,6 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ImGui::PopStyleColor();
             }
 
-            ImGui::Unindent();
-
-            ImGui::Separator();
             ImGui::Separator();
 
             ImGui::Indent();
@@ -476,7 +503,6 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                     break;
                 }
                 }
-                ImGui::Unindent();
             }
 
             gs_gui_gs2sh_tx_handler(global_data->network_data, access_level, &ACS_command_input, *allow_transmission);
@@ -585,7 +611,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
             }
             ImGui::SameLine();
-            ImGui::Text("Get ISUN");
+            ImGui::Text("Get Solar Generated Current (ISUN)");
 
             if (ImGui::ArrowButton("get_loop_timer_button", ImGuiDir_Right) && access_level > 0)
             {
@@ -727,7 +753,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
                 gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
             }
             ImGui::SameLine();
-            ImGui::Text("Get TMP SHDN");
+            ImGui::Text("Get Shutdown Temperature (TMP SHDN)");
 
             if (ImGui::ArrowButton("get_tmp_op_button", ImGuiDir_Right) && access_level > 0)
             {
@@ -739,7 +765,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
                 gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
             }
             ImGui::SameLine();
-            ImGui::Text("Get TMP OP");
+            ImGui::Text("Get Return to Operation Temperature (TMP OP)");
 
             if (ImGui::ArrowButton("get_loop_time_button", ImGuiDir_Right) && access_level > 0)
             {
@@ -901,7 +927,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
 
             ImGui::Separator();
 
-            ImGui::RadioButton("Set TMP SHDN", &XBAND_command, XBAND_SET_TMP_SHDN);
+            ImGui::RadioButton("Set Shutdown Temperature (TMP SHDN)", &XBAND_command, XBAND_SET_TMP_SHDN);
             ImGui::InputInt("TMP SHDN", &xband_rxtx_data_holder.tmp_shdn, 1, 100, flag);
             if (xband_rxtx_data_holder.tmp_shdn > 0xFF)
             {
@@ -915,7 +941,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
 
             ImGui::Separator();
 
-            ImGui::RadioButton("Set TMP OP", &XBAND_command, XBAND_SET_TMP_OP);
+            ImGui::RadioButton("Set Return to Operation Temperature (TMP OP)", &XBAND_command, XBAND_SET_TMP_OP);
             ImGui::InputInt("TMP OP", &xband_rxtx_data_holder.tmp_op, 1, 100, flag);
             if (xband_rxtx_data_holder.tmp_op > 0xFF)
             {
@@ -1333,6 +1359,19 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *al
         static int destination_port = SERVER_PORT; // defaults to the correct server listening port
         ImGui::InputText("IP Address", destination_ipv4, sizeof(destination_ipv4), flag);
         ImGui::InputInt("Port", &destination_port, 0, 0, flag);
+
+        ImGui::SameLine();
+        ImGui::Text("(?)");
+        if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Server Ports");
+            ImGui::Text("54200: GUI Client");
+            ImGui::Text("54210: Roof UHF");
+            ImGui::Text("54220: Roof X-Band");
+            ImGui::Text("54230: Haystack");
+            ImGui::EndTooltip();
+        }
 
         static int gui_connect_status = -1;
         static float last_connect_attempt_time = -1;
@@ -1989,9 +2028,9 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
     }
 }
 
-void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, int access_level)
+void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, int access_level, global_data_t *global_data)
 {
-    if (ImGui::Begin("I/O Displays Control Panel", DISP_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+    if (ImGui::Begin("SPACE-HAUC I/O Displays", DISP_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
         ImGui::Text("Input");
 
@@ -2015,20 +2054,18 @@ void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window
 
         ImGui::Separator();
 
-        if (*allow_transmission)
+        if (ImGui::Button("Toggle Transmissions Lock"))
         {
-            if (ImGui::Button("Lock Transmissions"))
-            {
-                *allow_transmission = false;
-            }
+            *allow_transmission = !(*allow_transmission);
         }
-        else
+        if (ImGui::IsItemHovered() && global_data->settings->tooltips)
         {
-            if (ImGui::Button("Unlock Transmissions"))
-            {
-                *allow_transmission = true;
-            }
+            ImGui::BeginTooltip();
+            ImGui::SetTooltip("Toggle transmission lock safety. Disables all transmissions from this terminal when locked.");
+            ImGui::EndTooltip();
         }
+        ImGui::SameLine();
+        *allow_transmission ? ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), " UNLOCKED ") : ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "  LOCKED  ");
     }
     ImGui::End();
 }
