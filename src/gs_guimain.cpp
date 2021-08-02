@@ -16,11 +16,13 @@
 // Implemented proper memory management, including free()'s and destroy()'s.
 // Implemented parsing of received ClientServerFrames properly.
 // Received data displayed either as plaintext or graphs.
-// TODO: Implement XBAND and UHF CLIENTSERVER structures, and receive / display / parse them properly.
+// TODO: Implement XBAND and UHF Network structures, and receive / display / parse them properly.
 // Now sends periodic null NetworkFrames to get the network status in 'netstat.'
 // Removed accept() code, since this is not a server. Should only connect().
 // TODO: Fix 'taking address of packed member' warnings.
 // Removed all raw send(...) calls and replaced them with frame->sendFrame().
+// TODO: Add tooltips explaining acronyms like "IMOI", "MOI", etc (see: README.md).
+// TODO: Get SW_UPDATE working over the Ground Station network (send through server first, then to Sat?).
 
 #include <stdio.h>
 #include <unistd.h>

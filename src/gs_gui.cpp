@@ -115,16 +115,6 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
             auth->access_level = 0;
         }
 
-        // ImGui::TextDisabled("(?)");
-        // if (ImGui::IsItemHovered())
-        // {
-        //     ImGui::BeginTooltip();
-        //     ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        //     ImGui::TextUnformatted("Text Unformatted");
-        //     ImGui::PopTextWrapPos();
-        //     ImGui::EndTooltip();
-        // }
-
         if (ImGui::IsItemHovered())
         {
             ImGui::BeginTooltip();
@@ -135,18 +125,10 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
     ImGui::End();
 }
 
-// TODO: Add functionality.
 void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data_t *global_data)
 {
     if (ImGui::Begin("Settings", SETTINGS_window))
     {
-        // static int test1 = 0, test2 = 0, test3 = 0;
-        // ImGui::Columns(3, "first_column_set", true);
-        // ImGui::InputInt("test1", &test1);
-        // ImGui::NextColumn();
-        // ImGui::InputInt("test2", &test2);
-        // ImGui::NextColumn();
-        // ImGui::InputInt("test3", &test3);
         ImGui::Text("Split ACS update graphs into multiple windows?");
         ImGui::Checkbox("ACS Multiple Windows", &global_data->settings->acs_multiple_windows);
     }
@@ -155,6 +137,8 @@ void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data
 
 void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_level, bool *allow_transmission)
 {
+    ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
+
     static int ACS_command = ACS_INVALID_ID;
     static cmd_input_t ACS_command_input = {.mod = INVALID_ID, .cmd = ACS_INVALID_ID, .unused = 0, .data_size = 0};
     static acs_set_data_t acs_set_data = {0};
@@ -165,9 +149,8 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
 
     if (ImGui::Begin("ACS Operations", ACS_window))
     {
-        if (ImGui::CollapsingHeader("Data-down Commands"))
+        if (ImGui::CollapsingHeader("Data-down Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
-
             if (access_level <= 0)
             {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ACCESS DENIED");
@@ -290,27 +273,28 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Data-up Commands"))
+        if (ImGui::CollapsingHeader("Data-up Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
 
             if (access_level <= 1)
             {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ACCESS DENIED");
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                flag = ImGuiInputTextFlags_ReadOnly;
             }
 
             ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI);    // 9x floats
-            ImGui::InputFloat3("MOI [0] [1] [2]", &acs_set_data.moi[0]); // Sets 3 at a time.
-            ImGui::InputFloat3("MOI [3] [4] [5]", &acs_set_data.moi[3]);
-            ImGui::InputFloat3("MOI [6] [7] [8]", &acs_set_data.moi[6]);
+            ImGui::InputFloat3("MOI [0] [1] [2]", &acs_set_data.moi[0], "%.3e", flag); // Sets 3 at a time.
+            ImGui::InputFloat3("MOI [3] [4] [5]", &acs_set_data.moi[3], "%.3e", flag);
+            ImGui::InputFloat3("MOI [6] [7] [8]", &acs_set_data.moi[6], "%.3e", flag);
             ImGui::RadioButton("Set IMOI", &ACS_command, ACS_SET_IMOI); // 9x floats
-            ImGui::InputFloat3("IMOI [0] [1] [2]", &acs_set_data.imoi[0]);
-            ImGui::InputFloat3("IMOI [3] [4] [5]", &acs_set_data.imoi[3]);
-            ImGui::InputFloat3("IMOI [6] [7] [8]", &acs_set_data.imoi[6]);
+            ImGui::InputFloat3("IMOI [0] [1] [2]", &acs_set_data.imoi[0], "%.3e", flag);
+            ImGui::InputFloat3("IMOI [3] [4] [5]", &acs_set_data.imoi[3], "%.3e", flag);
+            ImGui::InputFloat3("IMOI [6] [7] [8]", &acs_set_data.imoi[6], "%.3e", flag);
             ImGui::RadioButton("Set Dipole", &ACS_command, ACS_SET_DIPOLE); // 1x float
-            ImGui::InputFloat("Dipole Moment", &acs_set_data.dipole);
+            ImGui::InputFloat("Dipole Moment", &acs_set_data.dipole, 0.0f, 0.0f, "%.3e", flag);
             ImGui::RadioButton("Set Timestep", &ACS_command, ACS_SET_TSTEP); // 1x uint8_t
-            if (ImGui::InputInt("Timestep (ms)", &acs_set_data_holder.tstep))
+            if (ImGui::InputInt("Timestep (ms)", &acs_set_data_holder.tstep, 1, 100, flag))
             {
                 if (acs_set_data_holder.tstep > 255)
                 {
@@ -324,7 +308,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             }
 
             ImGui::RadioButton("Set Measure Time", &ACS_command, ACS_SET_MEASURE_TIME); // 1x uint8_t
-            if (ImGui::InputInt("Measure Time (ms)", &acs_set_data_holder.measure_time))
+            if (ImGui::InputInt("Measure Time (ms)", &acs_set_data_holder.measure_time, 1, 100, flag))
             {
                 if (acs_set_data_holder.measure_time > 255)
                 {
@@ -338,7 +322,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             }
 
             ImGui::RadioButton("Set Leeway", &ACS_command, ACS_SET_LEEWAY); // 1x uint8_t
-            if (ImGui::InputInt("Leeway Factor", &acs_set_data_holder.leeway))
+            if (ImGui::InputInt("Leeway Factor", &acs_set_data_holder.leeway, 1, 100, flag))
             {
                 if (acs_set_data_holder.leeway > 255)
                 {
@@ -352,9 +336,9 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             }
 
             ImGui::RadioButton("Set W-Target", &ACS_command, ACS_SET_WTARGET); // 1x float
-            ImGui::InputFloat("W-Target", &acs_set_data.wtarget);
+            ImGui::InputFloat("W-Target", &acs_set_data.wtarget, 0.0f, 0.0f, "%.3e", flag);
             ImGui::RadioButton("Set Detumble Angle", &ACS_command, ACS_SET_DETUMBLE_ANG); // 1x uint8_t
-            if (ImGui::InputInt("Angle", &acs_set_data_holder.detumble_angle))
+            if (ImGui::InputInt("Angle", &acs_set_data_holder.detumble_angle, 1, 100, flag))
             {
                 if (acs_set_data_holder.detumble_angle > 255)
                 {
@@ -367,7 +351,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 acs_set_data.detumble_angle = (uint8_t)acs_set_data_holder.detumble_angle;
             }
             ImGui::RadioButton("Set Sun Angle", &ACS_command, ACS_SET_SUN_ANGLE); // 1x uint8_t
-            if (ImGui::InputInt("Sun Angle", &acs_set_data_holder.sun_angle))
+            if (ImGui::InputInt("Sun Angle", &acs_set_data_holder.sun_angle, 1, 100, flag))
             {
                 if (acs_set_data_holder.sun_angle > 255)
                 {
@@ -382,6 +366,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             if (access_level <= 1)
             {
                 ImGui::PopStyleColor();
+                flag = (ImGuiInputTextFlags_)0;
             }
         }
 
@@ -390,7 +375,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Transmit"))
+        if (ImGui::CollapsingHeader("Transmit", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (!allow_transmission)
             {
@@ -502,13 +487,15 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
 
 void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool *allow_transmission)
 {
+    ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
+
     static int EPS_command = EPS_INVALID_ID;
     static cmd_input_t EPS_command_input = {.mod = INVALID_ID, .cmd = EPS_INVALID_ID, .unused = 0, .data_size = 0};
     static eps_set_data_t eps_set_data = {0};
 
     if (ImGui::Begin("EPS Operations", EPS_window))
     {
-        if (ImGui::CollapsingHeader("Data-down Commands"))
+        if (ImGui::CollapsingHeader("Data-down Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (access_level <= 0)
             {
@@ -620,20 +607,22 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Data-up Commands"))
+        if (ImGui::CollapsingHeader("Data-up Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (access_level <= 1)
             {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ACCESS DENIED");
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                flag = ImGuiInputTextFlags_ReadOnly;
             }
 
             ImGui::RadioButton("Set Loop Timer", &EPS_command, EPS_SET_LOOP_TIMER);
-            ImGui::InputInt("Loop Time (seconds)", &eps_set_data.loop_timer);
+            ImGui::InputInt("Loop Time (seconds)", &eps_set_data.loop_timer, 1, 100, flag);
 
             if (access_level <= 1)
             {
                 ImGui::PopStyleColor();
+                flag = (ImGuiInputTextFlags_)0;
             }
         }
 
@@ -642,7 +631,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Transmit"))
+        if (ImGui::CollapsingHeader("Transmit", ImGuiTreeNodeFlags_DefaultOpen))
         {
 
             if (!allow_transmission)
@@ -695,6 +684,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
 
 void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int access_level, bool *allow_transmission)
 {
+    ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
     NetworkData *network_data = global_data->network_data;
 
     static int XBAND_command = XBAND_INVALID_ID;
@@ -708,7 +698,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
 
     if (ImGui::Begin("X-Band Operations", XBAND_window))
     {
-        if (ImGui::CollapsingHeader("Data-down Commands"))
+        if (ImGui::CollapsingHeader("Data-down Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (access_level <= 0)
             {
@@ -772,19 +762,20 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Data-up Commands"))
+        if (ImGui::CollapsingHeader("Data-up Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (access_level <= 1)
             {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ACCESS DENIED");
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                flag = ImGuiInputTextFlags_ReadOnly;
             }
             ImGui::Indent();
 
             ImGui::RadioButton("Set Transmit", &XBAND_command, XBAND_SET_TX);
-            ImGui::InputFloat("TX LO", &xband_set_data.TX.LO);
-            ImGui::InputFloat("TX bw", &xband_set_data.TX.bw);
-            ImGui::InputInt("TX Samp", &xband_set_data.TXH.samp);
+            ImGui::InputFloat("TX LO", &xband_set_data.TX.LO, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputFloat("TX bw", &xband_set_data.TX.bw, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputInt("TX Samp", &xband_set_data.TXH.samp, 1, 100, flag);
             if (xband_set_data.TXH.samp > 0xFFFF)
             {
                 xband_set_data.TXH.samp = 0xFFFF;
@@ -795,7 +786,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             }
             xband_set_data.TX.samp = (uint16_t)xband_set_data.TXH.samp;
 
-            ImGui::InputInt("TX Phy Gain", &xband_set_data.TXH.phy_gain);
+            ImGui::InputInt("TX Phy Gain", &xband_set_data.TXH.phy_gain, 1, 100, flag);
             if (xband_set_data.TXH.phy_gain > 0xFF)
             {
                 xband_set_data.TXH.phy_gain = 0xFF;
@@ -806,7 +797,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             }
             xband_set_data.TX.phy_gain = (uint8_t)xband_set_data.TXH.phy_gain;
 
-            ImGui::InputInt("TX Adar Gain", &xband_set_data.TXH.adar_gain);
+            ImGui::InputInt("TX Adar Gain", &xband_set_data.TXH.adar_gain, 1, 100, flag);
             if (xband_set_data.TXH.adar_gain > 0xFF)
             {
                 xband_set_data.TXH.adar_gain = 0xFF;
@@ -820,10 +811,10 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::Combo("TX Filter", &xband_set_data.TXH.ftr, "m_6144.ftr\0m_3072.ftr\0m_1000.ftr\0m_lte5.ftr\0m_lte1.ftr\0\0");
             xband_set_data.TX.ftr = (uint8_t)xband_set_data.TXH.ftr;
 
-            ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0]);
-            ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4]);
-            ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8]);
-            ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_set_data.TXH.phase[12]);
+            ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_set_data.TXH.phase[0], flag);
+            ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_set_data.TXH.phase[4], flag);
+            ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_set_data.TXH.phase[8], flag);
+            ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_set_data.TXH.phase[12], flag);
             for (int i = 0; i < 16; i++)
             {
                 if (xband_set_data.TXH.phase[i] > 32767)
@@ -840,9 +831,9 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::Separator();
 
             ImGui::RadioButton("Set Receive", &XBAND_command, XBAND_SET_RX);
-            ImGui::InputFloat("RX LO", &xband_set_data.RX.LO);
-            ImGui::InputFloat("RX bw", &xband_set_data.RX.bw);
-            ImGui::InputInt("RX Samp", &xband_set_data.RXH.samp);
+            ImGui::InputFloat("RX LO", &xband_set_data.RX.LO, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputFloat("RX bw", &xband_set_data.RX.bw, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputInt("RX Samp", &xband_set_data.RXH.samp, 1, 100, flag);
             if (xband_set_data.RXH.samp > 0xFFFF)
             {
                 xband_set_data.RXH.samp = 0xFFFF;
@@ -853,7 +844,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             }
             xband_set_data.RX.samp = (uint16_t)xband_set_data.RXH.samp;
 
-            ImGui::InputInt("RX Phy Gain", &xband_set_data.RXH.phy_gain);
+            ImGui::InputInt("RX Phy Gain", &xband_set_data.RXH.phy_gain, 1, 100, flag);
             if (xband_set_data.RXH.phy_gain > 0xFF)
             {
                 xband_set_data.RXH.phy_gain = 0xFF;
@@ -864,7 +855,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             }
             xband_set_data.RX.phy_gain = (uint8_t)xband_set_data.RXH.phy_gain;
 
-            ImGui::InputInt("RX Adar Gain", &xband_set_data.RXH.adar_gain);
+            ImGui::InputInt("RX Adar Gain", &xband_set_data.RXH.adar_gain, 1, 100, flag);
             if (xband_set_data.RXH.adar_gain > 0xFF)
             {
                 xband_set_data.RXH.adar_gain = 0xFF;
@@ -878,10 +869,10 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::Combo("RX Filter", &xband_set_data.RXH.ftr, "m_6144.ftr\0m_3072.ftr\0m_1000.ftr\0m_lte5.ftr\0m_lte1.ftr\0\0");
             xband_set_data.RX.ftr = (uint8_t)xband_set_data.RXH.ftr;
 
-            ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0]);
-            ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4]);
-            ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8]);
-            ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_set_data.RXH.phase[12]);
+            ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_set_data.RXH.phase[0], flag);
+            ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_set_data.RXH.phase[4], flag);
+            ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_set_data.RXH.phase[8], flag);
+            ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_set_data.RXH.phase[12], flag);
             for (int i = 0; i < 16; i++)
             {
                 if (xband_set_data.RXH.phase[i] > 32767)
@@ -898,7 +889,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::Separator();
 
             ImGui::RadioButton("Set MAX ON", &XBAND_command, XBAND_SET_MAX_ON);
-            ImGui::InputInt("Max On", &xband_rxtx_data_holder.max_on);
+            ImGui::InputInt("Max On", &xband_rxtx_data_holder.max_on, 1, 100, flag);
             if (xband_rxtx_data_holder.max_on > 0xFF)
             {
                 xband_rxtx_data_holder.max_on = 0xFF;
@@ -912,7 +903,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::Separator();
 
             ImGui::RadioButton("Set TMP SHDN", &XBAND_command, XBAND_SET_TMP_SHDN);
-            ImGui::InputInt("TMP SHDN", &xband_rxtx_data_holder.tmp_shdn);
+            ImGui::InputInt("TMP SHDN", &xband_rxtx_data_holder.tmp_shdn, 1, 100, flag);
             if (xband_rxtx_data_holder.tmp_shdn > 0xFF)
             {
                 xband_rxtx_data_holder.tmp_shdn = 0xFF;
@@ -926,7 +917,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::Separator();
 
             ImGui::RadioButton("Set TMP OP", &XBAND_command, XBAND_SET_TMP_OP);
-            ImGui::InputInt("TMP OP", &xband_rxtx_data_holder.tmp_op);
+            ImGui::InputInt("TMP OP", &xband_rxtx_data_holder.tmp_op, 1, 100, flag);
             if (xband_rxtx_data_holder.tmp_op > 0xFF)
             {
                 xband_rxtx_data_holder.tmp_op = 0xFF;
@@ -940,7 +931,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::Separator();
 
             ImGui::RadioButton("Set Loop Time", &XBAND_command, XBAND_SET_LOOP_TIME);
-            ImGui::InputInt("Loop Time", &xband_rxtx_data_holder.loop_time);
+            ImGui::InputInt("Loop Time", &xband_rxtx_data_holder.loop_time, 1, 100, flag);
             if (xband_rxtx_data_holder.loop_time > 0xFF)
             {
                 xband_rxtx_data_holder.loop_time = 0xFF;
@@ -956,22 +947,24 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             if (access_level <= 1)
             {
                 ImGui::PopStyleColor();
+                flag = (ImGuiInputTextFlags_)0;
             }
         }
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Executable Commands"))
+        if (ImGui::CollapsingHeader("Executable Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
 
             if (access_level <= 1)
             {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ACCESS DENIED");
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                flag = ImGuiInputTextFlags_ReadOnly;
             }
 
             ImGui::RadioButton("Transmit", &XBAND_command, XBAND_DO_TX);
-            ImGui::InputInt("TX type", &xband_tx_data_holder.type);
+            ImGui::InputInt("TX type", &xband_tx_data_holder.type, 1, 100, flag);
             if (xband_tx_data_holder.type > 255)
             {
                 xband_tx_data_holder.type = 255;
@@ -982,8 +975,8 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             }
             xband_tx_data.type = (uint8_t)xband_tx_data_holder.type;
 
-            ImGui::InputInt("TX f_id", &xband_tx_data.f_id);
-            ImGui::InputInt("TX mtu", &xband_tx_data.mtu);
+            ImGui::InputInt("TX f_id", &xband_tx_data.f_id, 1, 100, flag);
+            ImGui::InputInt("TX mtu", &xband_tx_data.mtu, 1, 100, flag);
 
             ImGui::Separator();
 
@@ -1000,6 +993,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             if (access_level <= 1)
             {
                 ImGui::PopStyleColor();
+                flag = (ImGuiInputTextFlags_)0;
             }
         }
     }
@@ -1009,7 +1003,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
 
     ImGui::Separator();
 
-    if (ImGui::CollapsingHeader("Transmit"))
+    if (ImGui::CollapsingHeader("Transmit", ImGuiTreeNodeFlags_DefaultOpen))
     {
         switch (XBAND_command_input.cmd)
         {
@@ -1087,6 +1081,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
 
 void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int access_level, bool *allow_transmission)
 {
+    ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
     static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
     static char upd_filename_buffer[256] = {0};
 
@@ -1113,7 +1108,6 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
             // Sets values for the software update command structure.
             UPD_command_input.mod = SW_UPD_ID;
             UPD_command_input.cmd = SW_UPD_FUNC_MAGIC;
-            // UPD_command_input.data[0] = SW_UPD_VALID_MAGIC;
             long sw_upd_valid_magic_temp = SW_UPD_VALID_MAGIC;
             memcpy(UPD_command_input.data, &sw_upd_valid_magic_temp, sizeof(long));
 
@@ -1139,7 +1133,7 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
 
     if (ImGui::Begin("System Control Panel", SYS_CTRL_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
-        if (ImGui::CollapsingHeader("Data-down Commands"))
+        if (ImGui::CollapsingHeader("Data-down Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (access_level <= 0)
             {
@@ -1167,7 +1161,7 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Data-up Commands"))
+        if (ImGui::CollapsingHeader("Data-up Commands", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (access_level <= 2)
             {
@@ -1190,7 +1184,7 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Transmit"))
+        if (ImGui::CollapsingHeader("Transmit", ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (allow_transmission)
             {
@@ -1593,7 +1587,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
             // The implemented method of displaying the ACS update data includes a locally-global class (ACSDisplayData) with data that this window will display. The data is set by gs_receive.
             // NOTE: This window must be opened independent of ACS's automated data retrieval option.
 
-            if (ImGui::CollapsingHeader("CT / Mode Graph"))
+            if (ImGui::CollapsingHeader("CT / Mode Graph", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->mode.Min(), acs_rolbuf->ct.Min()), getMax(acs_rolbuf->mode.Max(), acs_rolbuf->ct.Max()), ImGuiCond_Always);
                 if (ImPlot::BeginPlot("CT / Mode Graph"))
@@ -1607,7 +1601,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 }
             }
 
-            if (ImGui::CollapsingHeader("B (x, y, z) Graph"))
+            if (ImGui::CollapsingHeader("B (x, y, z) Graph", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->bx.Min(), acs_rolbuf->by.Min(), acs_rolbuf->bz.Min()), getMax(acs_rolbuf->bx.Max(), acs_rolbuf->by.Max(), acs_rolbuf->bz.Max()), ImGuiCond_Always);
                 if (ImPlot::BeginPlot("B (x, y, z) Graph"))
@@ -1623,7 +1617,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 }
             }
 
-            if (ImGui::CollapsingHeader("W (x, y, z) Graph"))
+            if (ImGui::CollapsingHeader("W (x, y, z) Graph", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->wx.Min(), acs_rolbuf->wy.Min(), acs_rolbuf->wz.Min()), getMax(acs_rolbuf->wx.Max(), acs_rolbuf->wy.Max(), acs_rolbuf->wz.Max()), ImGuiCond_Always);
                 if (ImPlot::BeginPlot("W (x, y, z) Graph"))
@@ -1639,7 +1633,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 }
             }
 
-            if (ImGui::CollapsingHeader("S (x, y, z) Graph"))
+            if (ImGui::CollapsingHeader("S (x, y, z) Graph", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->sx.Min(), acs_rolbuf->sy.Min(), acs_rolbuf->sz.Min()), getMax(acs_rolbuf->sx.Max(), acs_rolbuf->sy.Max(), acs_rolbuf->sz.Max()), ImGuiCond_Always);
                 if (ImPlot::BeginPlot("S (x, y, z) Graph"))
@@ -1655,7 +1649,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 }
             }
 
-            if (ImGui::CollapsingHeader("Battery Graph"))
+            if (ImGui::CollapsingHeader("Battery Graph", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->vbatt.Min(), acs_rolbuf->vboost.Min()), getMax(acs_rolbuf->vbatt.Max(), acs_rolbuf->vbatt.Max()), ImGuiCond_Always);
                 if (ImPlot::BeginPlot("Battery Graph"))
@@ -1669,7 +1663,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
                 }
             }
 
-            if (ImGui::CollapsingHeader("Solar Current Graph"))
+            if (ImGui::CollapsingHeader("Solar Current Graph", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImPlot::SetNextPlotLimits(start_time, acs_rolbuf->x_index, getMin(acs_rolbuf->cursun.Min(), acs_rolbuf->cursun.Min()), getMax(acs_rolbuf->cursys.Max(), acs_rolbuf->cursys.Max()), ImGuiCond_Always);
                 if (ImPlot::BeginPlot("Solar Current Graph"))

@@ -37,3 +37,37 @@ ground_station
 ground_station_server  
 ground_station_uhf  
 ground_station_xband  
+
+
+Moment of Interia
+Inverse Moment of Intertia
+Leeway: Z Angular Momentum Target  (tolerable error)
+W-Target: Target angular momentum vector
+
+ISUN: Solar generated current
+
+TMP SHDN: At this temperture it shuts down (max temp)
+
+TMP OP: After Temp. shutdown, at what temperature does it come back on.
+
+Adding Tooltips~
+
+    // ImGui::TextDisabled("(?)");
+    // if (ImGui::IsItemHovered())
+    // {
+    //     ImGui::BeginTooltip();
+    //     ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+    //     ImGui::TextUnformatted("Text Unformatted");
+    //     ImGui::PopTextWrapPos();
+    //     ImGui::EndTooltip();
+    // }
+
+Splitting into Columns~
+
+    // static int test1 = 0, test2 = 0, test3 = 0;
+    // ImGui::Columns(3, "first_column_set", true);
+    // ImGui::InputInt("test1", &test1);
+    // ImGui::NextColumn();
+    // ImGui::InputInt("test2", &test2);
+    // ImGui::NextColumn();
+    // ImGui::InputInt("test3", &test3);
