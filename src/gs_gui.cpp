@@ -283,7 +283,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 flag = ImGuiInputTextFlags_ReadOnly;
             }
 
-            ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI);    // 9x floats
+            ImGui::RadioButton("Set MOI", &ACS_command, ACS_SET_MOI);                  // 9x floats
             ImGui::InputFloat3("MOI [0] [1] [2]", &acs_set_data.moi[0], "%.3e", flag); // Sets 3 at a time.
             ImGui::InputFloat3("MOI [3] [4] [5]", &acs_set_data.moi[3], "%.3e", flag);
             ImGui::InputFloat3("MOI [6] [7] [8]", &acs_set_data.moi[6], "%.3e", flag);
@@ -694,7 +694,6 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
     static xband_tx_data_holder_t xband_tx_data_holder = {0};
     static xband_rxtx_data_t xband_rxtx_data = {0};
     static xband_rxtx_data_holder_t xband_rxtx_data_holder = {0};
-    // static xband_get_bool_t xband_get_bool = {0};
 
     if (ImGui::Begin("X-Band Operations", XBAND_window))
     {
@@ -1472,6 +1471,315 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *al
 
         ImGui::End();
     }
+}
+
+void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool *allow_transmission, global_data_t *global_data)
+{
+    ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
+    NetworkData *network_data = global_data->network_data;
+
+    static int XBAND_config_command = XBAND_INVALID_ID;
+    // static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
+
+    static xband_set_data_array_t xband_config_data = {0};
+    // static xband_tx_data_t xband_tx_data = {0};
+    // static xband_tx_data_holder_t xband_tx_data_holder = {0};
+    // static xband_rxtx_data_t xband_rxtx_data = {0};
+    // static xband_rxtx_data_holder_t xband_rxtx_data_holder = {0};
+
+    if (ImGui::Begin("Radios Configurations Manager", CONFIG_manager))
+    {
+        if (ImGui::CollapsingHeader("Configurations", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (access_level <= 1)
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ACCESS DENIED");
+                ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                flag = ImGuiInputTextFlags_ReadOnly;
+            }
+            ImGui::Indent();
+
+            ImGui::RadioButton("Set Transmit", &XBAND_config_command, XBAND_SET_TX);
+            ImGui::InputFloat("TX LO", &xband_config_data.TX.LO, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputFloat("TX bw", &xband_config_data.TX.bw, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputInt("TX Samp", &xband_config_data.TXH.samp, 1, 100, flag);
+            if (xband_config_data.TXH.samp > 0xFFFF)
+            {
+                xband_config_data.TXH.samp = 0xFFFF;
+            }
+            else if (xband_config_data.TXH.samp < 0)
+            {
+                xband_config_data.TXH.samp = 0;
+            }
+            xband_config_data.TX.samp = (uint16_t)xband_config_data.TXH.samp;
+
+            ImGui::InputInt("TX Phy Gain", &xband_config_data.TXH.phy_gain, 1, 100, flag);
+            if (xband_config_data.TXH.phy_gain > 0xFF)
+            {
+                xband_config_data.TXH.phy_gain = 0xFF;
+            }
+            else if (xband_config_data.TXH.phy_gain < 0)
+            {
+                xband_config_data.TXH.phy_gain = 0;
+            }
+            xband_config_data.TX.phy_gain = (uint8_t)xband_config_data.TXH.phy_gain;
+
+            ImGui::InputInt("TX Adar Gain", &xband_config_data.TXH.adar_gain, 1, 100, flag);
+            if (xband_config_data.TXH.adar_gain > 0xFF)
+            {
+                xband_config_data.TXH.adar_gain = 0xFF;
+            }
+            else if (xband_config_data.TXH.adar_gain < 0)
+            {
+                xband_config_data.TXH.adar_gain = 0;
+            }
+            xband_config_data.TX.adar_gain = (uint8_t)xband_config_data.TXH.adar_gain;
+
+            ImGui::Combo("TX Filter", &xband_config_data.TXH.ftr, "m_6144.ftr\0m_3072.ftr\0m_1000.ftr\0m_lte5.ftr\0m_lte1.ftr\0\0");
+            xband_config_data.TX.ftr = (uint8_t)xband_config_data.TXH.ftr;
+
+            ImGui::InputInt4("TX Phase [0]  [1]  [2]  [3]", &xband_config_data.TXH.phase[0], flag);
+            ImGui::InputInt4("TX Phase [4]  [5]  [6]  [7]", &xband_config_data.TXH.phase[4], flag);
+            ImGui::InputInt4("TX Phase [8]  [9]  [10] [11]", &xband_config_data.TXH.phase[8], flag);
+            ImGui::InputInt4("TX Phase [12] [13] [14] [15]", &xband_config_data.TXH.phase[12], flag);
+            for (int i = 0; i < 16; i++)
+            {
+                if (xband_config_data.TXH.phase[i] > 32767)
+                {
+                    xband_config_data.TXH.phase[i] = 32767;
+                }
+                else if (xband_config_data.TXH.phase[i] < -32768)
+                {
+                    xband_config_data.TXH.phase[i] = -32768;
+                }
+                xband_config_data.TX.phase[i] = (short)xband_config_data.TXH.phase[i];
+            }
+
+            ImGui::Separator();
+
+            ImGui::RadioButton("Set Receive", &XBAND_config_command, XBAND_SET_RX);
+            ImGui::InputFloat("RX LO", &xband_config_data.RX.LO, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputFloat("RX bw", &xband_config_data.RX.bw, 0.0f, 0.0f, "%.3e", flag);
+            ImGui::InputInt("RX Samp", &xband_config_data.RXH.samp, 1, 100, flag);
+            if (xband_config_data.RXH.samp > 0xFFFF)
+            {
+                xband_config_data.RXH.samp = 0xFFFF;
+            }
+            else if (xband_config_data.RXH.samp < 0)
+            {
+                xband_config_data.RXH.samp = 0;
+            }
+            xband_config_data.RX.samp = (uint16_t)xband_config_data.RXH.samp;
+
+            ImGui::InputInt("RX Phy Gain", &xband_config_data.RXH.phy_gain, 1, 100, flag);
+            if (xband_config_data.RXH.phy_gain > 0xFF)
+            {
+                xband_config_data.RXH.phy_gain = 0xFF;
+            }
+            else if (xband_config_data.RXH.phy_gain < 0)
+            {
+                xband_config_data.RXH.phy_gain = 0;
+            }
+            xband_config_data.RX.phy_gain = (uint8_t)xband_config_data.RXH.phy_gain;
+
+            ImGui::InputInt("RX Adar Gain", &xband_config_data.RXH.adar_gain, 1, 100, flag);
+            if (xband_config_data.RXH.adar_gain > 0xFF)
+            {
+                xband_config_data.RXH.adar_gain = 0xFF;
+            }
+            else if (xband_config_data.RXH.adar_gain < 0)
+            {
+                xband_config_data.RXH.adar_gain = 0;
+            }
+            xband_config_data.RX.adar_gain = (uint8_t)xband_config_data.RXH.adar_gain;
+
+            ImGui::Combo("RX Filter", &xband_config_data.RXH.ftr, "m_6144.ftr\0m_3072.ftr\0m_1000.ftr\0m_lte5.ftr\0m_lte1.ftr\0\0");
+            xband_config_data.RX.ftr = (uint8_t)xband_config_data.RXH.ftr;
+
+            ImGui::InputInt4("RX Phase [0]  [1]  [2]  [3]", &xband_config_data.RXH.phase[0], flag);
+            ImGui::InputInt4("RX Phase [4]  [5]  [6]  [7]", &xband_config_data.RXH.phase[4], flag);
+            ImGui::InputInt4("RX Phase [8]  [9]  [10] [11]", &xband_config_data.RXH.phase[8], flag);
+            ImGui::InputInt4("RX Phase [12] [13] [14] [15]", &xband_config_data.RXH.phase[12], flag);
+            for (int i = 0; i < 16; i++)
+            {
+                if (xband_config_data.RXH.phase[i] > 32767)
+                {
+                    xband_config_data.RXH.phase[i] = 32767;
+                }
+                else if (xband_config_data.RXH.phase[i] < -32768)
+                {
+                    xband_config_data.RXH.phase[i] = -32768;
+                }
+                xband_config_data.RX.phase[i] = (short)xband_config_data.RXH.phase[i];
+            }
+
+            ImGui::Separator();
+
+            // ImGui::RadioButton("Set MAX ON", &XBAND_config_command, XBAND_SET_MAX_ON);
+            // ImGui::InputInt("Max On", &xband_rxtx_data_holder.max_on, 1, 100, flag);
+            // if (xband_rxtx_data_holder.max_on > 0xFF)
+            // {
+            //     xband_rxtx_data_holder.max_on = 0xFF;
+            // }
+            // else if (xband_rxtx_data_holder.max_on < 0)
+            // {
+            //     xband_rxtx_data_holder.max_on = 0;
+            // }
+            // xband_rxtx_data.max_on = (uint8_t)xband_rxtx_data_holder.max_on;
+
+            // ImGui::Separator();
+
+            // ImGui::RadioButton("Set TMP SHDN", &XBAND_config_command, XBAND_SET_TMP_SHDN);
+            // ImGui::InputInt("TMP SHDN", &xband_rxtx_data_holder.tmp_shdn, 1, 100, flag);
+            // if (xband_rxtx_data_holder.tmp_shdn > 0xFF)
+            // {
+            //     xband_rxtx_data_holder.tmp_shdn = 0xFF;
+            // }
+            // else if (xband_rxtx_data_holder.tmp_shdn < 0)
+            // {
+            //     xband_rxtx_data_holder.tmp_shdn = 0;
+            // }
+            // xband_rxtx_data.tmp_shdn = (uint8_t)xband_rxtx_data_holder.tmp_shdn;
+
+            // ImGui::Separator();
+
+            // ImGui::RadioButton("Set TMP OP", &XBAND_config_command, XBAND_SET_TMP_OP);
+            // ImGui::InputInt("TMP OP", &xband_rxtx_data_holder.tmp_op, 1, 100, flag);
+            // if (xband_rxtx_data_holder.tmp_op > 0xFF)
+            // {
+            //     xband_rxtx_data_holder.tmp_op = 0xFF;
+            // }
+            // else if (xband_rxtx_data_holder.tmp_op < 0)
+            // {
+            //     xband_rxtx_data_holder.tmp_op = 0;
+            // }
+            // xband_rxtx_data.tmp_op = (uint8_t)xband_rxtx_data_holder.tmp_op;
+
+            // ImGui::Separator();
+
+            // ImGui::RadioButton("Set Loop Time", &XBAND_config_command, XBAND_SET_LOOP_TIME);
+            // ImGui::InputInt("Loop Time", &xband_rxtx_data_holder.loop_time, 1, 100, flag);
+            // if (xband_rxtx_data_holder.loop_time > 0xFF)
+            // {
+            //     xband_rxtx_data_holder.loop_time = 0xFF;
+            // }
+            // else if (xband_rxtx_data_holder.loop_time < 0)
+            // {
+            //     xband_rxtx_data_holder.loop_time = 0;
+            // }
+            // xband_rxtx_data.loop_time = (uint8_t)xband_rxtx_data_holder.loop_time;
+
+            ImGui::Unindent();
+
+            if (access_level <= 1)
+            {
+                ImGui::PopStyleColor();
+                flag = (ImGuiInputTextFlags_)0;
+            }
+        }
+    }
+
+    // XBAND_command_input.mod = XBAND_ID;
+    // XBAND_command_input.cmd = XBAND_config_command;
+
+    ImGui::Separator();
+
+    if (ImGui::CollapsingHeader("Send Config", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        // gs_gui_gs2sh_tx_handler(network_data, access_level, &XBAND_command_input, *allow_transmission);
+        if (!allow_transmission)
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "TRANSMISSIONS LOCKED");
+            ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        }
+
+        if (access_level <= 1)
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "ACCESS DENIED");
+            ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        }
+
+        ImGui::Text("Send Configuration");
+        ImGui::Indent();
+
+        ImGui::Text("Queued Configuration");
+        ImGui::Text("(RX Config)");
+        ImGui::Text("LO ----------- %.3f", xband_config_data.TX.LO);
+        ImGui::Text("bw ----------- %.3f", xband_config_data.TX.bw);
+        ImGui::Text("samp --------- %d", xband_config_data.TX.samp);
+        ImGui::Text("phy gain ----- %d", xband_config_data.TX.phy_gain);
+        ImGui::Text("adar gain ---- %d", xband_config_data.TX.adar_gain);
+        ImGui::Text("ftr ---------- %d", xband_config_data.TX.ftr);
+        ImGui::Text("phase -------- ", xband_config_data.TX.bw);
+        for (int i = 0; i < 16; i++)
+        {
+            ImGui::SameLine();
+            ImGui::Text("%x", xband_config_data.TX.phase[i]);
+        }
+
+        ImGui::Separator();
+
+        ImGui::Text("(TX Config)");
+        ImGui::Text("LO ----------- %.3f", xband_config_data.RX.LO);
+        ImGui::Text("bw ----------- %.3f", xband_config_data.RX.bw);
+        ImGui::Text("samp --------- %d", xband_config_data.RX.samp);
+        ImGui::Text("phy gain ----- %d", xband_config_data.RX.phy_gain);
+        ImGui::Text("adar gain ---- %d", xband_config_data.RX.adar_gain);
+        ImGui::Text("ftr ---------- %d", xband_config_data.RX.ftr);
+        ImGui::Text("phase -------- ", xband_config_data.RX.bw);
+        for (int i = 0; i < 16; i++)
+        {
+            ImGui::SameLine();
+            ImGui::Text("%x", xband_config_data.RX.phase[i]);
+        }
+
+        if (ImGui::Button("Send Configuration") && allow_transmission && access_level > 1)
+        {
+            switch (XBAND_config_command)
+            {
+            case XBAND_SET_TX:
+            {
+                gs_transmit(global_data->network_data, CS_TYPE_CONFIG_XBAND, CS_ENDPOINT_ROOFXBAND, &xband_config_data.TX, sizeof(xband_set_data_t));
+                break;
+            }
+            case XBAND_SET_RX:
+            {
+                gs_transmit(global_data->network_data, CS_TYPE_CONFIG_XBAND, CS_ENDPOINT_HAYSTACK, &xband_config_data.RX, sizeof(xband_set_data_array_t));
+                break;
+            }
+            case XBAND_SET_MAX_ON:
+            case XBAND_SET_TMP_SHDN:
+            case XBAND_SET_TMP_OP:
+            case XBAND_SET_LOOP_TIME:
+            {
+                dbprintlf(RED_FG "Functionality not yet implemented.");
+                break;
+            }
+            case XBAND_DO_TX:
+            case XBAND_DO_RX:
+            case XBAND_DISABLE:
+            {
+                dbprintlf(RED_FG "Functionality not available.");
+                break;
+            }
+            default:
+            {
+                break;
+            }
+            }
+        }
+
+        if (!allow_transmission)
+        {
+            ImGui::PopStyleColor();
+        }
+
+        if (access_level <= 1)
+        {
+            ImGui::PopStyleColor();
+        }
+    }
+    ImGui::End();
 }
 
 void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display, global_data_t *global_data)

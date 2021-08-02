@@ -16,13 +16,14 @@
 // Implemented proper memory management, including free()'s and destroy()'s.
 // Implemented parsing of received ClientServerFrames properly.
 // Received data displayed either as plaintext or graphs.
-// TODO: Implement XBAND and UHF Network structures, and receive / display / parse them properly.
+// TODO: Implement XBAND and UHF Network structures, and receive / display / parse them properly. xband_set_data_t is used to configure SH's X-Band and should be find to use for the Ground Station's X-Band radios as well. However, for configuration of Ground-base X-Band radios, we won't pack a xband_set_data_t into the cmd_output_t's payload, but instead place it directly in a NetworkFrame's payload. This system should have its own GUI window. Assume the Server and UHF radios have no configurations for now.
 // Now sends periodic null NetworkFrames to get the network status in 'netstat.'
 // Removed accept() code, since this is not a server. Should only connect().
 // TODO: Fix 'taking address of packed member' warnings.
 // Removed all raw send(...) calls and replaced them with frame->sendFrame().
 // TODO: Add tooltips explaining acronyms like "IMOI", "MOI", etc (see: README.md).
 // TODO: Get SW_UPDATE working over the Ground Station network (send through server first, then to Sat?).
+// TODO: Neaten up the Radio Configs window.
 
 #include <stdio.h>
 #include <unistd.h>
@@ -92,6 +93,7 @@ int main(int, char **)
     bool allow_transmission = false;
     bool AUTH_control_panel = true;
     bool SETTINGS_window = false;
+    bool CONFIG_manager = false;
     bool ACS_window = false;
     bool EPS_window = false;
     bool XBAND_window = false;
@@ -182,6 +184,12 @@ int main(int, char **)
             gs_gui_conns_manager_window(&CONNS_manager, auth.access_level, &allow_transmission, global_data, &rx_thread_id);
         }
 
+        // Radio Configurations Manager
+        if (CONFIG_manager)
+        {
+            gs_gui_config_manager_window(&CONFIG_manager, auth.access_level, &allow_transmission, global_data);
+        }
+
         if (DISP_control_panel)
         {
             gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, auth.access_level);
@@ -206,6 +214,10 @@ int main(int, char **)
             if (ImGui::Button("Connections"))
             {
                 CONNS_manager = !CONNS_manager;
+            }
+            if (ImGui::Button("Radio Configs"))
+            {
+                CONFIG_manager = !CONFIG_manager;
             }
             if (ImGui::Button("Settings"))
             {

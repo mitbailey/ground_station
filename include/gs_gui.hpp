@@ -111,6 +111,16 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *al
 /**
  * @brief 
  * 
+ * @param CONFIG_manager 
+ * @param access_level 
+ * @param allow_transmission 
+ * @param global_data 
+ */
+void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool *allow_transmission, global_data_t *global_data);
+
+/**
+ * @brief 
+ * 
  * @param acs_rolbuf 
  * @param ACS_UPD_display 
  */

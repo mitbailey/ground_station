@@ -134,23 +134,6 @@ enum XBAND_FUNC_ID
     XBAND_SET_LOOP_TIME,
 };
 
-typedef struct
-{
-    uint8_t ack; // 0 = NAck, 1 = Ack
-    int code;    // Error code or some other info.
-} cs_ack_t;      // (N/ACK)
-
-// Config types.
-typedef struct
-{
-
-} cs_config_xband_t;
-
-typedef struct
-{
-
-} cs_config_uhf_t;
-
 /**
  * @brief Command structure that SPACE-HAUC receives.
  * 
@@ -304,6 +287,22 @@ typedef struct
     xband_set_data_holder_t TXH;
 } xband_set_data_array_t;
 
+typedef struct
+{
+    uint8_t ack; // 0 = NAck, 1 = Ack
+    int code;    // Error code or some other info.
+} cs_ack_t;      // (N/ACK)
+
+// Config types.
+// NOTE: cs_config_xband_t == xband_set_data_array_t
+// typedef xband_set_data_array_t cs_config_xband_t;
+
+// NOTE: No UHF configurations exist at this time.
+typedef struct
+{
+
+} cs_config_uhf_t;
+
 /**
  * @brief X-Band TX structure.
  * 
@@ -387,7 +386,7 @@ typedef struct
     settings_t settings[1];
     cs_ack_t cs_ack[1];
     cs_config_uhf_t cs_config_uhf[1];
-    cs_config_xband_t cs_config_xband[1];
+    xband_set_data_t cs_config_xband[1];
     cmd_output_t cmd_output[1];
     uint8_t netstat;
     double last_contact;
