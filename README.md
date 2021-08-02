@@ -30,3 +30,10 @@ Server
     (Roof UHF)      54210  
     (Roof X-Band)   54220  
     (Haystack)      54230   
+    
+    
+### Repositories
+ground_station
+ground_station_server
+ground_station_uhf
+ground_station_xband
