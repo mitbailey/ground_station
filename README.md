@@ -33,7 +33,7 @@ Server
     
     
 ### Repositories
-ground_station
-ground_station_server
-ground_station_uhf
-ground_station_xband
+ground_station  
+ground_station_server  
+ground_station_uhf  
+ground_station_xband  
