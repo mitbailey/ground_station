@@ -349,7 +349,6 @@ void *gs_polling_thread(void *args)
 
 // Updated, referenced "void *rcv_thr(void *sock)" from line 338 of: https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
 // Also see: https://github.com/mitbailey/socket_server
-// TODO: Any premature returns from the RX Thread should be changed to somehow managing the failure. However, in the event that the thread does stop, this needs to be made obvious to the user and there should exist a "Manual RX Thread Restart" function.
 void *gs_rx_thread(void *args)
 {
     // Convert the passed void pointer into something useful; in this case, global_data_t.
@@ -396,7 +395,6 @@ void *gs_rx_thread(void *args)
                 }
                 dbprintlf("Integrity check successful.");
 
-                // TODO: Write this data to the GUI in some meaningful manner.
                 global_data->netstat = clientserver_frame->getNetstat();
                 global_data->last_contact = ImGui::GetTime();
                 // For now, just print the Netstat.
@@ -494,6 +492,7 @@ void *gs_rx_thread(void *args)
         erprintlf(errno);
     }
 
+    network_data->rx_active = false;
     dbprintlf(FATAL "DANGER! RECEIVE THREAD IS RETURNING!");
     return NULL;
 }

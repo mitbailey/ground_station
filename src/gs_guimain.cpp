@@ -177,7 +177,7 @@ int main(int, char **)
         // Network Connections Manager
         if (CONNS_manager)
         {
-            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, global_data);
+            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, global_data, &rx_thread_id);
         }
 
         if (DISP_control_panel)

@@ -1245,7 +1245,7 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
     ImGui::End();
 }
 
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, global_data_t *global_data)
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id)
 {
     NetworkData *network_data = global_data->network_data;
 
@@ -1255,6 +1255,19 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_
         {
             // static int port = LISTENING_PORT;
             // static char ipaddr[16] = LISTENING_IP_ADDRESS;
+
+            if (!network_data->rx_active)
+            {
+                if (ImGui::Button("Start Receive Thread"))
+                {
+                    network_data->rx_active = true;
+                    pthread_create(rx_thread_id, NULL, gs_rx_thread, global_data);
+                }
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Receive Thread Active");
+            }
 
             auto flag = ImGuiInputTextFlags_ReadOnly;
             if (!(network_data->connection_ready))

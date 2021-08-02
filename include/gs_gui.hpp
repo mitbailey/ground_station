@@ -106,7 +106,7 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data);
  * @param allow_transmission 
  * @param global_data 
  */
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, global_data_t *global_data);
+void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id);
 
 /**
  * @brief 
