@@ -204,9 +204,19 @@ int main(int, char **)
         // The main menu bar located at the top of the screen.
         if (ImGui::BeginMainMenuBar())
         {
-            if (ImGui::Button("Authentication"))
+            if (AUTH_control_panel)
             {
-                AUTH_control_panel = !AUTH_control_panel;
+                if (ImGui::Button("v Authentication"))
+                {
+                    AUTH_control_panel = !AUTH_control_panel;
+                }
+            }
+            else
+            {
+                if (ImGui::Button("> Authentication"))
+                {
+                    AUTH_control_panel = !AUTH_control_panel;
+                }
             }
             if (ImGui::IsItemHovered() && global_data->settings->tooltips)
             {
@@ -214,6 +224,7 @@ int main(int, char **)
                 ImGui::SetTooltip("Toggle Authentication Control Panel visibility.");
                 ImGui::EndTooltip();
             }
+
             if (ImGui::Button("SPACE-HAUC I/O"))
             {
                 DISP_control_panel = !DISP_control_panel;
@@ -224,6 +235,7 @@ int main(int, char **)
                 ImGui::SetTooltip("Toggle SPACE-HAUC I/O Displays Control Panel visibility.");
                 ImGui::EndTooltip();
             }
+
             if (ImGui::Button("Connections"))
             {
                 CONNS_manager = !CONNS_manager;
@@ -234,6 +246,7 @@ int main(int, char **)
                 ImGui::SetTooltip("Toggle Connections Manager visibility.");
                 ImGui::EndTooltip();
             }
+
             if (ImGui::Button("Radio Configs"))
             {
                 CONFIG_manager = !CONFIG_manager;
@@ -244,9 +257,20 @@ int main(int, char **)
                 ImGui::SetTooltip("Toggle Radio Configuration Manager visibility.");
                 ImGui::EndTooltip();
             }
-            if (ImGui::Button("Settings"))
+
+            if (SETTINGS_window)
             {
-                SETTINGS_window = !SETTINGS_window;
+                if (ImGui::Button("v Settings"))
+                {
+                    SETTINGS_window = !SETTINGS_window;
+                }
+            }
+            else
+            {
+                if (ImGui::Button("> Settings"))
+                {
+                    SETTINGS_window = !SETTINGS_window;
+                }
             }
             if (ImGui::IsItemHovered() && global_data->settings->tooltips)
             {
@@ -254,6 +278,7 @@ int main(int, char **)
                 ImGui::SetTooltip("Toggle Settings visibility.");
                 ImGui::EndTooltip();
             }
+
             if (ImGui::Button("User Manual"))
             {
                 User_Manual = !User_Manual;
@@ -263,6 +288,35 @@ int main(int, char **)
                 ImGui::BeginTooltip();
                 ImGui::SetTooltip("Toggle User Manual visibility.");
                 ImGui::EndTooltip();
+            }
+
+            switch (auth.access_level)
+            {
+                case 0:
+                {
+                    ImGui::Text("  [LOW LEVEL ACCESS]");
+                    break;
+                }
+                case 1:
+                {
+                    ImGui::Text("  [TEAM MEMBER ACCESS]");
+                    break;
+                }
+                case 2:
+                {
+                    ImGui::Text("  [PRIORITY ACCESS]");
+                    break;
+                }
+                case 3:
+                {
+                    ImGui::Text("  [PROJECT MANAGER ACCESS]");
+                    break;
+                }
+                default:
+                {
+                    ImGui::Text("  [ERR: UNKNOWN ACCESS LEVEL]");
+                    break;
+                }
             }
 
             ImGui::Text("\t\t Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);

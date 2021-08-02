@@ -75,8 +75,8 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
 
     // ImVec2 m_dim = ImGui::GetWindowSize();
     // ImGui::SetNextWindowPos(ImVec2(m_dim.x / 2, m_dim.y / 2));
-
-    if (ImGui::Begin("Authentication Control Panel", AUTH_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    if (ImGui::Begin("Authentication Control Panel", AUTH_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus))
     {
         if (auth->busy)
         {
@@ -124,9 +124,18 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
             }
         }
 
-        if (ImGui::Button("DEAUTHENTICATE"))
+        int access_level = auth->access_level;
+        if (access_level == 0)
+        {
+            ImGui::PushStyleColor(0, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+        }
+        if (ImGui::Button("REVOKE ACCESS"))
         {
             auth->access_level = 0;
+        }
+        if (access_level == 0)
+        {
+            ImGui::PopStyleColor();
         }
 
         if (ImGui::IsItemHovered() && global_data->settings->tooltips)
@@ -141,7 +150,8 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
 
 void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data_t *global_data)
 {
-    if (ImGui::Begin("Settings", SETTINGS_window))
+    ImGui::SetNextWindowPos(ImVec2(450, 0));
+    if (ImGui::Begin("Settings", SETTINGS_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus))
     {
         ImGui::Text("Split ACS update graphs into multiple windows?");
         ImGui::Checkbox("ACS Multiple Windows", &global_data->settings->acs_multiple_windows);
