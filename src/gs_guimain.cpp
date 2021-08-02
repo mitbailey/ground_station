@@ -130,28 +130,28 @@ int main(int, char **)
 
         if (SETTINGS_window)
         {
-            gs_gui_settings_window(&SETTINGS_window, &auth, global_data);
+            gs_gui_settings_window(&SETTINGS_window, auth.access_level, global_data);
         }
 
         if (ACS_window)
         {
-            gs_gui_acs_window(global_data, &ACS_window, &auth, &allow_transmission);
+            gs_gui_acs_window(global_data, &ACS_window, auth.access_level, &allow_transmission);
         }
 
         if (EPS_window)
         {
-            gs_gui_eps_window(global_data->network_data, &ACS_window, &auth, &allow_transmission);
+            gs_gui_eps_window(global_data->network_data, &ACS_window, auth.access_level, &allow_transmission);
         }
 
         if (XBAND_window)
         {
-            gs_gui_xband_window(global_data, &XBAND_window, &auth, &allow_transmission);
+            gs_gui_xband_window(global_data, &XBAND_window, auth.access_level, &allow_transmission);
         }
 
         // Handles software updates.
         if (SW_UPD_window)
         {
-            gs_gui_sw_upd_window(global_data->network_data, &XBAND_window, &auth, &allow_transmission);
+            gs_gui_sw_upd_window(global_data->network_data, &XBAND_window, auth.access_level, &allow_transmission);
         }
 
         // Handles
@@ -161,7 +161,7 @@ int main(int, char **)
         // SYS_CLEAN_SHBYTES = 0xfd
         if (SYS_CTRL_window)
         {
-            gs_gui_sys_ctrl_window(global_data->network_data, &SYS_CTRL_window, &auth, &allow_transmission);
+            gs_gui_sys_ctrl_window(global_data->network_data, &SYS_CTRL_window, auth.access_level, &allow_transmission);
         }
 
         if (RX_display)
@@ -177,12 +177,12 @@ int main(int, char **)
         // Network Connections Manager
         if (CONNS_manager)
         {
-            gs_gui_conns_manager_window(&CONNS_manager, &auth, &allow_transmission, global_data, &rx_thread_id);
+            gs_gui_conns_manager_window(&CONNS_manager, auth.access_level, &allow_transmission, global_data, &rx_thread_id);
         }
 
         if (DISP_control_panel)
         {
-            gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, &auth);
+            gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, auth.access_level);
         }
 
         if (User_Manual)

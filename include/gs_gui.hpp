@@ -22,7 +22,7 @@
  * @param command_input The command to be augmented.
  * @return int Positive on success, negative on failure.
  */
-int gs_gui_gs2sh_tx_handler(NetworkData *network_data, auth_t *auth, cmd_input_t *command_input, bool *allow_transmission);
+int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_input_t *command_input, bool allow_transmission);
 
 /**
  * @brief 
@@ -38,7 +38,7 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
  * @param SETTINGS_window 
  * @param auth 
  */
-void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth, global_data_t *global_data);
+void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data_t *global_data);
 
 /**
  * @brief 
@@ -48,7 +48,7 @@ void gs_gui_settings_window(bool *SETTINGS_window, auth_t *auth, global_data_t *
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_level, bool *allow_transmission);
 
 /**
  * @brief 
@@ -58,7 +58,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, auth_t *aut
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool *allow_transmission);
 
 /**
  * @brief 
@@ -68,7 +68,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, auth_t *auth
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int access_level, bool *allow_transmission);
 
 /**
  * @brief 
@@ -78,7 +78,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, auth_t 
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int access_level, bool *allow_transmission);
 
 /**
  * @brief 
@@ -88,7 +88,7 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, auth_t
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, auth_t *auth, bool *allow_transmission);
+void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, int access_level, bool *allow_transmission);
 
 /**
  * @brief 
@@ -106,7 +106,7 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data);
  * @param allow_transmission 
  * @param global_data 
  */
-void gs_gui_conns_manager_window(bool *CONNS_manager, auth_t *auth, bool *allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id);
+void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id);
 
 /**
  * @brief 
@@ -130,7 +130,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
  * @param allow_transmission 
  * @param auth 
  */
-void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, auth_t *auth);
+void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, int access_level);
 
 /**
  * @brief 
