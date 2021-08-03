@@ -37,16 +37,12 @@ ground_station
 ground_station_server  
 ground_station_uhf  
 ground_station_xband  
-
-Adding Tooltips~
-
-      //  if (ImGui::IsItemHovered() && global_data->settings->tooltips)
-      //  {
-      //      ImGui::BeginTooltip();
-      //      ImGui::SetTooltip("Resets access to lowest level.");
-      //      ImGui::EndTooltip();
-      //  }
-
+  
+  
+    
+   
+  
+  
 Splitting into Columns~
 
     // static int test1 = 0, test2 = 0, test3 = 0;
