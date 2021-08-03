@@ -318,7 +318,7 @@ int main(int, char **)
                     break;
                 }
             }
-
+            ImGui::Text("%fx%f", ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
             ImGui::Text("\t\t Uptime: %.02f \t\t Framerate: %.02f", ImGui::GetTime(), ImGui::GetIO().Framerate);
         }
         ImGui::EndMainMenuBar();

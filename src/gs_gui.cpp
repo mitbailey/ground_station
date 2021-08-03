@@ -447,7 +447,6 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
 
             ImGui::Separator();
 
-            ImGui::Indent();
             if (access_level > 1)
             {
                 // Move the data into ACS_command_input.data
@@ -2088,25 +2087,26 @@ void gs_gui_user_manual_window(bool *User_Manual)
         if (ImGui::BeginTabItem("Getting Started"))
         {
             ImGui::TextWrapped("Overview");
-
+            ImGui::Separator();
             ImGui::Indent();
 
             // TODO: Implement a display to show the data retrieved when a data-down command is sent.
             ImGui::TextWrapped("The SPACE-HAUC Ground Station Client is provided to allow an operator to interface with the SPACE-HAUC satellite.");
 
-            ImGui::TextWrapped("Data-retrieval commands, referred to as 'data-down,' are sent automatically when the corresponding Arrow Button is pressed. These can be found in the corresponding 'Data-down' drop-down sections of the three 'Operations' panels (ACS, EPS, or XBAND). Once the data is received, it is displayed in the [NO DISPLAY IMPLEMENTED YET].");
+            ImGui::TextWrapped("Data-retrieval commands, referred to as 'data-down,' are sent automatically when the corresponding Arrow Button is pressed. These can be found in the corresponding 'Data-down' drop-down sections of the three 'Operations' panels (ACS, EPS, or XBAND). Once the data is received, it is displayed in the Plaintext RX Display window.");
 
             ImGui::TextWrapped("Value-setting commands, referred to as 'data-up,' are accessed in the 'Data-up' drop-down sections of the three 'Operations' panels. Unlike the 'data-down' commands, 'data-up' commands do not send automatically. Instead, the operator must choose which 'data-up' command they would like to make active using the Radio Buttons. Any number of 'data-up' command arguments can be edited simultaneously, but only one 'data-up' command can be selected for transmission at a time. The arguments are not cleared until the program is restarted.");
 
-            ImGui::TextWrapped("Once the transmit functionality is 'unlocked' via the 'Communications Control' panel, the operator can check the currently queued command in the 'Transmit' drop-down section. Pressing 'SEND DATA-UP TRANSMISSION' will confirm and send the queued transmission. Any return value or data received as a result of the 'data-up' transmission will also be displayed in the [NO DISPLAY IMPLEMENTED YET].");
+            ImGui::TextWrapped("Once the transmit functionality is unlocked via the 'SPACE-HAUC I/O Displays' panel, the operator can check the currently queued command in the 'Transmit' drop-down sections. Pressing 'SEND DATA-UP TRANSMISSION' will confirm and send the queued transmission. Any return value or data received as a result of the 'data-up' transmission will also be displayed in the Plaintext RX Display window.");
 
             ImGui::Unindent();
             ImGui::Separator();
-
+            ImGui::Separator();
             ImGui::TextWrapped("Window Interaction");
+            ImGui::Separator();
             ImGui::Indent();
 
-            ImGui::TextWrapped("The Menu Bar at the top of the screen has buttons to toggle the visibility of the Authentication, Communications, and User Manual windows. Within the Communications window are checkboxes to toggle the visibility of the Attitude Control System, Electrical Power Supply, X-Band, Software Updater, and System Control windows.");
+            ImGui::TextWrapped("The Menu Bar at the top of the screen has buttons to toggle the visibility of various windows and drop-down menus. Within the SPACE-HAUC I/O Displays window are checkboxes to toggle the visibility of 'Input' windows, which allow the operator to send commands, and 'Output' windows, which present the operator with data from SPACE-HAUC.");
 
             ImGui::TextWrapped("Some windows are a fixed size, while larger windows are able to be resized by the user. All windows have an 'X' in the top right-hand corner to hide the window. Windows can also be hidden the same way they are shown as previously mentioned.");
 
@@ -2117,7 +2117,8 @@ void gs_gui_user_manual_window(bool *User_Manual)
 
         if (ImGui::BeginTabItem("Authentication"))
         {
-            ImGui::TextWrapped("Window");
+            ImGui::TextWrapped("Authentication Control Panel Window");
+            ImGui::Separator();
             ImGui::Indent();
 
             ImGui::TextWrapped("The Authentication Control Panel window is visible by default. Its visibility can be toggled by pressing the Authentication button in the Main Toolbar at the top of the screen.");
@@ -2134,8 +2135,10 @@ void gs_gui_user_manual_window(bool *User_Manual)
 
             ImGui::Unindent();
             ImGui::Separator();
+            ImGui::Separator();
 
             ImGui::TextWrapped("Access Levels");
+            ImGui::Separator();
             ImGui::Indent();
 
             ImGui::TextWrapped("0 - Low Level Access");
@@ -2160,9 +2163,10 @@ void gs_gui_user_manual_window(bool *User_Manual)
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Displays Control"))
+        if (ImGui::BeginTabItem("SPACE-HAUC I/O Displays"))
         {
-            ImGui::TextWrapped("Window");
+            ImGui::TextWrapped("SPACE-HAUC I/O Displays Window");
+            ImGui::Separator();
             ImGui::Indent();
 
             ImGui::TextWrapped("The Displays Control window is unique, as it is the only window which allows for toggling the visibility of other windows. The Displays Control window itself can be toggled by the 'Displays Control' button on the Menu Bar at the top of the screen.");
@@ -2175,12 +2179,52 @@ void gs_gui_user_manual_window(bool *User_Manual)
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Communications"))
+        if (ImGui::BeginTabItem("Connections"))
         {
+            ImGui::TextWrapped("Connections Manager Window");
+            ImGui::Separator();
+            ImGui::Indent();
+
+            ImGui::TextWrapped("The Connections Manager window's visibility is toggled via the 'Connections' button along the main menu bar at the top of the screen.");
+
+            ImGui::TextWrapped("This window allows connection to an IP and Port and presents the operator with the last known status of the Ground Station Network. The Ground Station client can only be connected to one network device at any time, and should only ever be connected to the Ground Station Network's central server via port 54200.");
+
+            ImGui::TextWrapped("At the top of the window should appear, in green letters, 'Receive Thread Active.' This should always be the case, however, in the event that the receive thread stops working, red text indicating this and a 'Restart Thread' button will appear. If the receive thread is inactive, no data will be received by the client. Below this is the IP and Port input fields. These can only be edited when not connected to another device. Pressing 'Connect' will attempt a connection to the given IP and Port. If the connection attempt succeeds, the button will change to show 'Disconnect,' and status data will be updated at the bottom of the window. If the connection fails, a red 'CONNECTION FAILED' notice will appear next to the 'Connect' button followed by the time in seconds after Client boot-up that the attempt failed. At the bottom of the window is the 'Last Known Status' area, where the last received status of all network devices is shown. Also shown is the current Server connection status, followed in parentheses by the reason for disconnection.");
+
+            ImGui::Unindent();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Radio Configs"))
+        {
+            ImGui::TextWrapped("Radios Configuration Manager Window");
+            ImGui::Separator();
+            ImGui::Indent();
+
             ImGui::Unindent();
             ImGui::Separator();
+            ImGui::Separator();
+            ImGui::TextWrapped("X-Band");
+            ImGui::Separator();
+            ImGui::Indent();
 
+            ImGui::Unindent();
+            ImGui::Separator();
+            ImGui::Separator();
+            ImGui::TextWrapped("UHF");
+            ImGui::Indent();
+            ImGui::Separator();
+
+            ImGui::TextWrapped("No UHF radio configuration exists at this time.");
+
+            ImGui::Unindent();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Communications"))
+        {
             ImGui::TextWrapped("Command Types");
+            ImGui::Separator();
             ImGui::Indent();
 
             ImGui::TextWrapped("Data-down");
@@ -2203,55 +2247,11 @@ void gs_gui_user_manual_window(bool *User_Manual)
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Copyright"))
+        if (ImGui::BeginTabItem("About"))
         {
+            ImGui::TextWrapped("SPACE-HAUC Ground Station: Graphical User Interface Client designed for use with the SPACE-HAUC spacecraft and as a part of the SPACE-HAUC Ground Station Network.");
             ImGui::TextWrapped("Mit Bailey Copyright (c) 2021");
 
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("ACS"))
-        {
-            ImGui::TextWrapped("Attitude Control System");
-            ImGui::Indent();
-
-            ImGui::Unindent();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("EPS"))
-        {
-            ImGui::TextWrapped("Electrical Power Supply");
-            ImGui::Indent();
-
-            ImGui::Unindent();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("XBAND"))
-        {
-            ImGui::TextWrapped("X-Band");
-            ImGui::Indent();
-
-            ImGui::Unindent();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("UPD"))
-        {
-            ImGui::TextWrapped("Software Updater");
-            ImGui::Indent();
-
-            ImGui::Unindent();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("SYS"))
-        {
-            ImGui::TextWrapped("System Control");
-            ImGui::Indent();
-
-            ImGui::Unindent();
             ImGui::EndTabItem();
         }
 
