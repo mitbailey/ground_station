@@ -5,6 +5,9 @@ Graphical user interface for SPACE-HAUC Ground Station operations.
 The Client packages and sends ClientServerFrames over a socket connection. The outbound connection is enduced by the operator via the Connections Manager window. Currently sent and received data can be viewed either through the Linux Terminal or in the 'Plaintext RX Display' and 'ACS Update Display' windows. Received ClientServerFrames are currently parsed and displayed, but no further functionality is implemented yet. Outbound ClientServerFrames undergo an integrity check before they are allowed to be sent.  
 
 ### Connections Testing  
+2021.08.03
+Tested connection to the server with preliminary version of Roof UHF program. Correctly receives the status of all parties, stays connected, and the Roof UHF program also stays connected. Roof UHF successfully reconnects if the server crashes, and does not crash itself trying to get the UHF Radio up and running.
+
 2021.07.29b
 Port connection issue fixed, see ground_station_server repository for more information.
 
