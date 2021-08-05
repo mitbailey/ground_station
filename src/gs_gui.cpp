@@ -1772,7 +1772,7 @@ void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool *
         ImGui::Text("phy gain ----- %d", xband_config_data.TX.phy_gain);
         ImGui::Text("adar gain ---- %d", xband_config_data.TX.adar_gain);
         ImGui::Text("ftr ---------- %d", xband_config_data.TX.ftr);
-        ImGui::Text("phase -------- ", xband_config_data.TX.bw);
+        ImGui::Text("phase -------- ");
         for (int i = 0; i < 16; i++)
         {
             ImGui::SameLine();
