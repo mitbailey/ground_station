@@ -48,7 +48,7 @@ void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_level, bool *allow_transmission);
+void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_level, bool allow_transmission);
 
 /**
  * @brief 
@@ -58,7 +58,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool *allow_transmission);
+void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool allow_transmission);
 
 /**
  * @brief 
@@ -68,7 +68,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int access_level, bool *allow_transmission);
+void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int access_level, bool allow_transmission);
 
 /**
  * @brief 
@@ -88,7 +88,7 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, int access_level, bool *allow_transmission);
+void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, int access_level, bool allow_transmission);
 
 /**
  * @brief 
@@ -106,7 +106,7 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data);
  * @param allow_transmission 
  * @param global_data 
  */
-void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id);
+void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id);
 
 /**
  * @brief 
@@ -116,7 +116,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *al
  * @param allow_transmission 
  * @param global_data 
  */
-void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool *allow_transmission, global_data_t *global_data);
+void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool allow_transmission, global_data_t *global_data);
 
 /**
  * @brief 

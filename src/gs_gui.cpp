@@ -91,9 +91,9 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
                 "     ."};
 
             static int li = -1;
-            li = (li + 1) % 40;
+            li = (li + 1) % 80;
 
-            ImGui::Text("PROCESSING%s", loading_icon[li / 5]);
+            ImGui::Text("PROCESSING%s", loading_icon[li / 10]);
             ImGui::InputTextWithHint("", "Enter Password", auth->password, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_ReadOnly);
         }
         else
@@ -159,7 +159,7 @@ void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data
     ImGui::End();
 }
 
-void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_level, bool *allow_transmission)
+void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_level, bool allow_transmission)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
 
@@ -181,7 +181,13 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
             }
 
-            if (ImGui::ArrowButton("get_moi_button", ImGuiDir_Right) && access_level > 0)
+            if (!allow_transmission)
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "TRANSMISSIONS LOCKED");
+                ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+            }
+
+            if (ImGui::ArrowButton("get_moi_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_MOI;
@@ -193,7 +199,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get Moment of Intertia (MOI)");
 
-            if (ImGui::ArrowButton("get_imoi_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_imoi_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_IMOI;
@@ -205,7 +211,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get Inverse Moment of Inertia (IMOI)");
 
-            if (ImGui::ArrowButton("get_dipole_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_dipole_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_DIPOLE;
@@ -217,7 +223,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get Dipole");
 
-            if (ImGui::ArrowButton("get_timestep_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_timestep_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_TSTEP;
@@ -229,7 +235,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get Timestep");
 
-            if (ImGui::ArrowButton("get_measure_time_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_measure_time_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_MEASURE_TIME;
@@ -241,7 +247,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get Measure Time");
 
-            if (ImGui::ArrowButton("get_leeway_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_leeway_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_LEEWAY;
@@ -253,7 +259,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get Leeway (Z-Angular Momentum Target Tolerable Error)");
 
-            if (ImGui::ArrowButton("get_wtarget_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_wtarget_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_WTARGET;
@@ -265,7 +271,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get W-Target (Angular Momentum Target Vector");
 
-            if (ImGui::ArrowButton("get_detumble_angle_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_detumble_angle_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_DETUMBLE_ANG;
@@ -277,7 +283,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             ImGui::SameLine();
             ImGui::Text("Get Detumble Angle");
 
-            if (ImGui::ArrowButton("get_sun_angle_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_sun_angle_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 ACS_command_input.mod = ACS_ID;
                 ACS_command_input.cmd = ACS_GET_SUN_ANGLE;
@@ -288,6 +294,11 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             }
             ImGui::SameLine();
             ImGui::Text("Get Sun Angle");
+
+            if (!allow_transmission)
+            {
+                ImGui::PopStyleColor();
+            }
 
             if (access_level <= 0)
             {
@@ -408,7 +419,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             }
 
             ImGui::Text("ACS Data-down Update (every 100ms)");
-            if (ImGui::Button("Toggle ACS Update"))
+            if (ImGui::Button("Toggle ACS Update") && allow_transmission)
             {
                 acs_rxtx_automated = !acs_rxtx_automated;
             }
@@ -513,13 +524,13 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 }
             }
 
-            gs_gui_gs2sh_tx_handler(global_data->network_data, access_level, &ACS_command_input, *allow_transmission);
+            gs_gui_gs2sh_tx_handler(global_data->network_data, access_level, &ACS_command_input, allow_transmission);
         }
     }
     ImGui::End();
 }
 
-void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool *allow_transmission)
+void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool allow_transmission)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
 
@@ -537,7 +548,13 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
             }
 
-            if (ImGui::ArrowButton("get_min_hk_button", ImGuiDir_Right) && access_level > 0)
+            if (!allow_transmission)
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "TRANSMISSIONS LOCKED");
+                ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+            }
+
+            if (ImGui::ArrowButton("get_min_hk_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_MIN_HK;
@@ -549,7 +566,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             ImGui::SameLine();
             ImGui::Text("Get Minimal Housekeeping");
 
-            if (ImGui::ArrowButton("get_vbatt_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_vbatt_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_VBATT;
@@ -561,7 +578,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             ImGui::SameLine();
             ImGui::Text("Get Battery Voltage");
 
-            if (ImGui::ArrowButton("get_sys_curr_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_sys_curr_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_SYS_CURR;
@@ -573,7 +590,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             ImGui::SameLine();
             ImGui::Text("Get System Current");
 
-            if (ImGui::ArrowButton("get_power_out_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_power_out_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_OUTPOWER;
@@ -585,7 +602,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             ImGui::SameLine();
             ImGui::Text("Get Power Out");
 
-            if (ImGui::ArrowButton("get_solar_voltage_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_solar_voltage_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_VSUN;
@@ -597,7 +614,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             ImGui::SameLine();
             ImGui::Text("Get Solar Voltage");
 
-            if (ImGui::ArrowButton("get_all_solar_voltage_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_all_solar_voltage_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_VSUN_ALL;
@@ -609,7 +626,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             ImGui::SameLine();
             ImGui::Text("Get Solar Voltage (All)");
 
-            if (ImGui::ArrowButton("get_isun_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_isun_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_ISUN;
@@ -621,7 +638,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             ImGui::SameLine();
             ImGui::Text("Get Solar Generated Current (ISUN)");
 
-            if (ImGui::ArrowButton("get_loop_timer_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_loop_timer_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 EPS_command_input.mod = EPS_ID;
                 EPS_command_input.cmd = EPS_GET_LOOP_TIMER;
@@ -632,6 +649,11 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
             }
             ImGui::SameLine();
             ImGui::Text("Get Loop Timer");
+
+            if (!allow_transmission)
+            {
+                ImGui::PopStyleColor();
+            }
 
             if (access_level <= 0)
             {
@@ -716,7 +738,7 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
     ImGui::End();
 }
 
-void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int access_level, bool *allow_transmission)
+void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int access_level, bool allow_transmission)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
     NetworkData *network_data = global_data->network_data;
@@ -739,7 +761,13 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
             }
 
-            if (ImGui::ArrowButton("get_max_on_button", ImGuiDir_Right) && access_level > 0)
+            if (!allow_transmission)
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "TRANSMISSIONS LOCKED");
+                ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+            }
+
+            if (ImGui::ArrowButton("get_max_on_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 XBAND_command_input.mod = XBAND_ID;
                 XBAND_command_input.cmd = XBAND_GET_MAX_ON;
@@ -751,7 +779,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::SameLine();
             ImGui::Text("Get Max On");
 
-            if (ImGui::ArrowButton("get_tmp_shdn_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_tmp_shdn_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 XBAND_command_input.mod = XBAND_ID;
                 XBAND_command_input.cmd = XBAND_GET_TMP_SHDN;
@@ -763,7 +791,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::SameLine();
             ImGui::Text("Get Shutdown Temperature (TMP SHDN)");
 
-            if (ImGui::ArrowButton("get_tmp_op_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_tmp_op_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 XBAND_command_input.mod = XBAND_ID;
                 XBAND_command_input.cmd = XBAND_GET_TMP_OP;
@@ -775,7 +803,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             ImGui::SameLine();
             ImGui::Text("Get Return to Operation Temperature (TMP OP)");
 
-            if (ImGui::ArrowButton("get_loop_time_button", ImGuiDir_Right) && access_level > 0)
+            if (ImGui::ArrowButton("get_loop_time_button", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 XBAND_command_input.mod = XBAND_ID;
                 XBAND_command_input.cmd = XBAND_GET_LOOP_TIME;
@@ -786,6 +814,11 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
             }
             ImGui::SameLine();
             ImGui::Text("Get Loop Time");
+
+            if (!allow_transmission)
+            {
+                ImGui::PopStyleColor();
+            }
 
             if (access_level <= 0)
             {
@@ -1106,7 +1139,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
         }
         }
 
-        gs_gui_gs2sh_tx_handler(network_data, access_level, &XBAND_command_input, *allow_transmission);
+        gs_gui_gs2sh_tx_handler(network_data, access_level, &XBAND_command_input, allow_transmission);
     }
 
     ImGui::End();
@@ -1173,7 +1206,7 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
     ImGui::End();
 }
 
-void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, int access_level, bool *allow_transmission)
+void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, int access_level, bool allow_transmission)
 {
     // static int SYS_command = INVALID_ID;
     static cmd_input_t SYS_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
@@ -1189,7 +1222,13 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
             }
 
-            if (ImGui::ArrowButton("get_version_magic", ImGuiDir_Right) && access_level > 0)
+            if (!allow_transmission)
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "TRANSMISSIONS LOCKED");
+                ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+            }
+
+            if (ImGui::ArrowButton("get_version_magic", ImGuiDir_Right) && access_level > 0 && allow_transmission)
             {
                 SYS_command_input.mod = SYS_VER_MAGIC;
                 SYS_command_input.cmd = 0x0;
@@ -1200,6 +1239,11 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
             }
             ImGui::SameLine();
             ImGui::Text("Get Version Magic");
+
+            if (!allow_transmission)
+            {
+                ImGui::PopStyleColor();
+            }
 
             if (access_level <= 0)
             {
@@ -1279,7 +1323,7 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
                 }
                 ImGui::Unindent();
 
-                gs_gui_gs2sh_tx_handler(network_data, access_level, &SYS_command_input, *allow_transmission);
+                gs_gui_gs2sh_tx_handler(network_data, access_level, &SYS_command_input, allow_transmission);
 
                 if (access_level <= 2)
                 {
@@ -1343,7 +1387,7 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
     ImGui::End();
 }
 
-void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id)
+void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id)
 {
     NetworkData *network_data = global_data->network_data;
 
@@ -1535,7 +1579,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool *al
     }
 }
 
-void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool *allow_transmission, global_data_t *global_data)
+void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool allow_transmission, global_data_t *global_data)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
     NetworkData *network_data = global_data->network_data;
@@ -1795,7 +1839,7 @@ void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool *
             ImGui::Text("%x", xband_config_data.RX.phase[i]);
         }
 
-        if (ImGui::Button("Send Configuration") && *allow_transmission && access_level > 1)
+        if (ImGui::Button("Send Configuration") && allow_transmission && access_level > 1)
         {
             switch (XBAND_config_command)
             {

@@ -140,17 +140,17 @@ int main(int, char **)
 
         if (ACS_window)
         {
-            gs_gui_acs_window(global_data, &ACS_window, auth.access_level, &allow_transmission);
+            gs_gui_acs_window(global_data, &ACS_window, auth.access_level, allow_transmission);
         }
 
         if (EPS_window)
         {
-            gs_gui_eps_window(global_data->network_data, &ACS_window, auth.access_level, &allow_transmission);
+            gs_gui_eps_window(global_data->network_data, &ACS_window, auth.access_level, allow_transmission);
         }
 
         if (XBAND_window)
         {
-            gs_gui_xband_window(global_data, &XBAND_window, auth.access_level, &allow_transmission);
+            gs_gui_xband_window(global_data, &XBAND_window, auth.access_level, allow_transmission);
         }
 
         // Handles software updates.
@@ -166,7 +166,7 @@ int main(int, char **)
         // SYS_CLEAN_SHBYTES = 0xfd
         if (SYS_CTRL_window)
         {
-            gs_gui_sys_ctrl_window(global_data->network_data, &SYS_CTRL_window, auth.access_level, &allow_transmission);
+            gs_gui_sys_ctrl_window(global_data->network_data, &SYS_CTRL_window, auth.access_level, allow_transmission);
         }
 
         if (RX_display)
@@ -182,13 +182,13 @@ int main(int, char **)
         // Network Connections Manager
         if (CONNS_manager)
         {
-            gs_gui_conns_manager_window(&CONNS_manager, auth.access_level, &allow_transmission, global_data, &rx_thread_id);
+            gs_gui_conns_manager_window(&CONNS_manager, auth.access_level, allow_transmission, global_data, &rx_thread_id);
         }
 
         // Radio Configurations Manager
         if (CONFIG_manager)
         {
-            gs_gui_config_manager_window(&CONFIG_manager, auth.access_level, &allow_transmission, global_data);
+            gs_gui_config_manager_window(&CONFIG_manager, auth.access_level, allow_transmission, global_data);
         }
 
         if (DISP_control_panel)
