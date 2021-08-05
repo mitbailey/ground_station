@@ -156,7 +156,7 @@ int main(int, char **)
         // Handles software updates.
         if (SW_UPD_window)
         {
-            gs_gui_sw_upd_window(global_data->network_data, &XBAND_window, auth.access_level, &allow_transmission);
+            gs_gui_sw_upd_window(global_data->network_data, &XBAND_window, auth.access_level, allow_transmission);
         }
 
         // Handles

@@ -50,7 +50,7 @@ int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_inp
     }
 
     ImGui::Unindent();
-    if (ImGui::Button("SEND DATA-UP TRANSMISSION") && access_level > 1)
+    if (ImGui::Button("SEND DATA-UP TRANSMISSION") && access_level > 1 && allow_transmission)
     {
         // Send the transmission.
         gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, command_input, sizeof(cmd_input_t));
@@ -88,8 +88,7 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
                 "  ... ",
                 "   ...",
                 "    ..",
-                "     ."
-            };
+                "     ."};
 
             static int li = -1;
             li = (li + 1) % 40;
@@ -1113,8 +1112,10 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
     ImGui::End();
 }
 
-void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int access_level, bool *allow_transmission)
+void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int access_level, bool allow_transmission)
 {
+    // TODO: Make this work, currently this has little to no functionality.
+
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
     static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
     static char upd_filename_buffer[256] = {0};
@@ -1122,6 +1123,8 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
     if (ImGui::Begin("Software Updater Control Panel", SW_UPD_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
         // Needs buttons. Values are just #defines and magic values
+
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "WARNING: NOT YET IMPLEMENTED");
 
         ImGui::Text("Name of the file to send:");
         ImGui::InputTextWithHint("", "Name of File", upd_filename_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue);
@@ -1137,7 +1140,13 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
             ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
         }
 
-        if (ImGui::Button("BEGIN UPDATE") && access_level > 2)
+        if (!allow_transmission)
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "TRANSMISSIONS LOCKED");
+            ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        }
+
+        if (ImGui::Button("BEGIN UPDATE") && access_level > 2 && allow_transmission)
         {
             // Sets values for the software update command structure.
             UPD_command_input.mod = SW_UPD_ID;
@@ -1147,6 +1156,11 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
 
             // Transmits the software update command.
             gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &UPD_command_input, sizeof(cmd_input_t));
+        }
+
+        if (!allow_transmission)
+        {
+            ImGui::PopStyleColor();
         }
 
         if (access_level <= 2)
@@ -1781,7 +1795,7 @@ void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool *
             ImGui::Text("%x", xband_config_data.RX.phase[i]);
         }
 
-        if (ImGui::Button("Send Configuration") && allow_transmission && access_level > 1)
+        if (ImGui::Button("Send Configuration") && *allow_transmission && access_level > 1)
         {
             switch (XBAND_config_command)
             {
