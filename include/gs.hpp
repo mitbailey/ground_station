@@ -24,8 +24,10 @@
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
-#define RECV_TIMEOUT 15 // seconds
+#define RECV_TIMEOUT 15    // seconds
 #define SERVER_POLL_RATE 5 // once per this many seconds
+
+#define NACK_NO_UHF 0x756866 // Roof UHF says it cannot access UHF communications.
 
 // Function magic for system restart command, replaces .cmd value.
 #define SYS_RESTART_FUNC_MAGIC 0x3c
@@ -391,7 +393,24 @@ typedef struct
     cmd_output_t cmd_output[1];
     uint8_t netstat;
     double last_contact;
+
+    cmd_output_t sw_output[1];
+    pthread_mutex_t sw_output_lock[1];
+    bool sw_output_fresh;
+    bool sw_updating;
+    int sw_upd_packet;        // Current packet number for GUI loading bar.
+    int sw_upd_total_packets; // Total packets for the transfer.
+
+    char directory[20];
+    char filename[20];
 } global_data_t;
+
+// typedef struct
+// {
+//     global_data_t **global_data;
+//     char directory[20];
+//     char filename[20];
+// } sw_upd_args_t;
 
 /**
  * @brief 
@@ -497,6 +516,32 @@ void *gs_polling_thread(void *args);
  * @return void* 
  */
 void *gs_rx_thread(void *args);
+
+/**
+ * @brief 
+ * 
+ * @param args_vp 
+ * @return void* 
+ */
+void *gs_sw_send_file_thread(void *args_vp);
+// int gs_sw_send_file(global_data_t *global_data, const char directory[], const char filename[], bool *done_upld);
+
+/**
+ * @brief 
+ * 
+ * @param filename 
+ * @return ssize_t 
+ */
+ssize_t gs_sw_get_sent_bytes(const char filename[]);
+
+/**
+ * @brief 
+ * 
+ * @param filename 
+ * @param sent_bytes 
+ * @return int 
+ */
+int gs_sw_set_sent_bytes(const char filename[], ssize_t sent_bytes);
 
 /**
  * @brief Generates a 16-bit CRC for the given data.

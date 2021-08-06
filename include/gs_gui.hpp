@@ -78,7 +78,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int access_level, bool allow_transmission);
+void gs_gui_sw_upd_window(global_data_t *global_data, bool *SW_UPD_window, int access_level, bool allow_transmission);
 
 /**
  * @brief 

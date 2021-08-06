@@ -22,7 +22,7 @@
 // TODO: Fix 'taking address of packed member' warnings.
 // Removed all raw send(...) calls and replaced them with frame->sendFrame().
 // TODO: Add tooltips explaining acronyms like "IMOI", "MOI", etc (see: README.md).
-// TODO: Get SW_UPDATE working over the Ground Station network (send through server first, then to Sat?).
+// TODO: Get SW_UPDATE working over the Ground Station network (send through server first, then to Sat? No, just send through the network).
 // TODO: Neaten up the Radio Configs window.
 
 #include <stdio.h>
@@ -156,7 +156,7 @@ int main(int, char **)
         // Handles software updates.
         if (SW_UPD_window)
         {
-            gs_gui_sw_upd_window(global_data->network_data, &XBAND_window, auth.access_level, allow_transmission);
+            gs_gui_sw_upd_window(global_data, &XBAND_window, auth.access_level, allow_transmission);
         }
 
         // Handles

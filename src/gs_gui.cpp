@@ -18,6 +18,7 @@
 #include "gs.hpp"
 #include "gs_gui.hpp"
 #include "meb_debug.hpp"
+#include "sw_update_packdef.h"
 
 int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_input_t *command_input, bool allow_transmission)
 {
@@ -1145,13 +1146,13 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
     ImGui::End();
 }
 
-void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int access_level, bool allow_transmission)
+void gs_gui_sw_upd_window(global_data_t *global_data, bool *SW_UPD_window, int access_level, bool allow_transmission)
 {
     // TODO: Make this work, currently this has little to no functionality.
 
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
     static cmd_input_t UPD_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
-    static char upd_filename_buffer[256] = {0};
+    static char upd_filename_buffer[SW_UPD_FN_SIZE] = {0};
 
     if (ImGui::Begin("Software Updater Control Panel", SW_UPD_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
@@ -1162,8 +1163,17 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
         ImGui::Text("Name of the file to send:");
         ImGui::InputTextWithHint("", "Name of File", upd_filename_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue);
 
-        // NOTE: Queued file name not sent with software update command, probably doesn't need to be here at all. This is something the Ground Station's version of SW_UPDATE will have to handle.
+        // NOTE: Queued file name not sent with software update command, needs to be here to select what file to send.
         ImGui::Text("Queued file name: %s", upd_filename_buffer);
+
+        ImGui::Text("Selected File");
+        ImGui::Text("%s", upd_filename_buffer);
+        ImGui::Text("In progress? %s", global_data->sw_updating ? "Yes" : "No");
+        
+        if (global_data->sw_upd_total_packets != 0)
+        {
+            ImGui::ProgressBar((float)global_data->sw_upd_packet / (float)global_data->sw_upd_total_packets);
+        }
 
         ImGui::Separator();
 
@@ -1179,16 +1189,32 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
             ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
         }
 
-        if (ImGui::Button("BEGIN UPDATE") && access_level > 2 && allow_transmission)
+        if (global_data->sw_updating)
         {
-            // Sets values for the software update command structure.
-            UPD_command_input.mod = SW_UPD_ID;
-            UPD_command_input.cmd = SW_UPD_FUNC_MAGIC;
-            long sw_upd_valid_magic_temp = SW_UPD_VALID_MAGIC;
-            memcpy(UPD_command_input.data, &sw_upd_valid_magic_temp, sizeof(long));
+            if (ImGui::Button("ABORT UPDATE") && access_level > 2 && allow_transmission)
+            {
+                global_data->sw_updating = false;
+            }
 
-            // Transmits the software update command.
-            gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &UPD_command_input, sizeof(cmd_input_t));
+            if (!global_data->network_data->connection_ready)
+            {
+                dbprintf(FATAL "Update canceled due to loss of connection with server!");
+                global_data->sw_updating = false;
+            }
+        }
+        else
+        {
+            if (ImGui::Button("BEGIN UPDATE") && access_level > 2 && allow_transmission)
+            {
+                global_data->sw_updating = true;
+
+                static pthread_t sw_upd_tid;
+
+                strcpy(global_data->directory, "sendables/");
+                snprintf(global_data->filename, 20, upd_filename_buffer);
+
+                pthread_create(&sw_upd_tid, NULL, gs_sw_send_file_thread, global_data);   
+            }
         }
 
         if (!allow_transmission)
@@ -1200,8 +1226,6 @@ void gs_gui_sw_upd_window(NetworkData *network_data, bool *SW_UPD_window, int ac
         {
             ImGui::PopStyleColor();
         }
-
-        // Maybe some information on the current status of an update can go here.
     }
     ImGui::End();
 }

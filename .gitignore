@@ -1,3 +1,5 @@
+*.gsbytes
+
 # build dir #
 build/
 macosx/
