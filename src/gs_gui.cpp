@@ -1496,7 +1496,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
                     struct timeval timeout;
                     timeout.tv_sec = RECV_TIMEOUT;
                     timeout.tv_usec = 0;
-                    setsockopt(network_data->socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof timeout);
+                    setsockopt(network_data->socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
 
                     network_data->connection_ready = true;
                     gui_connect_status = -1;
