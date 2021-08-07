@@ -15,7 +15,7 @@
 #include <arpa/inet.h>
 
 #define NETWORK_FRAME_GUID 0x1A1C
-#define NETWORK_FRAME_MAX_PAYLOAD_SIZE 0x256
+#define NETWORK_FRAME_MAX_PAYLOAD_SIZE 0x100
 #define SERVER_IP "127.0.0.1" // hostname -I
 #define SERVER_PORT 54200
 
