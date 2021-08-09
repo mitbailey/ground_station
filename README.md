@@ -16,6 +16,10 @@ Graphical user interface for SPACE-HAUC Ground Station operations. Intended to b
 The Client packages and sends NetworkFrames over a socket connection. The outbound connection is opened by the operator via the Connections Manager window. Currently, sent and received data can be viewed either through the Linux Terminal or in the 'Plaintext RX Display' and 'ACS Update Display' windows. NetworkFrames undergo an integrity check prior to leaving and when they are received. The Client will periodically send null NetworkFrames to the Ground Station Network Server for status information on the devices connected to the Network. The other Network devices should connect to the server automatically.  
 
 ## Connections Testing  
+__*2021.08.10*__
+
+
+
 __*2021.08.04*__
 
 Tested connection to the server with all other clients, everything connected and displayed status correctly. Versions below. 
