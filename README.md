@@ -19,6 +19,10 @@ The Client packages and sends NetworkFrames over a socket connection. The outbou
 __*2021.08.10*__
 
 
+__*2021.08.09*__
+
+Connected all clients to the server; the server hosted on the LoCCST server (IP: 129.63.134.29). Connection successfully held open, frames delivered to correct recipients, for over one hour. At one point some frames were failing integrity checks once at the server (likely a network issue), but this did not disconnect any clients. It recovered after approximately 5 seconds of this.
+
 
 __*2021.08.04*__
 
