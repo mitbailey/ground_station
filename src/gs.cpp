@@ -925,7 +925,7 @@ void *gs_sw_send_file_thread(void *args)
 
             int retval = pthread_mutex_timedlock(global_data->sw_output_lock, &timeout);
 
-            if (retval = 0)
+            if (retval == 0)
             {
                 memcpy(rd_buf, global_data->sw_output->data, global_data->sw_output->data_size);
                 global_data->sw_output_fresh = false;
