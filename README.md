@@ -13,11 +13,26 @@ Graphical user interface for SPACE-HAUC Ground Station operations. Intended to b
 [Haystack](https://github.com/mitbailey/ground_station_haystack) (ground_station_haystack)
   
 ## Current State
-The Client packages and sends NetworkFrames over a socket connection. The outbound connection is opened by the operator via the Connections Manager window. Currently, sent and received data can be viewed either through the Linux Terminal or in the 'Plaintext RX Display' and 'ACS Update Display' windows. NetworkFrames undergo an integrity check prior to leaving and when they are received. The Client will periodically send null NetworkFrames to the Ground Station Network Server for status information on the devices connected to the Network. The other Network devices should connect to the server automatically.  
+_GUI Client_ (beta, tested)
+
+The Client packages and sends NetworkFrames over a socket connection. The outbound connection is opened by the operator via the Connections Manager window. Currently, sent and received data can be viewed either through the Linux Terminal or in the 'Plaintext RX Display' and 'ACS Update Display' windows. NetworkFrames undergo an integrity check prior to leaving and when they are received. The Client will periodically send null NetworkFrames to the Ground Station Network Server for status information on the devices connected to the Network. The other Network devices should connect to the server automatically. 
+
+_Server_ (release, tested)
+
+The server successfully handles connections and disconnections, including unexpected losses of signal, reliably transferring data.
+
+_Roof UHF_ (release, tested)
+
+The UHF transmit / receive system operates nominally, successfully sending and receiving data, ensuring its integrity.
+
+_Roof X-Band_ (beta, requires hardware testing)
+
+_Haystack_ (beta, requires hardware testing)
 
 ## Connections Testing  
-__*2021.08.10*__
+__*2021.08.12*__
 
+Server (ground_station_server v3.0-release) running on qe.locsst.uml.edu, UHF client (ground_station_uhf v3.0-release) running on Raspberry Pi 4, and GUI Client (ground_station v2.0-beta) tested together with the faux_space-hauc repository, which runs on a Raspberry Pi 4 with Si446x UHF radio and simulates SPACE-HAUC. Test showed that the Attitude Control System data updates cannot be polled faster than once every half-second, else the Ground Station Network loses a significant number of packets. At this reduced (from ten per second) rate, the Network successfully polled faux_space-hauc for mock ACS data via UHF radio communication, passing it through the Server to the GUI Client. The Client then successfully displayed the data in graph form. When programs are shutdown or lose connection, proper communications resume when they are restarted. Non-user-operated programs successfully automatically connect to the Server, and the server times the connection out if necessary (ie connection is lost). 
 
 __*2021.08.09*__
 
