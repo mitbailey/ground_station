@@ -24,8 +24,6 @@
 #define SEC *1000000
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
-#define RECV_TIMEOUT 15    // seconds
-#define SERVER_POLL_RATE 5 // once per this many seconds
 
 #define NACK_NO_UHF 0x756866 // Roof UHF says it cannot access UHF communications.
 
@@ -405,7 +403,7 @@ typedef struct
 typedef struct
 {
     // Data
-    NetworkData *network_data;
+    NetDataClients *network_data;
     ACSRollingBuffer *acs_rolbuf;
     settings_t settings[1];
     cs_ack_t cs_ack[1];
@@ -414,6 +412,8 @@ typedef struct
     cmd_output_t cmd_output[1];
     uint8_t netstat;
     double last_contact;
+
+    bool acs_update_active;
 
     cmd_output_t sw_output[1];
     pthread_mutex_t sw_output_lock[1];
@@ -513,22 +513,6 @@ int gs_helper(void *aa);
  * @return void* Pointer to the original argument.
  */
 void *gs_acs_update_thread(void *vp);
-
-/**
- * @brief Transmits data to SPACE-HAUC.
- * 
- * @param input The data to transmit.
- * @return int Positive on success, negative on failure.
- */
-int gs_transmit(NetworkData *network_data, NETWORK_FRAME_TYPE type, NETWORK_FRAME_ENDPOINT endpoint, void *data, int data_size);
-
-/**
- * @brief 
- * 
- * @param args 
- * @return void* 
- */
-void *gs_polling_thread(void *args);
 
 /**
  * @brief 

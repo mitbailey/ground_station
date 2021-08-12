@@ -22,7 +22,7 @@
  * @param command_input The command to be augmented.
  * @return int Positive on success, negative on failure.
  */
-int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_input_t *command_input, bool allow_transmission);
+int gs_gui_gs2sh_tx_handler(NetDataClients *network_data, int access_level, cmd_input_t *command_input, bool allow_transmission);
 
 /**
  * @brief 
@@ -58,7 +58,7 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool allow_transmission);
+void gs_gui_eps_window(NetDataClients *network_data, bool *EPS_window, int access_level, bool allow_transmission);
 
 /**
  * @brief 
@@ -88,7 +88,7 @@ void gs_gui_sw_upd_window(global_data_t *global_data, bool *SW_UPD_window, int a
  * @param auth 
  * @param allow_transmission 
  */
-void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, int access_level, bool allow_transmission);
+void gs_gui_sys_ctrl_window(NetDataClients *network_data, bool *SYS_CTRL_window, int access_level, bool allow_transmission);
 
 /**
  * @brief 

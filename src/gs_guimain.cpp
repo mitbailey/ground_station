@@ -33,6 +33,7 @@
 #include "backend/imgui_impl_opengl2.h"
 #include "gs.hpp"
 #include "gs_gui.hpp"
+#include "network.hpp"
 
 int main(int, char **)
 {
@@ -85,8 +86,8 @@ int main(int, char **)
 
     global_data_t global_data[1] = {0};
     global_data->acs_rolbuf = new ACSRollingBuffer();
-    global_data->network_data = new NetworkData();
-    global_data->network_data->rx_active = true;
+    global_data->network_data = new NetDataClients(NetPort::CLIENT, SERVER_POLL_RATE);
+    global_data->network_data->recv_active = true;
     global_data->last_contact = -1.0;
     global_data->settings->tooltips = true;
 
@@ -109,7 +110,7 @@ int main(int, char **)
     // Set-up and start the RX thread.
     pthread_t rx_thread_id, polling_thread_id;
     pthread_create(&rx_thread_id, NULL, gs_rx_thread, global_data);
-    pthread_create(&polling_thread_id, NULL, gs_polling_thread, global_data);
+    pthread_create(&polling_thread_id, NULL, gs_polling_thread, global_data->network_data);
 
     // Start the receiver thread, passing it our acs_rolbuf (where we will read ACS Update data from) and (perhaps a cmd_output_t for all other data?).
 

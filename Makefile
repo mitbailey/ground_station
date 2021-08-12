@@ -16,7 +16,7 @@ endif
 
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS:= -I include/ -I imgui/include -I drivers/ -I imgui/include/imgui -I imgui/include/implot -I ./ -Wall -O2 -fpermissive # -DCOMPILING_SYSTEM 
+CXXFLAGS:= -I include/ -I imgui/include -I drivers/ -I network/ -I imgui/include/imgui -I imgui/include/implot -I ./ -Wall -O2 -fpermissive -DGSNID=\"guiclient\" # -DCOMPILING_SYSTEM 
 LIBS = 
 
 ifeq ($(UNAME_S), Linux) #LINUX
@@ -45,7 +45,7 @@ LIBS += -lm -lpthread
 
 BUILDGUI=imgui/libimgui_glfw.a
 
-BUILDCPP=src/buffer.o src/network.o src/gs.o src/gs_gui.o src/gs_guimain.o
+BUILDCPP=src/buffer.o network/network.o src/gs.o src/gs_gui.o src/gs_guimain.o
 
 GUITARGET=gs.out
 

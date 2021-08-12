@@ -39,7 +39,7 @@
 #define SW_UPD_HASH_SIZE 32
 #define SW_UPD_FN_SIZE 20
 
-typedef enum RET_ERR
+enum RET_ERR
 {
     ERR_FN_NULL = -10,
     ERR_FN_SIZE,
@@ -57,7 +57,7 @@ typedef enum MODE
     finish
 } sw_upd_mode;
 
-typedef enum REQ_PKT
+enum REQ_PKT
 {
     REQ_PKT_RESEND = -2,
     REQ_PKT_AFFIRM = -1
