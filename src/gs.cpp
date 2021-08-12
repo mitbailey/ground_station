@@ -462,7 +462,7 @@ void *gs_rx_thread(void *args)
                 }
                 case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
                 {
-                    dbprintlf("Received Data.");
+                    dbprintlf(BLUE_FG "Received Data.");
                     // TODO: Assuming all 'data'-type frame payloads incoming to the Client is in the form of a from-SPACE-HAUC cmd_output_t. May be a poor assumption.
                     // If this is for an sw_update...
                     if (((cmd_output_t *)payload)->mod == SW_UPD_ID)
