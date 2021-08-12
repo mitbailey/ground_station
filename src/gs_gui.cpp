@@ -419,6 +419,15 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
             }
 
+            if (ImGui::Button("Send One ACS Update Request") && allow_transmission)
+            {
+                // Spawn a new thread to run
+                if (pthread_mutex_trylock(&global_data->acs_rolbuf->acs_upd_inhibitor) == 0)
+                {
+                    pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global_data);
+                }
+            }
+
             ImGui::Text("ACS Data-down Update (every 100ms)");
             if (ImGui::Button("Toggle ACS Update") && allow_transmission)
             {

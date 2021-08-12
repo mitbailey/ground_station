@@ -292,13 +292,11 @@ void *gs_acs_update_thread(void *global_data_vp)
     acs_cmd->data_size = 0x0;
     memset(acs_cmd->data, 0x0, MAX_DATA_SIZE);
 
-    usleep(100000);
-
     // Transmit an ACS update request to the server.
     gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, acs_cmd, sizeof(cmd_input_t));
 
-    // Receive an ACS update from the server.
-    // gs_receive(global_data->acs_rolbuf);
+    // !WARN! Any faster than 0.5 seconds seems to break the Network.
+    usleep(ACS_UPDATE_FREQUENCY SEC);
 
     pthread_mutex_unlock(&global_data->acs_rolbuf->acs_upd_inhibitor);
 
@@ -439,7 +437,7 @@ void *gs_rx_thread(void *args)
                     dbprintlf("Received N/ACK.");
                     memcpy(global_data->cs_ack, payload, payload_size);
 
-                    if (((cs_ack_t *) payload)->code == NACK_NO_UHF)
+                    if (((cs_ack_t *)payload)->code == NACK_NO_UHF)
                     {
                         // Immediately cancel all ongoing software updates, since the Roof UHF is complaining that it cannot use the UHF.
                         dbprintlf(RED_FG "Roof UHF responded saying that it cannot access UHF communications at this time. Halting all software updates.");
@@ -462,11 +460,10 @@ void *gs_rx_thread(void *args)
                 }
                 case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
                 {
-                    dbprintlf(BLUE_FG "Received Data.");
-                    // TODO: Assuming all 'data'-type frame payloads incoming to the Client is in the form of a from-SPACE-HAUC cmd_output_t. May be a poor assumption.
-                    // If this is for an sw_update...
+                    // ASSERTION: All 'data'-type frame payloads incoming to the client must be in the form of a from-SPACE-HAUC cmd_output_t.
+
                     if (((cmd_output_t *)payload)->mod == SW_UPD_ID)
-                    {
+                    { // If this is part of an sw_update...
                         // If we can't get the lock, only wait for one second.
                         struct timespec timeout;
                         clock_gettime(CLOCK_REALTIME, &timeout);
@@ -483,9 +480,8 @@ void *gs_rx_thread(void *args)
                             dbprintlf(RED_FG "Failed to acquire sw_data_lock.");
                         }
                     }
-                    // If this is not an ACS Update...
                     else if (((cmd_output_t *)payload)->mod != ACS_UPD_ID)
-                    {
+                    { // If this is not an ACS Update...
                         memcpy(global_data->cmd_output, payload, payload_size);
                     }
                     else

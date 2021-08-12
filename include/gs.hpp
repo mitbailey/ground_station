@@ -22,6 +22,7 @@
 #include "buffer.hpp"
 
 #define SEC *1000000
+#define ACS_UPDATE_FREQUENCY 0.5 // seconds
 #define MAX_DATA_SIZE 46
 #define ACS_UPD_DATARATE 100
 #define RECV_TIMEOUT 15    // seconds
