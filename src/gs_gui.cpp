@@ -440,6 +440,12 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ImGui::SameLine();
                 ImGui::Text("ACTIVE");
                 ImGui::PopStyleColor();
+
+                // Spawn a thread to execute gs_acs_update_data_handler(...) once.
+                if (pthread_mutex_trylock(&global_data->acs_rolbuf->acs_upd_inhibitor) == 0)
+                {
+                    pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global_data);
+                }
             }
             else
             {
@@ -447,17 +453,6 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ImGui::SameLine();
                 ImGui::Text("INACTIVE");
                 ImGui::PopStyleColor();
-            }
-
-            // Spawn a thread to execute gs_acs_update_data_handler(...) once.
-            // If the operator wants to activate the automatic ACS update system...
-            if (acs_rxtx_automated)
-            {
-                // Spawn a new thread to run
-                if (pthread_mutex_trylock(&global_data->acs_rolbuf->acs_upd_inhibitor) == 0)
-                {
-                    pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global_data);
-                }
             }
 
             if (!allow_transmission)
