@@ -30,6 +30,10 @@ _Roof X-Band_ (beta, requires hardware testing)
 _Haystack_ (beta, requires hardware testing)
 
 ## Connections Testing  
+__*2021.08.13*__
+
+X-Band and Haystack programs tested, work within the network, transmitting / receiving may need tweaking. ground_station_track created to move the positioner on which the radio is mounted to track the satellite. Tested a smaller version with the hardware, properly listened to commands.
+
 __*2021.08.12*__
 
 Server (ground_station_server v3.0-release) running on qe.locsst.uml.edu, UHF client (ground_station_uhf v3.0-release) running on Raspberry Pi 4, and GUI Client (ground_station v2.0-beta) tested together with the faux_space-hauc repository, which runs on a Raspberry Pi 4 with Si446x UHF radio and simulates SPACE-HAUC. Test showed that the Attitude Control System data updates cannot be polled faster than once every half-second, else the Ground Station Network loses a significant number of packets. At this reduced (from ten per second) rate, the Network successfully polled faux_space-hauc for mock ACS data via UHF radio communication, passing it through the Server to the GUI Client. The Client then successfully displayed the data in graph form. When programs are shutdown or lose connection, proper communications resume when they are restarted. Non-user-operated programs successfully automatically connect to the Server, and the server times the connection out if necessary (ie connection is lost). 
