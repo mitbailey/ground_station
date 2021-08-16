@@ -85,8 +85,8 @@ int main(int, char **)
 
     global_data_t global_data[1] = {0};
     global_data->acs_rolbuf = new ACSRollingBuffer();
-    global_data->network_data = new NetworkData();
-    global_data->network_data->rx_active = true;
+    global_data->network_data = new NetDataClient(NetPort::CLIENT, SERVER_POLL_RATE);
+    global_data->network_data->recv_active = true;
     global_data->last_contact = -1.0;
     global_data->settings->tooltips = true;
 

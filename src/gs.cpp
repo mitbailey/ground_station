@@ -27,121 +27,121 @@ void glfw_error_callback(int error, const char *description)
     fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
-/**
- * @brief 
- * 
- * From:
- * https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
- * with minor modifications.
- * 
- * @param socket 
- * @param address 
- * @param socket_size 
- * @param tout_s 
- * @return int 
- */
-int gs_connect(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s)
-{
-    int res;
-    long arg;
-    fd_set myset;
-    struct timeval tv;
-    int valopt;
-    socklen_t lon;
+// /**
+//  * @brief 
+//  * 
+//  * From:
+//  * https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
+//  * with minor modifications.
+//  * 
+//  * @param socket 
+//  * @param address 
+//  * @param socket_size 
+//  * @param tout_s 
+//  * @return int 
+//  */
+// int gs_connect(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s)
+// {
+//     int res;
+//     long arg;
+//     fd_set myset;
+//     struct timeval tv;
+//     int valopt;
+//     socklen_t lon;
 
-    // Set non-blocking.
-    if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
-    {
-        dbprintlf(RED_FG "Error fcntl(..., F_GETFL)");
-        erprintlf(errno);
-        return -1;
-    }
-    arg |= O_NONBLOCK;
-    if (fcntl(socket, F_SETFL, arg) < 0)
-    {
-        dbprintlf(RED_FG "Error fcntl(..., F_SETFL)");
-        erprintlf(errno);
-        return -1;
-    }
+//     // Set non-blocking.
+//     if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
+//     {
+//         dbprintlf(RED_FG "Error fcntl(..., F_GETFL)");
+//         erprintlf(errno);
+//         return -1;
+//     }
+//     arg |= O_NONBLOCK;
+//     if (fcntl(socket, F_SETFL, arg) < 0)
+//     {
+//         dbprintlf(RED_FG "Error fcntl(..., F_SETFL)");
+//         erprintlf(errno);
+//         return -1;
+//     }
 
-    // Trying to connect with timeout.
-    res = connect(socket, address, socket_size);
-    if (res < 0)
-    {
-        if (errno == EINPROGRESS)
-        {
-            dbprintlf(YELLOW_FG "EINPROGRESS in connect() - selecting");
-            do
-            {
-                if (tout_s > 0)
-                {
-                    tv.tv_sec = tout_s;
-                }
-                else
-                {
-                    tv.tv_sec = 1; // Minimum 1 second.
-                }
-                tv.tv_usec = 0;
-                FD_ZERO(&myset);
-                FD_SET(socket, &myset);
-                res = select(socket + 1, NULL, &myset, NULL, &tv);
-                if (res < 0 && errno != EINTR)
-                {
-                    dbprintlf(RED_FG "Error connecting.");
-                    erprintlf(errno);
-                    return -1;
-                }
-                else if (res > 0)
-                {
-                    // Socket selected for write.
-                    lon = sizeof(int);
-                    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void *)(&valopt), &lon) < 0)
-                    {
-                        dbprintlf(RED_FG "Error in getsockopt()");
-                        erprintlf(errno);
-                        return -1;
-                    }
+//     // Trying to connect with timeout.
+//     res = connect(socket, address, socket_size);
+//     if (res < 0)
+//     {
+//         if (errno == EINPROGRESS)
+//         {
+//             dbprintlf(YELLOW_FG "EINPROGRESS in connect() - selecting");
+//             do
+//             {
+//                 if (tout_s > 0)
+//                 {
+//                     tv.tv_sec = tout_s;
+//                 }
+//                 else
+//                 {
+//                     tv.tv_sec = 1; // Minimum 1 second.
+//                 }
+//                 tv.tv_usec = 0;
+//                 FD_ZERO(&myset);
+//                 FD_SET(socket, &myset);
+//                 res = select(socket + 1, NULL, &myset, NULL, &tv);
+//                 if (res < 0 && errno != EINTR)
+//                 {
+//                     dbprintlf(RED_FG "Error connecting.");
+//                     erprintlf(errno);
+//                     return -1;
+//                 }
+//                 else if (res > 0)
+//                 {
+//                     // Socket selected for write.
+//                     lon = sizeof(int);
+//                     if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void *)(&valopt), &lon) < 0)
+//                     {
+//                         dbprintlf(RED_FG "Error in getsockopt()");
+//                         erprintlf(errno);
+//                         return -1;
+//                     }
 
-                    // Check the value returned...
-                    if (valopt)
-                    {
-                        dbprintlf(RED_FG "Error in delayed connection()");
-                        erprintlf(valopt);
-                        return -1;
-                    }
-                    break;
-                }
-                else
-                {
-                    dbprintlf(RED_FG "Timeout in select(), cancelling!");
-                    return -1;
-                }
-            } while (1);
-        }
-        else
-        {
-            fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
-            dbprintlf(RED_FG "Error connecting.");
-            erprintlf(errno);
-            return -1;
-        }
-    }
-    // Set to blocking mode again...
-    if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
-    {
-        dbprintlf("Error fcntl(..., F_GETFL)");
-        erprintlf(errno);
-        return -1;
-    }
-    arg &= (~O_NONBLOCK);
-    if (fcntl(socket, F_SETFL, arg) < 0)
-    {
-        dbprintlf("Error fcntl(..., F_GETFL)");
-        erprintlf(errno);
-        return -1;
-    }
-    return socket;
-}
+//                     // Check the value returned...
+//                     if (valopt)
+//                     {
+//                         dbprintlf(RED_FG "Error in delayed connection()");
+//                         erprintlf(valopt);
+//                         return -1;
+//                     }
+//                     break;
+//                 }
+//                 else
+//                 {
+//                     dbprintlf(RED_FG "Timeout in select(), cancelling!");
+//                     return -1;
+//                 }
+//             } while (1);
+//         }
+//         else
+//         {
+//             fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+//             dbprintlf(RED_FG "Error connecting.");
+//             erprintlf(errno);
+//             return -1;
+//         }
+//     }
+//     // Set to blocking mode again...
+//     if ((arg = fcntl(socket, F_GETFL, NULL)) < 0)
+//     {
+//         dbprintlf("Error fcntl(..., F_GETFL)");
+//         erprintlf(errno);
+//         return -1;
+//     }
+//     arg &= (~O_NONBLOCK);
+//     if (fcntl(socket, F_SETFL, arg) < 0)
+//     {
+//         dbprintlf("Error fcntl(..., F_GETFL)");
+//         erprintlf(errno);
+//         return -1;
+//     }
+//     return socket;
+// }
 
 float getMin(float a, float b)
 {
@@ -282,7 +282,7 @@ int gs_helper(void *aa)
 
 void *gs_acs_update_thread(void *global_data_vp)
 {
-    global_data_t *global_data = (global_data_t *)global_data_vp;
+    global_data_t *global = (global_data_t *)global_data_vp;
 
     cmd_input_t acs_cmd[1];
     memset(acs_cmd, 0x0, sizeof(cmd_input_t));
@@ -293,57 +293,60 @@ void *gs_acs_update_thread(void *global_data_vp)
     memset(acs_cmd->data, 0x0, MAX_DATA_SIZE);
 
     // Transmit an ACS update request to the server.
-    gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, acs_cmd, sizeof(cmd_input_t));
+    // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, acs_cmd, sizeof(cmd_input_t));
+    NetFrame *network_frame = new NetFrame((unsigned char *)acs_cmd, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+    network_frame->sendFrame(global->network_data);
+    delete network_frame;
 
     // !WARN! Any faster than 0.5 seconds seems to break the Network.
     usleep(ACS_UPDATE_FREQUENCY SEC);
 
-    pthread_mutex_unlock(&global_data->acs_rolbuf->acs_upd_inhibitor);
+    pthread_mutex_unlock(&global->acs_rolbuf->acs_upd_inhibitor);
 
     return NULL;
 }
 
-int gs_transmit(NetworkData *network_data, NETWORK_FRAME_TYPE type, NETWORK_FRAME_ENDPOINT endpoint, void *data, int data_size)
-{
-    if (data_size < 0)
-    {
-        printf("Error: data_size is %d.\n", data_size);
-        printf("Cancelling transmit.\n");
-        return -1;
-    }
+// int gs_transmit(NetworkData *network_data, NETWORK_FRAME_TYPE type, NETWORK_FRAME_ENDPOINT endpoint, void *data, int data_size)
+// {
+//     if (data_size < 0)
+//     {
+//         printf("Error: data_size is %d.\n", data_size);
+//         printf("Cancelling transmit.\n");
+//         return -1;
+//     }
 
-    // Create a NetworkFrame to send our data in.
-    NetworkFrame *clientserver_frame = new NetworkFrame(type, data_size);
-    clientserver_frame->storePayload(endpoint, data, data_size);
+//     // Create a NetworkFrame to send our data in.
+//     NetworkFrame *clientserver_frame = new NetworkFrame(type, data_size);
+//     clientserver_frame->storePayload(endpoint, data, data_size);
 
-    clientserver_frame->sendFrame(network_data);
+//     clientserver_frame->sendFrame(network_data);
 
-    return 1;
-}
+//     return 1;
+// }
 
-void *gs_polling_thread(void *args)
-{
-    global_data_t *global_data = (global_data_t *)args;
-    NetworkData *network_data = global_data->network_data;
+// void *gs_polling_thread(void *args)
+// {
+//     global_data_t *global_data = (global_data_t *)args;
+//     NetworkData *network_data = global_data->network_data;
 
-    while (network_data->rx_active)
-    {
-        if (network_data->connection_ready)
-        {
-            NetworkFrame *null_frame = new NetworkFrame(CS_TYPE_NULL, 0x0);
-            null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
+//     while (network_data->rx_active)
+//     {
+//         if (network_data->connection_ready)
+//         {
+//             NetworkFrame *null_frame = new NetworkFrame(CS_TYPE_NULL, 0x0);
+//             null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
 
-            // send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
-            null_frame->sendFrame(network_data);
-            delete null_frame;
-        }
+//             // send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
+//             null_frame->sendFrame(network_data);
+//             delete null_frame;
+//         }
 
-        usleep(SERVER_POLL_RATE SEC);
-    }
+//         usleep(SERVER_POLL_RATE SEC);
+//     }
 
-    dbprintlf(FATAL "GS_POLLING_THREAD IS EXITING!");
-    return NULL;
-}
+//     dbprintlf(FATAL "GS_POLLING_THREAD IS EXITING!");
+//     return NULL;
+// }
 
 // Updated, referenced "void *rcv_thr(void *sock)" from line 338 of: https://github.com/sunipkmukherjee/comic-mon/blob/master/guimain.cpp
 // Also see: https://github.com/mitbailey/socket_server
@@ -351,9 +354,9 @@ void *gs_rx_thread(void *args)
 {
     // Convert the passed void pointer into something useful; in this case, global_data_t.
     global_data_t *global_data = (global_data_t *)args;
-    NetworkData *network_data = global_data->network_data;
+    NetDataClient *network_data = global_data->network_data;
 
-    while (network_data->rx_active)
+    while (network_data->recv_active)
     {
         if (!network_data->connection_ready)
         {
@@ -363,9 +366,9 @@ void *gs_rx_thread(void *args)
 
         int read_size = 0;
 
-        while (read_size >= 0 && network_data->rx_active)
+        while (read_size >= 0 && network_data->recv_active)
         {
-            char buffer[sizeof(NetworkFrame) * 2];
+            char buffer[sizeof(NetFrame) * 2];
             memset(buffer, 0x0, sizeof(buffer));
 
             dbprintlf(BLUE_BG "Waiting to receive...");
@@ -383,20 +386,20 @@ void *gs_rx_thread(void *args)
 
                 // Parse the data.
                 // Map a NetworkFrame onto the data; this allows us to use the class' functions on the data.
-                NetworkFrame *clientserver_frame = (NetworkFrame *)buffer;
+                NetFrame *network_frame = (NetFrame *)buffer;
 
                 // Check if we've received data in the form of a NetworkFrame.
-                if (clientserver_frame->checkIntegrity() < 0)
+                if (network_frame->validate() < 0)
                 {
-                    dbprintlf("Integrity check failed (%d).", clientserver_frame->checkIntegrity());
+                    dbprintlf("Integrity check failed (%d).", network_frame->validate());
                     continue;
                 }
                 dbprintlf("Integrity check successful.");
 
-                global_data->netstat = clientserver_frame->getNetstat();
+                global_data->netstat = network_frame->getNetstat();
                 global_data->last_contact = ImGui::GetTime();
                 // For now, just print the Netstat.
-                uint8_t netstat = clientserver_frame->getNetstat();
+                uint8_t netstat = network_frame->getNetstat();
                 dbprintlf(BLUE_FG "NETWORK STATUS");
                 dbprintf("GUI Client ----- ");
                 ((netstat & 0x80) == 0x80) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
@@ -408,31 +411,30 @@ void *gs_rx_thread(void *args)
                 ((netstat & 0x10) == 0x10) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
 
                 // Extract the payload into a buffer.
-                int payload_size = clientserver_frame->getPayloadSize();
+                int payload_size = network_frame->getPayloadSize();
                 unsigned char *payload = (unsigned char *)malloc(payload_size);
-                if (clientserver_frame->retrievePayload(payload, payload_size) < 0)
+                if (network_frame->retrievePayload(payload, payload_size) < 0)
                 {
                     dbprintlf("Error retrieving data.");
                     continue;
                 }
 
-                NETWORK_FRAME_TYPE type = clientserver_frame->getType();
                 // Based on what we got, set things to display the data.
-                switch (type)
+                switch (network_frame->getType())
                 {
-                case CS_TYPE_NULL:
+                case NetType::POLL:
                 { // Will have status data.
                     dbprintlf("Received NULL frame.");
                     // global_data->netstat = clientserver_frame->getNetstat();
                     break;
                 }
-                case CS_TYPE_ACK:
+                case NetType::ACK:
                 {
                     dbprintlf("Received ACK.");
                     memcpy(global_data->cs_ack, payload, payload_size);
                     break;
                 }
-                case CS_TYPE_NACK:
+                case NetType::NACK:
                 {
                     dbprintlf("Received N/ACK.");
                     memcpy(global_data->cs_ack, payload, payload_size);
@@ -446,19 +448,19 @@ void *gs_rx_thread(void *args)
 
                     break;
                 }
-                case CS_TYPE_CONFIG_UHF:
+                case NetType::UHF_CONFIG:
                 {
                     dbprintlf("Received UHF Config.");
                     memcpy(global_data->cs_config_uhf, payload, payload_size);
                     break;
                 }
-                case CS_TYPE_CONFIG_XBAND:
+                case NetType::XBAND_CONFIG:
                 {
                     dbprintlf("Received X-Band Config.");
                     memcpy(global_data->cs_config_xband, payload, payload_size);
                     break;
                 }
-                case CS_TYPE_DATA: // Data type is just cmd_output_t (SH->GS)
+                case NetType::DATA: // Data type is just cmd_output_t (SH->GS)
                 {
                     // ASSERTION: All 'data'-type frame payloads incoming to the client must be in the form of a from-SPACE-HAUC cmd_output_t.
 
@@ -490,7 +492,6 @@ void *gs_rx_thread(void *args)
                     }
                     break;
                 }
-                case CS_TYPE_ERROR:
                 default:
                 {
                     break;
@@ -506,21 +507,21 @@ void *gs_rx_thread(void *args)
         if (read_size == 0)
         {
             dbprintlf(RED_BG "Connection forcibly closed by the server.");
-            strcpy(network_data->discon_reason, "SERVER-FORCED");
+            strcpy(network_data->disconnect_reason, "SERVER-FORCED");
             network_data->connection_ready = false;
             continue;
         }
         else if (errno == EAGAIN)
         {
             dbprintlf(YELLOW_BG "Active connection timed-out (%d).", read_size);
-            strcpy(network_data->discon_reason, "TIMED-OUT");
+            strcpy(network_data->disconnect_reason, "TIMED-OUT");
             network_data->connection_ready = false;
             continue;
         }
         erprintlf(errno);
     }
 
-    network_data->rx_active = false;
+    network_data->recv_active = false;
     dbprintlf(FATAL "DANGER! RECEIVE THREAD IS RETURNING!");
     return NULL;
 }
@@ -529,36 +530,36 @@ void *gs_rx_thread(void *args)
 // NOTE: The RX thread copies all SW-related data into global_data->sw_output and sets the new_sw_data flag.
 void *gs_sw_send_file_thread(void *args)
 {
-    global_data_t *global_data = (global_data_t *)args;
+    global_data_t *global = (global_data_t *)args;
     dbprintlf("Checkpoint 1.");
     char directory[20];
-    snprintf(directory, 20, global_data->directory);
+    snprintf(directory, 20, global->directory);
     dbprintlf("Checkpoint 2.");
     char filename[20];
-    snprintf(filename, 20, global_data->filename);
+    snprintf(filename, 20, global->filename);
     dbprintlf("Checkpoint 3.");
 
     // int gs_sw_send_file(global_data_t *global_data, const char directory[], const char filename[], bool *done_upld)
     // {
-    if (!global_data->network_data->connection_ready)
+    if (!global->network_data->connection_ready)
     {
         dbprintlf("Checkpoint 4.");
         dbprintlf(RED_FG "Connection is not ready: update aborted.");
-        global_data->sw_updating = false;
+        global->sw_updating = false;
         return NULL;
     }
     if (filename == NULL)
     {
         dbprintlf("Checkpoint 4.");
         dbprintlf(RED_FG "File name not supplied.");
-        global_data->sw_updating = false;
+        global->sw_updating = false;
         return NULL;
     }
     else if (strlen(filename) >= SW_UPD_FN_SIZE)
     {
         dbprintlf("Checkpoint 4.");
         dbprintlf(RED_FG "File name too long.");
-        global_data->sw_updating = false;
+        global->sw_updating = false;
         return NULL;
     }
     dbprintlf("Checkpoint 4.");
@@ -569,7 +570,7 @@ void *gs_sw_send_file_thread(void *args)
     if (bin_fp == NULL)
     {
         dbprintlf(RED_FG "Could not open %s.", directory_filename);
-        global_data->sw_updating = false;
+        global->sw_updating = false;
         return NULL;
     }
 
@@ -585,7 +586,7 @@ void *gs_sw_send_file_thread(void *args)
     if (sent_bytes < 0)
     {
         dbprintlf(RED_FG "Failed to retrieve sent bytes for %s (%d).", directory_filename, sent_bytes);
-        global_data->sw_updating = false;
+        global->sw_updating = false;
         return NULL;
     }
 
@@ -605,12 +606,12 @@ void *gs_sw_send_file_thread(void *args)
     dbprintlf("Entering file transfer phase.");
 
     // Outer loop. Runs until we have sent the entire file.
-    while ((mode != finish) && global_data->sw_updating)
+    while ((mode != finish) && global->sw_updating)
     {
         // Each loop we should set sent_bytes and sent_packets.
         sent_bytes = gs_sw_get_sent_bytes(filename);
         sent_packets = (sent_bytes / SW_UPD_DATA_SIZE_MAX) + ((sent_bytes % SW_UPD_DATA_SIZE_MAX) > 0);
-        global_data->sw_upd_packet = sent_packets;
+        global->sw_upd_packet = sent_packets;
 
         ssize_t in_sz = 0;
 
@@ -631,11 +632,14 @@ void *gs_sw_send_file_thread(void *args)
             sr_pmr->total_bytes = file_size;
 
             // Send the START/RESUME primer, and get back a reply
-            for (send_attempts = 0; (send_attempts < SW_UPD_MAX_SEND_ATTEMPTS) && global_data->sw_updating; send_attempts++)
+            for (send_attempts = 0; (send_attempts < SW_UPD_MAX_SEND_ATTEMPTS) && global->sw_updating; send_attempts++)
             {
                 dbprintlf("Sending S/R primer.");
 
-                retval = gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, wr_buf, SW_UPD_PACKET_SIZE);
+                // retval = gs_transmit(global->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, wr_buf, SW_UPD_PACKET_SIZE);
+                NetFrame *network_frame = new NetFrame((unsigned char *)wr_buf, SW_UPD_PACKET_SIZE, NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
 
                 if (retval <= 0)
                 {
@@ -647,12 +651,12 @@ void *gs_sw_send_file_thread(void *args)
                 memset(rd_buf, 0x0, SW_UPD_PACKET_SIZE);
 
                 // TODO: Figure out a better way to wait for new data.
-                while (!global_data->sw_output_fresh && global_data->sw_updating)
+                while (!global->sw_output_fresh && global->sw_updating)
                 {
                     dbprintlf("Waiting for response...");
                     usleep(0.1 SEC);
                 }
-                if (!global_data->sw_updating)
+                if (!global->sw_updating)
                 {
                     // Update aborted.
                     dbprintlf(YELLOW_FG "Update aborted.");
@@ -664,13 +668,13 @@ void *gs_sw_send_file_thread(void *args)
                 clock_gettime(CLOCK_REALTIME, &timeout);
                 timeout.tv_sec += 15;
 
-                int retval = pthread_mutex_timedlock(global_data->sw_output_lock, &timeout);
+                int retval = pthread_mutex_timedlock(global->sw_output_lock, &timeout);
 
                 if (retval == 0)
                 {
-                    memcpy(rd_buf, global_data->sw_output->data, global_data->sw_output->data_size);
-                    global_data->sw_output_fresh = false;
-                    pthread_mutex_unlock(global_data->sw_output_lock);
+                    memcpy(rd_buf, global->sw_output->data, global->sw_output->data_size);
+                    global->sw_output_fresh = false;
+                    pthread_mutex_unlock(global->sw_output_lock);
                 }
                 else if (retval == ETIMEDOUT)
                 {
@@ -721,7 +725,7 @@ void *gs_sw_send_file_thread(void *args)
                     break;
                 }
             }
-            if (!global_data->sw_updating)
+            if (!global->sw_updating)
             {
                 // Update aborted.
                 dbprintlf(YELLOW_FG "Update aborted.");
@@ -739,7 +743,7 @@ void *gs_sw_send_file_thread(void *args)
 
             sw_upd_data_reply_t *dt_rep = (sw_upd_data_reply_t *)rd_buf;
 
-            for (send_attempts = 0; (send_attempts < SW_UPD_MAX_SEND_ATTEMPTS) && global_data->sw_updating; send_attempts++)
+            for (send_attempts = 0; (send_attempts < SW_UPD_MAX_SEND_ATTEMPTS) && global->sw_updating; send_attempts++)
             {
                 fseek(bin_fp, sent_packets * SW_UPD_DATA_SIZE_MAX, SEEK_SET);
                 in_sz = fread(wr_buf + sizeof(sw_upd_data_t), 0x1, SW_UPD_DATA_SIZE_MAX, bin_fp);
@@ -757,7 +761,10 @@ void *gs_sw_send_file_thread(void *args)
 
                 memcpy(wr_buf, dt_hdr, sizeof(sw_upd_data_t));
 
-                retval = gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, wr_buf, SW_UPD_PACKET_SIZE);
+                // retval = gs_transmit(global->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, wr_buf, SW_UPD_PACKET_SIZE);
+                NetFrame *network_frame = new NetFrame((unsigned char *)wr_buf,  SW_UPD_PACKET_SIZE, NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
 
                 if (retval <= 0)
                 {
@@ -769,7 +776,7 @@ void *gs_sw_send_file_thread(void *args)
                 memset(rd_buf, 0x0, SW_UPD_PACKET_SIZE);
 
                 // TODO: Figure out a better way to wait for new data.
-                while (!global_data->sw_output_fresh && global_data->sw_updating)
+                while (!global->sw_output_fresh && global->sw_updating)
                 {
                     dbprintlf("Waiting for response...");
                     usleep(0.1 SEC);
@@ -780,13 +787,13 @@ void *gs_sw_send_file_thread(void *args)
                 clock_gettime(CLOCK_REALTIME, &timeout);
                 timeout.tv_sec += 15;
 
-                int retval = pthread_mutex_timedlock(global_data->sw_output_lock, &timeout);
+                int retval = pthread_mutex_timedlock(global->sw_output_lock, &timeout);
 
                 if (retval == 0)
                 {
-                    memcpy(rd_buf, global_data->sw_output->data, global_data->sw_output->data_size);
-                    global_data->sw_output_fresh = false;
-                    pthread_mutex_unlock(global_data->sw_output_lock);
+                    memcpy(rd_buf, global->sw_output->data, global->sw_output->data_size);
+                    global->sw_output_fresh = false;
+                    pthread_mutex_unlock(global->sw_output_lock);
                 }
                 else if (retval == ETIMEDOUT)
                 {
@@ -837,7 +844,7 @@ void *gs_sw_send_file_thread(void *args)
                     break;
                 }
             }
-            if (!global_data->sw_updating)
+            if (!global->sw_updating)
             {
                 // Update aborted.
                 dbprintlf(YELLOW_FG "Update aborted.");
@@ -853,7 +860,7 @@ void *gs_sw_send_file_thread(void *args)
                 // Complete
                 dbprintlf("File transfer complete with %ld/%ld bytes of %s having been successfully sent and confirmed per packet.", sent_bytes, file_size, filename);
             }
-            else if (global_data->sw_updating)
+            else if (global->sw_updating)
             {
                 // Interrupted
                 dbprintlf(YELLOW_FG "File transfer interrupted with %ld/%ld bytes of %s having been successfully sent and confirmed per packet.", sent_bytes, file_size, filename);
@@ -862,7 +869,7 @@ void *gs_sw_send_file_thread(void *args)
             {
                 // Error
                 dbprintlf(RED_FG "An error has been encountered with %ld/%ld bytes of %s sent.", sent_bytes, file_size, filename);
-                global_data->sw_updating = false;
+                global->sw_updating = false;
                 return NULL;
             }
             else
@@ -870,7 +877,7 @@ void *gs_sw_send_file_thread(void *args)
                 /// NOTE: Will reach this case if (recv_bytes != file_size).
                 // ???
                 dbprintlf(FATAL "Confused.");
-                global_data->sw_updating = false;
+                global->sw_updating = false;
                 return NULL;
             }
 
@@ -890,7 +897,10 @@ void *gs_sw_send_file_thread(void *args)
 
             checksum_md5(directory_filename, cf_hdr->hash, 32);
 
-            retval = gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, wr_buf, SW_UPD_PACKET_SIZE);
+            // retval = gs_transmit(global->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, wr_buf, SW_UPD_PACKET_SIZE);
+            NetFrame *network_frame = new NetFrame((unsigned char *)wr_buf,  SW_UPD_PACKET_SIZE, NetType::DATA, NetVertex::ROOFUHF);
+            network_frame->sendFrame(global->network_data);
+            delete network_frame;
 
             if (retval <= 0)
             {
@@ -902,12 +912,12 @@ void *gs_sw_send_file_thread(void *args)
             memset(rd_buf, 0x0, SW_UPD_PACKET_SIZE);
 
             // TODO: Figure out a better way to wait for new data.
-            while (!global_data->sw_output_fresh && global_data->sw_updating)
+            while (!global->sw_output_fresh && global->sw_updating)
             {
                 dbprintlf("Waiting for response...");
                 usleep(0.1 SEC);
             }
-            if (!global_data->sw_updating)
+            if (!global->sw_updating)
             {
                 // Update aborted.
                 dbprintlf(YELLOW_FG "Update aborted.");
@@ -919,13 +929,13 @@ void *gs_sw_send_file_thread(void *args)
             clock_gettime(CLOCK_REALTIME, &timeout);
             timeout.tv_sec += 15;
 
-            int retval = pthread_mutex_timedlock(global_data->sw_output_lock, &timeout);
+            int retval = pthread_mutex_timedlock(global->sw_output_lock, &timeout);
 
             if (retval == 0)
             {
-                memcpy(rd_buf, global_data->sw_output->data, global_data->sw_output->data_size);
-                global_data->sw_output_fresh = false;
-                pthread_mutex_unlock(global_data->sw_output_lock);
+                memcpy(rd_buf, global->sw_output->data, global->sw_output->data_size);
+                global->sw_output_fresh = false;
+                pthread_mutex_unlock(global->sw_output_lock);
             }
             else if (retval == ETIMEDOUT)
             {
@@ -996,13 +1006,13 @@ void *gs_sw_send_file_thread(void *args)
         case finish:
         {
             dbprintlf("The file transfer is now complete.");
-            global_data->sw_upd_packet = -1;
+            global->sw_upd_packet = -1;
             break; // case finish
         }
         }
     }
 
-    global_data->sw_updating = false;
+    global->sw_updating = false;
     return NULL;
 }
 

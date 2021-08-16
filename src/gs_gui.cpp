@@ -20,7 +20,7 @@
 #include "meb_debug.hpp"
 #include "sw_update_packdef.h"
 
-int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_input_t *command_input, bool allow_transmission)
+int gs_gui_gs2sh_tx_handler(NetDataClient *network_data, int access_level, cmd_input_t *command_input, bool allow_transmission)
 {
     if (!allow_transmission)
     {
@@ -54,7 +54,10 @@ int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_inp
     if (ImGui::Button("SEND DATA-UP TRANSMISSION") && access_level > 1 && allow_transmission)
     {
         // Send the transmission.
-        gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, command_input, sizeof(cmd_input_t));
+        // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, command_input, sizeof(cmd_input_t));
+        NetFrame *network_frame = new NetFrame((unsigned char *)command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+        network_frame->sendFrame(network_data);
+        delete network_frame;
     }
 
     if (access_level <= 1)
@@ -70,7 +73,7 @@ int gs_gui_gs2sh_tx_handler(NetworkData *network_data, int access_level, cmd_inp
     return 1;
 }
 
-void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t *auth, global_data_t *global_data)
+void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t *auth, global_data_t *global)
 {
     static pthread_t auth_thread_id;
 
@@ -138,7 +141,7 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
             ImGui::PopStyleColor();
         }
 
-        if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+        if (ImGui::IsItemHovered() && global->settings->tooltips)
         {
             ImGui::BeginTooltip();
             ImGui::SetTooltip("Resets access to lowest level.");
@@ -148,19 +151,19 @@ void gs_gui_authentication_control_panel_window(bool *AUTH_control_panel, auth_t
     ImGui::End();
 }
 
-void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data_t *global_data)
+void gs_gui_settings_window(bool *SETTINGS_window, int access_level, global_data_t *global)
 {
     ImGui::SetNextWindowPos(ImVec2(450, 0));
     if (ImGui::Begin("Settings", SETTINGS_window, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus))
     {
         ImGui::Text("Split ACS update graphs into multiple windows?");
-        ImGui::Checkbox("ACS Multiple Windows", &global_data->settings->acs_multiple_windows);
-        ImGui::Checkbox("Show Tooltips", &global_data->settings->tooltips);
+        ImGui::Checkbox("ACS Multiple Windows", &global->settings->acs_multiple_windows);
+        ImGui::Checkbox("Show Tooltips", &global->settings->tooltips);
     }
     ImGui::End();
 }
 
-void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_level, bool allow_transmission)
+void gs_gui_acs_window(global_data_t *global, bool *ACS_window, int access_level, bool allow_transmission)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
 
@@ -195,7 +198,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Moment of Intertia (MOI)");
@@ -207,7 +213,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Inverse Moment of Inertia (IMOI)");
@@ -219,7 +228,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Dipole");
@@ -231,7 +243,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Timestep");
@@ -243,7 +258,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Measure Time");
@@ -255,7 +273,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Leeway (Z-Angular Momentum Target Tolerable Error)");
@@ -267,7 +288,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get W-Target (Angular Momentum Target Vector");
@@ -279,7 +303,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Detumble Angle");
@@ -291,7 +318,10 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ACS_command_input.unused = 0x0;
                 ACS_command_input.data_size = 0x0;
                 memset(ACS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &ACS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&ACS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(global->network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Sun Angle");
@@ -422,9 +452,9 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
             if (ImGui::Button("Send One ACS Update Request") && allow_transmission)
             {
                 // Spawn a new thread to run
-                if (pthread_mutex_trylock(&global_data->acs_rolbuf->acs_upd_inhibitor) == 0)
+                if (pthread_mutex_trylock(&global->acs_rolbuf->acs_upd_inhibitor) == 0)
                 {
-                    pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global_data);
+                    pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global);
                 }
             }
 
@@ -442,9 +472,9 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 ImGui::PopStyleColor();
 
                 // Spawn a thread to execute gs_acs_update_data_handler(...) once.
-                if (pthread_mutex_trylock(&global_data->acs_rolbuf->acs_upd_inhibitor) == 0)
+                if (pthread_mutex_trylock(&global->acs_rolbuf->acs_upd_inhibitor) == 0)
                 {
-                    pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global_data);
+                    pthread_create(&acs_thread_id, NULL, gs_acs_update_thread, global);
                 }
             }
             else
@@ -529,13 +559,13 @@ void gs_gui_acs_window(global_data_t *global_data, bool *ACS_window, int access_
                 }
             }
 
-            gs_gui_gs2sh_tx_handler(global_data->network_data, access_level, &ACS_command_input, allow_transmission);
+            gs_gui_gs2sh_tx_handler(global->network_data, access_level, &ACS_command_input, allow_transmission);
         }
     }
     ImGui::End();
 }
 
-void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_level, bool allow_transmission)
+void gs_gui_eps_window(NetDataClient *network_data, bool *EPS_window, int access_level, bool allow_transmission)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
 
@@ -566,7 +596,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Minimal Housekeeping");
@@ -578,7 +611,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Battery Voltage");
@@ -590,7 +626,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get System Current");
@@ -602,7 +641,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Power Out");
@@ -614,7 +656,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Solar Voltage");
@@ -626,7 +671,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Solar Voltage (All)");
@@ -638,7 +686,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Solar Generated Current (ISUN)");
@@ -650,7 +701,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
                 EPS_command_input.unused = 0x0;
                 EPS_command_input.data_size = 0x0;
                 memset(EPS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &EPS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&EPS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Loop Timer");
@@ -743,10 +797,10 @@ void gs_gui_eps_window(NetworkData *network_data, bool *EPS_window, int access_l
     ImGui::End();
 }
 
-void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int access_level, bool allow_transmission)
+void gs_gui_xband_window(global_data_t *global, bool *XBAND_window, int access_level, bool allow_transmission)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
-    NetworkData *network_data = global_data->network_data;
+    NetDataClient *network_data = global->network_data;
 
     static int XBAND_command = XBAND_INVALID_ID;
     static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
@@ -779,7 +833,10 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
                 XBAND_command_input.unused = 0x0;
                 XBAND_command_input.data_size = 0x0;
                 memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&XBAND_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Max On");
@@ -791,7 +848,10 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
                 XBAND_command_input.unused = 0x0;
                 XBAND_command_input.data_size = 0x0;
                 memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&XBAND_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Shutdown Temperature (TMP SHDN)");
@@ -803,7 +863,10 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
                 XBAND_command_input.unused = 0x0;
                 XBAND_command_input.data_size = 0x0;
                 memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&XBAND_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Return to Operation Temperature (TMP OP)");
@@ -815,7 +878,10 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
                 XBAND_command_input.unused = 0x0;
                 XBAND_command_input.data_size = 0x0;
                 memset(XBAND_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &XBAND_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&XBAND_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Loop Time");
@@ -1150,7 +1216,7 @@ void gs_gui_xband_window(global_data_t *global_data, bool *XBAND_window, int acc
     ImGui::End();
 }
 
-void gs_gui_sw_upd_window(global_data_t *global_data, bool *SW_UPD_window, int access_level, bool allow_transmission)
+void gs_gui_sw_upd_window(global_data_t *global, bool *SW_UPD_window, int access_level, bool allow_transmission)
 {
     // TODO: Make this work, currently this has little to no functionality.
 
@@ -1172,11 +1238,11 @@ void gs_gui_sw_upd_window(global_data_t *global_data, bool *SW_UPD_window, int a
 
         ImGui::Text("Selected File");
         ImGui::Text("%s", upd_filename_buffer);
-        ImGui::Text("In progress? %s", global_data->sw_updating ? "Yes" : "No");
+        ImGui::Text("In progress? %s", global->sw_updating ? "Yes" : "No");
         
-        if (global_data->sw_upd_total_packets != 0)
+        if (global->sw_upd_total_packets != 0)
         {
-            ImGui::ProgressBar((float)global_data->sw_upd_packet / (float)global_data->sw_upd_total_packets);
+            ImGui::ProgressBar((float)global->sw_upd_packet / (float)global->sw_upd_total_packets);
         }
 
         ImGui::Separator();
@@ -1193,31 +1259,31 @@ void gs_gui_sw_upd_window(global_data_t *global_data, bool *SW_UPD_window, int a
             ImGui::PushStyleColor(0, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
         }
 
-        if (global_data->sw_updating)
+        if (global->sw_updating)
         {
             if (ImGui::Button("ABORT UPDATE") && access_level > 2 && allow_transmission)
             {
-                global_data->sw_updating = false;
+                global->sw_updating = false;
             }
 
-            if (!global_data->network_data->connection_ready)
+            if (!global->network_data->connection_ready)
             {
                 dbprintf(FATAL "Update canceled due to loss of connection with server!");
-                global_data->sw_updating = false;
+                global->sw_updating = false;
             }
         }
         else
         {
             if (ImGui::Button("BEGIN UPDATE") && access_level > 2 && allow_transmission)
             {
-                global_data->sw_updating = true;
+                global->sw_updating = true;
 
                 static pthread_t sw_upd_tid;
 
-                strcpy(global_data->directory, "sendables/");
-                snprintf(global_data->filename, 20, upd_filename_buffer);
+                strcpy(global->directory, "sendables/");
+                snprintf(global->filename, 20, upd_filename_buffer);
 
-                pthread_create(&sw_upd_tid, NULL, gs_sw_send_file_thread, global_data);   
+                pthread_create(&sw_upd_tid, NULL, gs_sw_send_file_thread, global);   
             }
         }
 
@@ -1234,7 +1300,7 @@ void gs_gui_sw_upd_window(global_data_t *global_data, bool *SW_UPD_window, int a
     ImGui::End();
 }
 
-void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, int access_level, bool allow_transmission)
+void gs_gui_sys_ctrl_window(NetDataClient *network_data, bool *SYS_CTRL_window, int access_level, bool allow_transmission)
 {
     // static int SYS_command = INVALID_ID;
     static cmd_input_t SYS_command_input = {.mod = INVALID_ID, .cmd = INVALID_ID, .unused = 0, .data_size = 0};
@@ -1263,7 +1329,10 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
                 SYS_command_input.unused = 0x0;
                 SYS_command_input.data_size = 0x0;
                 memset(SYS_command_input.data, 0x0, MAX_DATA_SIZE);
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &SYS_command_input, sizeof(cmd_input_t));
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_ROOFUHF, &SYS_command_input, sizeof(cmd_input_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&SYS_command_input, sizeof(cmd_input_t), NetType::DATA, NetVertex::ROOFUHF);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
             ImGui::SameLine();
             ImGui::Text("Get Version Magic");
@@ -1367,14 +1436,14 @@ void gs_gui_sys_ctrl_window(NetworkData *network_data, bool *SYS_CTRL_window, in
     ImGui::End();
 }
 
-void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
+void gs_gui_rx_display_window(bool *RX_display, global_data_t *global)
 {
     if (ImGui::Begin("Plaintext RX Display"), RX_display)
     {
         ImGui::Text("ACKNOWLEDGEMENT");
         ImGui::Separator();
-        ImGui::Text("N/ACK ------------ %d", global_data->cs_ack->ack);
-        ImGui::Text("Code ------------- %d", global_data->cs_ack->code);
+        ImGui::Text("N/ACK ------------ %d", global->cs_ack->ack);
+        ImGui::Text("Code ------------- %d", global->cs_ack->code);
         ImGui::Separator();
         ImGui::Separator();
 
@@ -1392,32 +1461,32 @@ void gs_gui_rx_display_window(bool *RX_display, global_data_t *global_data)
 
         ImGui::Text("SPACE-HAUC COMMAND OUTPUT");
         ImGui::Separator();
-        ImGui::Text("Module ----------- %d", global_data->cmd_output->mod);
-        ImGui::Text("Command ---------- %d", global_data->cmd_output->cmd);
-        ImGui::Text("Return Value ----- %d", global_data->cmd_output->retval);
-        ImGui::Text("Data Size -------- %d", global_data->cmd_output->data_size);
+        ImGui::Text("Module ----------- %d", global->cmd_output->mod);
+        ImGui::Text("Command ---------- %d", global->cmd_output->cmd);
+        ImGui::Text("Return Value ----- %d", global->cmd_output->retval);
+        ImGui::Text("Data Size -------- %d", global->cmd_output->data_size);
         ImGui::Text("Data (hex) ------- ");
-        for (int i = 0; i < global_data->cmd_output->data_size; i++)
+        for (int i = 0; i < global->cmd_output->data_size; i++)
         {
             ImGui::SameLine(0.0F, 0.0F);
-            ImGui::Text("%2x", global_data->cmd_output->data[i]);
+            ImGui::Text("%2x", global->cmd_output->data[i]);
         }
         ImGui::Separator();
         ImGui::Separator();
 
         ImGui::Text("RADIOS STATUS");
 
-        ImGui::Text("GUI Client ------- %d", ((global_data->netstat & 0x80) == 0x80) ? 1 : 0);
-        ImGui::Text("Roof UHF --------- %d", ((global_data->netstat & 0x40) == 0x40) ? 1 : 0);
-        ImGui::Text("Roof X-Band ------ %d", ((global_data->netstat & 0x20) == 0x20) ? 1 : 0);
-        ImGui::Text("Haystack --------- %d", ((global_data->netstat & 0x10) == 0x10) ? 1 : 0);
+        ImGui::Text("GUI Client ------- %d", ((global->netstat & 0x80) == 0x80) ? 1 : 0);
+        ImGui::Text("Roof UHF --------- %d", ((global->netstat & 0x40) == 0x40) ? 1 : 0);
+        ImGui::Text("Roof X-Band ------ %d", ((global->netstat & 0x20) == 0x20) ? 1 : 0);
+        ImGui::Text("Haystack --------- %d", ((global->netstat & 0x10) == 0x10) ? 1 : 0);
     }
     ImGui::End();
 }
 
-void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool allow_transmission, global_data_t *global_data, pthread_t *rx_thread_id)
+void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool allow_transmission, global_data_t *global, pthread_t *rx_thread_id)
 {
-    NetworkData *network_data = global_data->network_data;
+    NetDataClient *network_data = global->network_data;
 
     if (ImGui::Begin("Connections Manager", CONNS_manager, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
@@ -1425,12 +1494,12 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
         // static int port = LISTENING_PORT;
         // static char ipaddr[16] = LISTENING_IP_ADDRESS;
 
-        if (!network_data->rx_active)
+        if (!network_data->recv_active)
         {
             if (ImGui::Button("Start Receive Thread"))
             {
-                network_data->rx_active = true;
-                pthread_create(rx_thread_id, NULL, gs_rx_thread, global_data);
+                network_data->recv_active = true;
+                pthread_create(rx_thread_id, NULL, gs_rx_thread, global);
             }
         }
         else
@@ -1451,13 +1520,13 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
             strcpy(destination_ipv4, SERVER_IP); // defaults to our own RX ip
             first_pass = false;
         }
-        static int destination_port = SERVER_PORT; // defaults to the correct server listening port
+        static int destination_port = (int)NetPort::CLIENT; // defaults to the correct server listening port
         ImGui::InputText("IP Address", destination_ipv4, sizeof(destination_ipv4), flag);
         ImGui::InputInt("Port", &destination_port, 0, 0, flag);
 
         ImGui::SameLine();
         ImGui::Text("(?)");
-        if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+        if (ImGui::IsItemHovered() && global->settings->tooltips)
         {
             ImGui::BeginTooltip();
             ImGui::Text("Server Ports");
@@ -1477,18 +1546,18 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
             {
                 last_connect_attempt_time = ImGui::GetTime();
 
-                network_data->serv_ip->sin_port = htons(destination_port);
+                network_data->server_ip->sin_port = htons(destination_port);
                 if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                 {
                     dbprintlf(RED_FG "Socket creation error.");
                     gui_connect_status = 0;
                 }
-                else if (inet_pton(AF_INET, destination_ipv4, &network_data->serv_ip->sin_addr) <= 0)
+                else if (inet_pton(AF_INET, destination_ipv4, &network_data->server_ip->sin_addr) <= 0)
                 {
                     dbprintlf(RED_FG "Invalid address; address not supported.");
                     gui_connect_status = 1;
                 }
-                else if (gs_connect(network_data->socket, (struct sockaddr *)network_data->serv_ip, sizeof(network_data->serv_ip), 1) < 0)
+                else if (gs_connect(network_data->socket, (struct sockaddr *)network_data->server_ip, sizeof(network_data->server_ip), 1) < 0)
                 {
                     dbprintlf(RED_FG "Connection failure.");
                     gui_connect_status = 2;
@@ -1544,7 +1613,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
             {
                 close(network_data->socket);
                 network_data->socket = -1;
-                strcpy(network_data->discon_reason, "USER");
+                strcpy(network_data->disconnect_reason, "USER");
                 network_data->connection_ready = false;
             }
         }
@@ -1557,15 +1626,15 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
         ImVec4 con = ImVec4(0.0, 0.5, 1.0, 1.0);
         ImVec4 discon = ImVec4(0.5, 0.5, 0.5, 1.0);
 
-        if (global_data->last_contact > 0)
+        if (global->last_contact > 0)
         {
-            if (global_data->network_data->connection_ready)
+            if (global->network_data->connection_ready)
             {
-                ImGui::Text("Current Status (%.0f seconds ago)", ImGui::GetTime() - global_data->last_contact);
+                ImGui::Text("Current Status (%.0f seconds ago)", ImGui::GetTime() - global->last_contact);
             }
             else
             {
-                ImGui::Text("Last Known Status (%.0f seconds ago)", ImGui::GetTime() - global_data->last_contact);
+                ImGui::Text("Last Known Status (%.0f seconds ago)", ImGui::GetTime() - global->last_contact);
             }
         }
         else
@@ -1577,29 +1646,32 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
 
         ImGui::Text("Server");
         ImGui::SameLine(125.0);
-        network_data->connection_ready ? ImGui::TextColored(con, "CONNECTED") : ImGui::TextColored(discon, "DISCONNECTED (%s)", network_data->discon_reason);
+        network_data->connection_ready ? ImGui::TextColored(con, "CONNECTED") : ImGui::TextColored(discon, "DISCONNECTED (%s)", network_data->disconnect_reason);
 
         ImGui::Text("GUI Client");
         ImGui::SameLine(125.0);
-        ((global_data->netstat & 0x80) == 0x80) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+        ((global->netstat & 0x80) == 0x80) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
 
         ImGui::Text("Roof UHF");
         ImGui::SameLine(125.0);
-        ((global_data->netstat & 0x40) == 0x40) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+        ((global->netstat & 0x40) == 0x40) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
 
         ImGui::Text("Roof X-Band");
         ImGui::SameLine(125.0);
-        ((global_data->netstat & 0x20) == 0x20) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+        ((global->netstat & 0x20) == 0x20) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
 
         ImGui::Text("Haystack");
         ImGui::SameLine(125.0);
-        ((global_data->netstat & 0x10) == 0x10) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
+        ((global->netstat & 0x10) == 0x10) ? ImGui::TextColored(online, "ONLINE") : ImGui::TextColored(offline, "OFFLINE");
 
         if (network_data->connection_ready && network_data->socket > 0)
         {
             if (ImGui::Button("SEND TEST FRAME"))
             {
-                gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_CLIENT, NULL, 0);
+                // gs_transmit(network_data, CS_TYPE_DATA, CS_ENDPOINT_CLIENT, NULL, 0);
+                NetFrame *network_frame = new NetFrame(NULL, 0, NetType::POLL, NetVertex::SERVER);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
             }
         }
 
@@ -1607,10 +1679,10 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
     }
 }
 
-void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool allow_transmission, global_data_t *global_data)
+void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool allow_transmission, global_data_t *global)
 {
     ImGuiInputTextFlags_ flag = (ImGuiInputTextFlags_)0;
-    NetworkData *network_data = global_data->network_data;
+    NetDataClient *network_data = global->network_data;
 
     static int XBAND_config_command = XBAND_INVALID_ID;
     // static cmd_input_t XBAND_command_input = {.mod = INVALID_ID, .cmd = XBAND_INVALID_ID, .unused = 0, .data_size = 0};
@@ -1873,12 +1945,18 @@ void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool a
             {
             case XBAND_SET_TX:
             {
-                gs_transmit(global_data->network_data, CS_TYPE_CONFIG_XBAND, CS_ENDPOINT_ROOFXBAND, &xband_config_data.TX, sizeof(xband_set_data_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_CONFIG_XBAND, CS_ENDPOINT_ROOFXBAND, &xband_config_data.TX, sizeof(xband_set_data_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&xband_config_data.TX, sizeof(xband_set_data_t), NetType::XBAND_CONFIG, NetVertex::ROOFXBAND);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
                 break;
             }
             case XBAND_SET_RX:
             {
-                gs_transmit(global_data->network_data, CS_TYPE_CONFIG_XBAND, CS_ENDPOINT_HAYSTACK, &xband_config_data.RX, sizeof(xband_set_data_array_t));
+                // gs_transmit(global_data->network_data, CS_TYPE_CONFIG_XBAND, CS_ENDPOINT_HAYSTACK, &xband_config_data.RX, sizeof(xband_set_data_array_t));
+                NetFrame *network_frame = new NetFrame((unsigned char *)&xband_config_data.RX, sizeof(xband_set_data_array_t), NetType::XBAND_CONFIG, NetVertex::HAYSTACK);
+                network_frame->sendFrame(network_data);
+                delete network_frame;
                 break;
             }
             case XBAND_SET_MAX_ON:
@@ -1916,7 +1994,7 @@ void gs_gui_config_manager_window(bool *CONFIG_manager, int access_level, bool a
     ImGui::End();
 }
 
-void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display, global_data_t *global_data)
+void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_display, global_data_t *global)
 {
     double start_time = acs_rolbuf->x_index - 60;
     if (start_time < 0)
@@ -1924,7 +2002,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
         start_time = 0;
     }
 
-    if (global_data->settings->acs_multiple_windows)
+    if (global->settings->acs_multiple_windows)
     {
         if (ImGui::Begin("ACS Update: CT / Mode Graph", ACS_UPD_display))
         {
@@ -2123,7 +2201,7 @@ void gs_gui_acs_upd_display_window(ACSRollingBuffer *acs_rolbuf, bool *ACS_UPD_d
     }
 }
 
-void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, int access_level, global_data_t *global_data)
+void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window, bool *EPS_window, bool *XBAND_window, bool *SW_UPD_window, bool *SYS_CTRL_window, bool *RX_display, bool *ACS_UPD_display, bool *allow_transmission, int access_level, global_data_t *global)
 {
     if (ImGui::Begin("SPACE-HAUC I/O Displays", DISP_control_panel, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
     {
@@ -2153,7 +2231,7 @@ void gs_gui_disp_control_panel_window(bool *DISP_control_panel, bool *ACS_window
         {
             *allow_transmission = !(*allow_transmission);
         }
-        if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+        if (ImGui::IsItemHovered() && global->settings->tooltips)
         {
             ImGui::BeginTooltip();
             ImGui::SetTooltip("Toggle transmission lock safety. Disables all transmissions from this terminal when locked.");

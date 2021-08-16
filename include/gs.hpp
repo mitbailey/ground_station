@@ -406,7 +406,7 @@ typedef struct
 typedef struct
 {
     // Data
-    NetworkData *network_data;
+    NetDataClient *network_data;
     ACSRollingBuffer *acs_rolbuf;
     settings_t settings[1];
     cs_ack_t cs_ack[1];
@@ -434,16 +434,16 @@ typedef struct
 //     char filename[20];
 // } sw_upd_args_t;
 
-/**
- * @brief 
- * 
- * @param socket 
- * @param address 
- * @param socket_size 
- * @param tout_s 
- * @return int 
- */
-int gs_connect(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
+// /**
+//  * @brief 
+//  * 
+//  * @param socket 
+//  * @param address 
+//  * @param socket_size 
+//  * @param tout_s 
+//  * @return int 
+//  */
+// int gs_connect(int socket, const struct sockaddr *address, socklen_t socket_size, int tout_s);
 
 /**
  * @brief Get the Min object
@@ -515,21 +515,21 @@ int gs_helper(void *aa);
  */
 void *gs_acs_update_thread(void *vp);
 
-/**
- * @brief Transmits data to SPACE-HAUC.
- * 
- * @param input The data to transmit.
- * @return int Positive on success, negative on failure.
- */
-int gs_transmit(NetworkData *network_data, NETWORK_FRAME_TYPE type, NETWORK_FRAME_ENDPOINT endpoint, void *data, int data_size);
+// /**
+//  * @brief Transmits data to SPACE-HAUC.
+//  * 
+//  * @param input The data to transmit.
+//  * @return int Positive on success, negative on failure.
+//  */
+// int gs_transmit(NetData *network_data, NETWORK_FRAME_TYPE type, NETWORK_FRAME_ENDPOINT endpoint, void *data, int data_size);
 
-/**
- * @brief 
- * 
- * @param args 
- * @return void* 
- */
-void *gs_polling_thread(void *args);
+// /**
+//  * @brief 
+//  * 
+//  * @param args 
+//  * @return void* 
+//  */
+// void *gs_polling_thread(void *args);
 
 /**
  * @brief 
