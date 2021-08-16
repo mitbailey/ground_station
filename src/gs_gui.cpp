@@ -1537,7 +1537,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
             ImGui::EndTooltip();
         }
 
-        static int gui_connect_status = -1;
+        static int gui_connect_status = 0;
         static float last_connect_attempt_time = -1;
 
         if (!(network_data->connection_ready) || network_data->socket < 0)
@@ -1546,7 +1546,7 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
             {
                 last_connect_attempt_time = ImGui::GetTime();
 
-                gs_connect_to_server(network_data);
+                gui_connect_status = gs_connect_to_server(network_data);
                 // network_data->server_ip->sin_port = htons(destination_port);
                 // if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                 // {
@@ -1586,22 +1586,22 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
 
             switch (gui_connect_status)
             {
-            case 0:
+            case -1:
             {
                 ImGui::SameLine();
                 ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "SOCKET CREATION ERROR");
             }
-            case 1:
+            case -2:
             {
                 ImGui::SameLine();
                 ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "INVALID ADDRESS");
             }
-            case 2:
+            case -3:
             {
                 ImGui::SameLine();
                 ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "CONNECTION FAILURE (%.2f).", last_connect_attempt_time);
             }
-            case -1:
+            case 0:
             default:
             {
                 break;
