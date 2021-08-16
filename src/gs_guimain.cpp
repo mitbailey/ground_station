@@ -109,7 +109,7 @@ int main(int, char **)
     // Set-up and start the RX thread.
     pthread_t rx_thread_id, polling_thread_id;
     pthread_create(&rx_thread_id, NULL, gs_rx_thread, global);
-    pthread_create(&polling_thread_id, NULL, gs_polling_thread, global);
+    pthread_create(&polling_thread_id, NULL, gs_polling_thread, global->network_data);
 
     // Start the receiver thread, passing it our acs_rolbuf (where we will read ACS Update data from) and (perhaps a cmd_output_t for all other data?).
 
