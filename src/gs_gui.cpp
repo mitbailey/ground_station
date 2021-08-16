@@ -1546,41 +1546,42 @@ void gs_gui_conns_manager_window(bool *CONNS_manager, int access_level, bool all
             {
                 last_connect_attempt_time = ImGui::GetTime();
 
-                network_data->server_ip->sin_port = htons(destination_port);
-                if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-                {
-                    dbprintlf(RED_FG "Socket creation error.");
-                    gui_connect_status = 0;
-                }
-                else if (inet_pton(AF_INET, destination_ipv4, &network_data->server_ip->sin_addr) <= 0)
-                {
-                    dbprintlf(RED_FG "Invalid address; address not supported.");
-                    gui_connect_status = 1;
-                }
-                else if (gs_connect(network_data->socket, (struct sockaddr *)network_data->server_ip, sizeof(network_data->server_ip), 1) < 0)
-                {
-                    dbprintlf(RED_FG "Connection failure.");
-                    gui_connect_status = 2;
-                }
-                else
-                {
-                    // If the socket is closed, but recv(...) was already called, it will be stuck trying to receive forever from a socket that is no longer active. One way to fix this is to close the RX thread and restart it. Alternatively, we could implement a recv(...) timeout, ensuring a fresh socket value is used.
-                    // Here, we implement a recv(...) timeout.
-                    struct timeval timeout;
-                    timeout.tv_sec = RECV_TIMEOUT;
-                    timeout.tv_usec = 0;
-                    setsockopt(network_data->socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+                gs_connect_to_server(network_data);
+                // network_data->server_ip->sin_port = htons(destination_port);
+                // if ((network_data->socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                // {
+                //     dbprintlf(RED_FG "Socket creation error.");
+                //     gui_connect_status = 0;
+                // }
+                // else if (inet_pton(AF_INET, destination_ipv4, &network_data->server_ip->sin_addr) <= 0)
+                // {
+                //     dbprintlf(RED_FG "Invalid address; address not supported.");
+                //     gui_connect_status = 1;
+                // }
+                // else if (gs_connect(network_data->socket, (struct sockaddr *)network_data->server_ip, sizeof(network_data->server_ip), 1) < 0)
+                // {
+                //     dbprintlf(RED_FG "Connection failure.");
+                //     gui_connect_status = 2;
+                // }
+                // else
+                // {
+                //     // If the socket is closed, but recv(...) was already called, it will be stuck trying to receive forever from a socket that is no longer active. One way to fix this is to close the RX thread and restart it. Alternatively, we could implement a recv(...) timeout, ensuring a fresh socket value is used.
+                //     // Here, we implement a recv(...) timeout.
+                //     struct timeval timeout;
+                //     timeout.tv_sec = RECV_TIMEOUT;
+                //     timeout.tv_usec = 0;
+                //     setsockopt(network_data->socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
 
-                    network_data->connection_ready = true;
-                    gui_connect_status = -1;
+                //     network_data->connection_ready = true;
+                //     gui_connect_status = -1;
 
-                    // Send a null frame to populate our status data.
-                    // NetworkFrame *null_frame = new NetworkFrame(CS_TYPE_NULL, 0x0);
-                    // null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
+                //     // Send a null frame to populate our status data.
+                //     // NetworkFrame *null_frame = new NetworkFrame(CS_TYPE_NULL, 0x0);
+                //     // null_frame->storePayload(CS_ENDPOINT_SERVER, NULL, 0);
 
-                    // send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
-                    // delete null_frame;
-                }
+                //     // send(network_data->socket, null_frame, sizeof(NetworkFrame), 0);
+                //     // delete null_frame;
+                // }
             }
 
             switch (gui_connect_status)

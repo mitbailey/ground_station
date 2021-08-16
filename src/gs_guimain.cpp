@@ -83,12 +83,12 @@ int main(int, char **)
     // Main loop prep.
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    global_data_t global_data[1] = {0};
-    global_data->acs_rolbuf = new ACSRollingBuffer();
-    global_data->network_data = new NetDataClient(NetPort::CLIENT, SERVER_POLL_RATE);
-    global_data->network_data->recv_active = true;
-    global_data->last_contact = -1.0;
-    global_data->settings->tooltips = true;
+    global_data_t global[1] = {0};
+    global->acs_rolbuf = new ACSRollingBuffer();
+    global->network_data = new NetDataClient(NetPort::CLIENT, SERVER_POLL_RATE);
+    global->network_data->recv_active = true;
+    global->last_contact = -1.0;
+    global->settings->tooltips = true;
 
     auth_t auth = {0};
     bool allow_transmission = false;
@@ -108,8 +108,8 @@ int main(int, char **)
 
     // Set-up and start the RX thread.
     pthread_t rx_thread_id, polling_thread_id;
-    pthread_create(&rx_thread_id, NULL, gs_rx_thread, global_data);
-    pthread_create(&polling_thread_id, NULL, gs_polling_thread, global_data);
+    pthread_create(&rx_thread_id, NULL, gs_rx_thread, global);
+    pthread_create(&polling_thread_id, NULL, gs_polling_thread, global);
 
     // Start the receiver thread, passing it our acs_rolbuf (where we will read ACS Update data from) and (perhaps a cmd_output_t for all other data?).
 
@@ -130,33 +130,33 @@ int main(int, char **)
         // Level 3: Project Manager access, can update flight software, edit critical systems.
         if (AUTH_control_panel)
         {
-            gs_gui_authentication_control_panel_window(&AUTH_control_panel, &auth, global_data);
+            gs_gui_authentication_control_panel_window(&AUTH_control_panel, &auth, global);
         }
 
         if (SETTINGS_window)
         {
-            gs_gui_settings_window(&SETTINGS_window, auth.access_level, global_data);
+            gs_gui_settings_window(&SETTINGS_window, auth.access_level, global);
         }
 
         if (ACS_window)
         {
-            gs_gui_acs_window(global_data, &ACS_window, auth.access_level, allow_transmission);
+            gs_gui_acs_window(global, &ACS_window, auth.access_level, allow_transmission);
         }
 
         if (EPS_window)
         {
-            gs_gui_eps_window(global_data->network_data, &ACS_window, auth.access_level, allow_transmission);
+            gs_gui_eps_window(global->network_data, &ACS_window, auth.access_level, allow_transmission);
         }
 
         if (XBAND_window)
         {
-            gs_gui_xband_window(global_data, &XBAND_window, auth.access_level, allow_transmission);
+            gs_gui_xband_window(global, &XBAND_window, auth.access_level, allow_transmission);
         }
 
         // Handles software updates.
         if (SW_UPD_window)
         {
-            gs_gui_sw_upd_window(global_data, &XBAND_window, auth.access_level, allow_transmission);
+            gs_gui_sw_upd_window(global, &XBAND_window, auth.access_level, allow_transmission);
         }
 
         // Handles
@@ -166,34 +166,34 @@ int main(int, char **)
         // SYS_CLEAN_SHBYTES = 0xfd
         if (SYS_CTRL_window)
         {
-            gs_gui_sys_ctrl_window(global_data->network_data, &SYS_CTRL_window, auth.access_level, allow_transmission);
+            gs_gui_sys_ctrl_window(global->network_data, &SYS_CTRL_window, auth.access_level, allow_transmission);
         }
 
         if (RX_display)
         {
-            gs_gui_rx_display_window(&RX_display, global_data);
+            gs_gui_rx_display_window(&RX_display, global);
         }
 
         if (ACS_UPD_display)
         {
-            gs_gui_acs_upd_display_window(global_data->acs_rolbuf, &ACS_UPD_display, global_data);
+            gs_gui_acs_upd_display_window(global->acs_rolbuf, &ACS_UPD_display, global);
         }
 
         // Network Connections Manager
         if (CONNS_manager)
         {
-            gs_gui_conns_manager_window(&CONNS_manager, auth.access_level, allow_transmission, global_data, &rx_thread_id);
+            gs_gui_conns_manager_window(&CONNS_manager, auth.access_level, allow_transmission, global, &rx_thread_id);
         }
 
         // Radio Configurations Manager
         if (CONFIG_manager)
         {
-            gs_gui_config_manager_window(&CONFIG_manager, auth.access_level, allow_transmission, global_data);
+            gs_gui_config_manager_window(&CONFIG_manager, auth.access_level, allow_transmission, global);
         }
 
         if (DISP_control_panel)
         {
-            gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, auth.access_level, global_data);
+            gs_gui_disp_control_panel_window(&DISP_control_panel, &ACS_window, &EPS_window, &XBAND_window, &SW_UPD_window, &SYS_CTRL_window, &RX_display, &ACS_UPD_display, &allow_transmission, auth.access_level, global);
         }
 
         if (User_Manual)
@@ -218,7 +218,7 @@ int main(int, char **)
                     AUTH_control_panel = !AUTH_control_panel;
                 }
             }
-            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            if (ImGui::IsItemHovered() && global->settings->tooltips)
             {
                 ImGui::BeginTooltip();
                 ImGui::SetTooltip("Toggle Authentication Control Panel visibility.");
@@ -229,7 +229,7 @@ int main(int, char **)
             {
                 DISP_control_panel = !DISP_control_panel;
             }
-            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            if (ImGui::IsItemHovered() && global->settings->tooltips)
             {
                 ImGui::BeginTooltip();
                 ImGui::SetTooltip("Toggle SPACE-HAUC I/O Displays Control Panel visibility.");
@@ -240,7 +240,7 @@ int main(int, char **)
             {
                 CONNS_manager = !CONNS_manager;
             }
-            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            if (ImGui::IsItemHovered() && global->settings->tooltips)
             {
                 ImGui::BeginTooltip();
                 ImGui::SetTooltip("Toggle Connections Manager visibility.");
@@ -251,7 +251,7 @@ int main(int, char **)
             {
                 CONFIG_manager = !CONFIG_manager;
             }
-            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            if (ImGui::IsItemHovered() && global->settings->tooltips)
             {
                 ImGui::BeginTooltip();
                 ImGui::SetTooltip("Toggle Radio Configuration Manager visibility.");
@@ -272,7 +272,7 @@ int main(int, char **)
                     SETTINGS_window = !SETTINGS_window;
                 }
             }
-            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            if (ImGui::IsItemHovered() && global->settings->tooltips)
             {
                 ImGui::BeginTooltip();
                 ImGui::SetTooltip("Toggle Settings visibility.");
@@ -283,7 +283,7 @@ int main(int, char **)
             {
                 User_Manual = !User_Manual;
             }
-            if (ImGui::IsItemHovered() && global_data->settings->tooltips)
+            if (ImGui::IsItemHovered() && global->settings->tooltips)
             {
                 ImGui::BeginTooltip();
                 ImGui::SetTooltip("Toggle User Manual visibility.");
@@ -345,9 +345,9 @@ int main(int, char **)
     retval == PTHREAD_CANCELED ? printf("Good rx_thread_id join.\n") : printf("Bad rx_thread_id join.\n");
     pthread_join(polling_thread_id, &retval);
     retval == PTHREAD_CANCELED ? printf("Good polling_thread_id join.\n") : printf("Bad polling_thread_id join.\n");
-    close(global_data->network_data->socket);
-    delete global_data->acs_rolbuf;
-    delete global_data->network_data;
+    close(global->network_data->socket);
+    delete global->acs_rolbuf;
+    delete global->network_data;
 
     // Cleanup.
     ImGui_ImplOpenGL2_Shutdown();
