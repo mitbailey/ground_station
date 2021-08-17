@@ -382,6 +382,75 @@ typedef struct
     int loop_time;
 } xband_rxtx_data_holder_t;
 
+/// X-Band ///
+
+// connection status
+static bool xbtx_avail = false;
+static bool xbrx_avail = false;
+
+enum TRX_MODE
+{
+    MODE_TX = 0,
+    MODE_RX = 1,
+};
+
+enum ensm_mode
+{
+    SLEEP,
+    FDD,
+    TDD
+};
+
+static char *pll_freq_str[] = {"5900 MHz", "4750 MHz"};
+
+// phy config
+typedef struct
+{
+    int mode;               // SLEEP, FDD, TDD
+    int pll_freq;           // PLL Frequency
+    int64_t LO;             // LO freq
+    int64_t samp;           // sampling rate
+    int64_t bw;             // bandwidth
+    char ftr_name[64];      // filter name
+    int64_t temp;           // temperature
+    double rssi;            // RSSI
+    double gain;            // TX Gain
+    char curr_gainmode[16]; // fast_attack or slow_attack
+    bool pll_lock;          // True = PLL On, False = PLL off.
+    uint32_t MTU;           // (TX ONLY)
+} phy_config_t;
+
+/**
+ * @brief Sent to GUI client for status updates.
+ * 
+ * Only used to cast incoming status packets to access booleans.
+ * 
+ */
+typedef struct
+{
+    // libiio.h: ensm_mode
+    int mode;               // SLEEP, FDD, TDD
+    int pll_freq;           // PLL Frequency
+    int64_t LO;             // LO freq
+    int64_t samp;           // Sampling rate
+    int64_t bw;             // Bandwidth
+    char ftr_name[64];      // Filter name
+    int64_t temp;           // Temperature
+    double rssi;            // RSSI
+    double gain;            // TX Gain
+    char curr_gainmode[16]; // "fast_attack" or "slow_attack"
+    bool pll_lock;          // True = PLL On, False = PLL off.
+    bool modem_ready;
+    bool PLL_ready;
+    bool radio_ready;       
+    bool rx_armed;          // (RX ONLY)
+    int last_rx_status;
+    int last_read_status;
+    uint32_t MTU;           // (TX ONLY)
+} phy_status_t;
+
+/// ////// ///
+
 /**
  * @brief Authentication structure, used to store auth-related information.
  * 
@@ -408,23 +477,33 @@ typedef struct
     // Data
     NetDataClient *network_data;
     ACSRollingBuffer *acs_rolbuf;
+
     settings_t settings[1];
     cs_ack_t cs_ack[1];
     cs_config_uhf_t cs_config_uhf[1];
+    // TODO: Delete cs_config_xband because we will be using phy_config_t (see below) instead.
     xband_set_data_t cs_config_xband[1];
     cmd_output_t cmd_output[1];
+
     uint8_t netstat;
     double last_contact;
 
+    // sw_update
     cmd_output_t sw_output[1];
     pthread_mutex_t sw_output_lock[1];
     bool sw_output_fresh;
     bool sw_updating;
     int sw_upd_packet;        // Current packet number for GUI loading bar.
     int sw_upd_total_packets; // Total packets for the transfer.
-
     char directory[20];
     char filename[20];
+
+    // x-band
+    bool xbrx_avail; // Is HAYSTACK connected?
+    bool xbtx_avail; // Is ROOFUHF connected?
+    phy_config_t rxphy[1]; // Receiver configuration.
+    phy_config_t txphy[1]; // Transmitter configuration.
+
 } global_data_t;
 
 // typedef struct

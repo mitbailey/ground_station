@@ -409,6 +409,8 @@ void *gs_rx_thread(void *args)
                 ((netstat & 0x20) == 0x20) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
                 dbprintf("Haystack ------- ");
                 ((netstat & 0x10) == 0x10) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
+                dbprintf("Track ---------- ");
+                ((netstat & 0x5) == 0x5) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
 
                 // Extract the payload into a buffer.
                 int payload_size = network_frame->getPayloadSize();
@@ -462,7 +464,7 @@ void *gs_rx_thread(void *args)
                 }
                 case NetType::DATA: // Data type is just cmd_output_t (SH->GS)
                 {
-                    // ASSERTION: All 'data'-type frame payloads incoming to the client must be in the form of a from-SPACE-HAUC cmd_output_t.
+                    // ASSERTION: All 'DATA'-type frame payloads incoming to the client is in the form of a from-SPACE-HAUC cmd_output_t.
 
                     if (((cmd_output_t *)payload)->mod == SW_UPD_ID)
                     { // If this is part of an sw_update...
