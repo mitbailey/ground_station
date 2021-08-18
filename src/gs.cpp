@@ -21,6 +21,7 @@
 #include "gs.hpp"
 #include "meb_debug.hpp"
 #include "sw_update_packdef.h"
+#include "phy.hpp"
 
 void glfw_error_callback(int error, const char *description)
 {

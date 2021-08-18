@@ -403,54 +403,6 @@ enum ensm_mode
 
 static char *pll_freq_str[] = {"5900 MHz", "4750 MHz"};
 
-// phy config
-typedef struct
-{
-    int mode;               // SLEEP, FDD, TDD
-    int pll_freq;           // PLL Frequency
-    int64_t LO;             // LO freq
-    int64_t samp;           // sampling rate
-    int64_t bw;             // bandwidth
-    char ftr_name[64];      // filter name
-    int64_t temp;           // temperature
-    double rssi;            // RSSI
-    double gain;            // TX Gain
-    char curr_gainmode[16]; // fast_attack or slow_attack
-    bool pll_lock;          // True = PLL On, False = PLL off.
-    uint32_t MTU;           // (TX ONLY)
-} phy_config_t;
-
-/**
- * @brief Sent to GUI client for status updates.
- * 
- * Only used to cast incoming status packets to access booleans.
- * 
- */
-typedef struct
-{
-    // libiio.h: ensm_mode
-    int mode;               // SLEEP, FDD, TDD
-    int pll_freq;           // PLL Frequency
-    int64_t LO;             // LO freq
-    int64_t samp;           // Sampling rate
-    int64_t bw;             // Bandwidth
-    char ftr_name[64];      // Filter name
-    int64_t temp;           // Temperature
-    double rssi;            // RSSI
-    double gain;            // TX Gain
-    char curr_gainmode[16]; // "fast_attack" or "slow_attack"
-    bool pll_lock;          // True = PLL On, False = PLL off.
-    bool modem_ready;
-    bool PLL_ready;
-    bool radio_ready;       
-    bool rx_armed;          // (RX ONLY)
-    uint32_t MTU;           // (TX ONLY)
-    int last_rx_status;
-    int last_read_status;
-} phy_status_t;
-
-/// ////// ///
-
 /**
  * @brief Authentication structure, used to store auth-related information.
  * 
