@@ -30,6 +30,11 @@ _Roof X-Band_ (beta, requires hardware testing)
 _Haystack_ (beta, requires hardware testing)
 
 ## Connections Testing  
+
+__*2021.08.18*__
+
+All but Track connected and tested with new Network API, everything works well. X-Band sends / receives 56-byte test packet.
+
 __*2021.08.13*__
 
 X-Band and Haystack programs tested, work within the network, transmitting / receiving may need tweaking. ground_station_track created to move the positioner on which the radio is mounted to track the satellite. Tested a smaller version with the hardware, properly listened to commands.
