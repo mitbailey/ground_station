@@ -444,9 +444,9 @@ typedef struct
     bool PLL_ready;
     bool radio_ready;       
     bool rx_armed;          // (RX ONLY)
+    uint32_t MTU;           // (TX ONLY)
     int last_rx_status;
     int last_read_status;
-    uint32_t MTU;           // (TX ONLY)
 } phy_status_t;
 
 /// ////// ///
