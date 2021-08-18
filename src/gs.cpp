@@ -357,7 +357,7 @@ void *gs_rx_thread(void *args)
     global_data_t *global_data = (global_data_t *)args;
     NetDataClient *network_data = global_data->network_data;
 
-    while (network_data->recv_active)
+    while (network_data->recv_active && network_data->thread_status > 0)
     {
         if (!network_data->connection_ready)
         {
@@ -367,63 +367,32 @@ void *gs_rx_thread(void *args)
 
         int read_size = 0;
 
-        while (read_size >= 0 && network_data->recv_active)
+        while (read_size >= 0 && network_data->recv_active && network_data->thread_status > 0)
         {
-            char buffer[sizeof(NetFrame) * 2];
-            memset(buffer, 0x0, sizeof(buffer));
-
             dbprintlf(BLUE_BG "Waiting to receive...");
-            read_size = recv(network_data->socket, buffer, sizeof(buffer), 0);
+
+            NetFrame *netframe = new NetFrame();
+            read_size = netframe->recvFrame(network_data);
+
             dbprintlf("Read %d bytes.", read_size);
 
-            if (read_size > 0)
+            if (read_size >= 0)
             {
-                dbprintf("RECEIVED (hex): ");
-                for (int i = 0; i < read_size; i++)
-                {
-                    printf("%02x", buffer[i]);
-                }
-                printf("(END)\n");
-
-                // Parse the data.
-                // Map a NetworkFrame onto the data; this allows us to use the class' functions on the data.
-                NetFrame *network_frame = (NetFrame *)buffer;
-
-                // Check if we've received data in the form of a NetworkFrame.
-                if (network_frame->validate() < 0)
-                {
-                    dbprintlf("Integrity check failed (%d).", network_frame->validate());
-                    continue;
-                }
-                dbprintlf("Integrity check successful.");
-
-                global_data->netstat = network_frame->getNetstat();
-                global_data->last_contact = ImGui::GetTime();
-                // For now, just print the Netstat.
-                uint8_t netstat = network_frame->getNetstat();
-                dbprintlf(BLUE_FG "NETWORK STATUS");
-                dbprintf("GUI Client ----- ");
-                ((netstat & 0x80) == 0x80) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
-                dbprintf("Roof UHF ------- ");
-                ((netstat & 0x40) == 0x40) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
-                dbprintf("Roof X-Band ---- ");
-                ((netstat & 0x20) == 0x20) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
-                dbprintf("Haystack ------- ");
-                ((netstat & 0x10) == 0x10) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
-                dbprintf("Track ---------- ");
-                ((netstat & 0x5) == 0x5) ? printf(GREEN_FG "ONLINE" RESET_ALL "\n") : printf(RED_FG "OFFLINE" RESET_ALL "\n");
+                dbprintlf("Received the following NetFrame:");
+                netframe->print();
+                netframe->printNetstat();
 
                 // Extract the payload into a buffer.
-                int payload_size = network_frame->getPayloadSize();
+                int payload_size = netframe->getPayloadSize();
                 unsigned char *payload = (unsigned char *)malloc(payload_size);
-                if (network_frame->retrievePayload(payload, payload_size) < 0)
+                if (netframe->retrievePayload(payload, payload_size) < 0)
                 {
                     dbprintlf("Error retrieving data.");
                     continue;
                 }
 
                 // Based on what we got, set things to display the data.
-                switch (network_frame->getType())
+                switch (netframe->getType())
                 {
                 case NetType::POLL:
                 { // Will have status data.
@@ -506,8 +475,11 @@ void *gs_rx_thread(void *args)
             {
                 break;
             }
+
+            delete netframe;
+
         }
-        if (read_size == 0)
+        if (read_size == -404)
         {
             dbprintlf(RED_BG "Connection forcibly closed by the server.");
             strcpy(network_data->disconnect_reason, "SERVER-FORCED");
