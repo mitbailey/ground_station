@@ -1,3 +1,5 @@
+Deprecated, superseded by https://github.com/SPACE-HAUC/gs_client.
+
 # SPACE-HAUC Ground Station GUI Client
 Graphical user interface for SPACE-HAUC Ground Station operations. Intended to be used with the SPACE-HAUC Ground Station Network.
 
